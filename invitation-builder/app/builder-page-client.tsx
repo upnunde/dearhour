@@ -4990,6 +4990,40 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               })()}
                             </div>
                           </FormItem>
+                          <FormItem label="옵션">
+                            <div className="flex flex-col gap-2 flex-1">
+                              <span
+                                role="button"
+                                tabIndex={0}
+                                className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                                onClick={() =>
+                                  updateData(
+                                    "guestUpload.showAfterEventModal",
+                                    !((data.guestUpload as any)?.showAfterEventModal ?? true),
+                                  )
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    updateData(
+                                      "guestUpload.showAfterEventModal",
+                                      !((data.guestUpload as any)?.showAfterEventModal ?? true),
+                                    );
+                                  }
+                                }}
+                              >
+                                <CircleCheckbox
+                                  checked={!!((data.guestUpload as any)?.showAfterEventModal ?? true)}
+                                  onChange={(e) =>
+                                    updateData("guestUpload.showAfterEventModal", e.target.checked)
+                                  }
+                                />
+                                예식일 이후 모달 띄우기
+                              </span>
+                              <div className="text-[12px] text-on-surface-30 leading-relaxed">
+                                예식 후 접속한 하객에게 사진 업로드를 바로 할 수 있도록 안내창을 띄웁니다
+                              </div>
+                            </div>
+                          </FormItem>
                         </>
                       )}
 
@@ -5080,21 +5114,32 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             />
                           </FormItem>
                           <div className="flex justify-end gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
-                              onClick={async () => {
-                                const linkToCopy = ((data.share as any)?.link ?? '').trim() || window.location.href;
-                                try {
-                                  await navigator.clipboard.writeText(linkToCopy);
-                                } catch {
-                                  // ignore clipboard permission failures
-                                }
-                              }}
-                            >
-                              링크복사
-                            </Button>
+                            {(((data.share as any)?.link ?? '').trim().length > 0) ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
+                                onClick={async () => {
+                                  const linkToCopy = ((data.share as any)?.link ?? '').trim();
+                                  try {
+                                    await navigator.clipboard.writeText(linkToCopy);
+                                  } catch {
+                                    // ignore clipboard permission failures
+                                  }
+                                }}
+                              >
+                                링크복사
+                              </Button>
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                disabled
+                                className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-30 inline-flex items-center opacity-60 cursor-not-allowed"
+                              >
+                                결제 이후 링크 복사하기
+                              </Button>
+                            )}
                             <Button
                               type="button"
                               variant="outline"

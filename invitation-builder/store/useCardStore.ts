@@ -132,6 +132,7 @@ export interface CardData {
     title: string;
     description: string;
     storageGb: 2 | 5 | 10 | 20;
+    showAfterEventModal: boolean;
   };
   share: {
     useThumbnail: boolean;
@@ -336,6 +337,7 @@ export const useCardStore = create<CardStore>((set) => ({
       title: '추억을 공유해 주세요',
       description: '예식 후 촬영하신 사진/영상을 업로드해 주세요.',
       storageGb: 2,
+      showAfterEventModal: true,
     },
     share: {
       useThumbnail: true,
