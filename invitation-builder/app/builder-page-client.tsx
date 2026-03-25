@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Palette, Music, Image as ImageIcon, Users, MessageSquare, MessageCircle, Phone, CalendarHeart, MapPin, Bell, Images, Wallet, BookOpen, Youtube, Share2, Shield, CheckCircle2, GripVertical, Play, Pause, VolumeX, Volume2, X, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, RotateCw, RefreshCcw, Move } from 'lucide-react';
+import { Palette, Music, Image as ImageIcon, Users, MessageSquare, MessageCircle, Phone, CalendarHeart, MapPin, Bell, Images, Wallet, BookOpen, Youtube, Share2, Shield, CheckCircle2, GripVertical, Play, Pause, VolumeX, Volume2, X, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, RotateCw, RefreshCcw, Move, ArrowUpDown } from 'lucide-react';
 
 const DEFAULT_LOCATION_PREVIEW_COORDS = { lat: 37.579617, lon: 126.977041 }; // 경복궁
 
@@ -212,6 +212,7 @@ import {
 import { useCardStore } from "../store/useCardStore";
 import { useSortable } from "@/lib/useSortable";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import GuestPhotoUploadForm from "@/components/GuestPhotoUploadForm";
 
 declare global {
   interface Window {
@@ -410,6 +411,7 @@ const sidebarItems = [
   { id: 'account', icon: Wallet, label: '계좌정보', category: '선택', hasSwitch: true },
   { id: 'guestbook', icon: BookOpen, label: '방명록', category: '선택', hasSwitch: true },
   { id: 'youtube', icon: Youtube, label: '유튜브', category: '선택', hasSwitch: true },
+  { id: 'guestUpload', icon: Images, label: '하객사진 받기', category: '선택', hasSwitch: true },
   { id: 'share', icon: Share2, label: '공유', category: '선택' },
   { id: 'protect', icon: Shield, label: '보호', category: '선택' },
 ];
@@ -2745,6 +2747,17 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           </div>
         );
       }
+      case 'guestUpload': {
+        const title = ((data.guestUpload as any)?.title ?? "하객사진 받기") as string;
+        const description = ((data.guestUpload as any)?.description ?? "예식 후 촬영하신 사진/영상을 업로드해 주세요.") as string;
+        return (
+          <div className="max-w-full mx-auto w-full space-y-3 text-[0.8125em] text-on-surface-20 text-left">
+            <p className="text-[0.875em] font-semibold text-on-surface-10">{title}</p>
+            {description && <p className="whitespace-pre-line leading-relaxed">{description}</p>}
+            <GuestPhotoUploadForm maxTotalMB={50} />
+          </div>
+        );
+      }
       case 'share': {
         const title = data.share?.title || "모바일 청첩장";
         const description = data.share?.description || "소중한 날에 초대합니다.";
@@ -2852,7 +2865,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 <div
                   key={item.id}
                   {...wrapperProps}
-                  className={`${wrapperProps.className} flex flex-col items-center justify-center gap-y-1 w-[80px] h-[64px] rounded-lg shadow-none cursor-grab active:cursor-grabbing ${
+                  className={`${wrapperProps.className} relative flex flex-col items-center justify-center gap-y-1 w-[80px] h-[64px] rounded-lg shadow-none cursor-grab active:cursor-grabbing ${
                     isDisabled
                       ? 'opacity-50 text-on-surface-30 hover:bg-slate-100'
                       : `${isActive ? 'bg-slate-100' : 'text-on-surface-20 hover:bg-slate-100'}`
@@ -2860,6 +2873,9 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   {...handleProps}
                   onClick={() => { if (!isDragging) scrollToSection(item.id); }}
                 >
+                  <span className="absolute top-1 right-1 pointer-events-none text-[color:var(--on-surface-disabled)]">
+                    <ArrowUpDown className="w-3 h-3" strokeWidth={1.75} />
+                  </span>
                   <item.icon className={`w-6 h-6 ${isDisabled ? 'text-on-surface-30' : isActive ? 'text-[color:var(--key)]' : 'text-on-surface-30'}`} strokeWidth={1.5} />
                   <span className={`text-[12px] font-normal ${isDisabled ? 'text-on-surface-30' : isActive ? 'text-[color:var(--key)]' : 'text-on-surface-20'}`}>{item.label}</span>
                 </div>
@@ -4810,7 +4826,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 type="password"
                                 value={data.guestbook?.password ?? ""}
                                 onChange={(e) => updateData('guestbook.password', e.target.value)}
-                                placeholder="선택 입력 (방명록 보호)"
+                                placeholder="비밀번호를 입력하세요."
                                 className="shadow-none flex-1"
                               />
                               <div className="text-[12px] text-on-surface-30">
@@ -4921,6 +4937,58 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               />
                               반복 재생
                             </span>
+                          </FormItem>
+                        </>
+                      )}
+
+                      {item.id === 'guestUpload' && (
+                        <>
+                          <FormItem label="제목">
+                            <Input
+                              value={(data.guestUpload as any)?.title ?? ""}
+                              onChange={(e) => updateData('guestUpload.title', e.target.value)}
+                              placeholder="추억을 공유해 주세요"
+                              className="shadow-none flex-1"
+                            />
+                          </FormItem>
+                          <FormItem label="안내 문구">
+                            <Textarea
+                              rows={3}
+                              value={(data.guestUpload as any)?.description ?? ""}
+                              onChange={(e) => updateData('guestUpload.description', e.target.value)}
+                              placeholder="예식 후 촬영하신 사진/영상을 업로드해 주세요."
+                              className="resize-none shadow-none flex-1"
+                            />
+                          </FormItem>
+                          <FormItem label="용량 선택">
+                            <div className="flex flex-col gap-2 flex-1">
+                              <div className="flex flex-wrap gap-2">
+                                {([2, 5, 10, 20] as const).map((gb) => (
+                                  <OptionChip
+                                    key={gb}
+                                    label={gb === 2 ? "2GB (무료)" : `${gb}GB (유료)`}
+                                    active={(((data.guestUpload as any)?.storageGb ?? 2) === gb)}
+                                    onClick={() => updateData("guestUpload.storageGb", gb)}
+                                  />
+                                ))}
+                              </div>
+                              {(() => {
+                                const gb = (((data.guestUpload as any)?.storageGb ?? 2) as 2 | 5 | 10 | 20);
+                                const hint =
+                                  gb === 2
+                                    ? "사진 약 400~660장 · 15초 영상 약 60~200개"
+                                    : gb === 5
+                                      ? "사진 약 1,000~1,650장 · 15초 영상 약 150~500개"
+                                      : gb === 10
+                                        ? "사진 약 2,000~3,300장 · 15초 영상 약 300~1,000개"
+                                        : "사진 약 4,000~6,600장 · 15초 영상 약 600~2,000개";
+                                return (
+                                  <div className="text-[12px] text-on-surface-30 leading-relaxed">
+                                    {hint}
+                                  </div>
+                                );
+                              })()}
+                            </div>
                           </FormItem>
                         </>
                       )}
@@ -5095,7 +5163,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       )}
 
                       {/* 아직 구체화되지 않은 나머지 섹션들의 플레이스홀더 */}
-                      {!['theme', 'bgm', 'main', 'hosts', 'eventInfo', 'greeting', 'account', 'location', 'gallery', 'notice', 'guestbook', 'youtube', 'share', 'protect'].includes(item.id) && (
+                      {!['theme', 'bgm', 'main', 'hosts', 'eventInfo', 'greeting', 'account', 'location', 'gallery', 'notice', 'guestbook', 'youtube', 'guestUpload', 'share', 'protect'].includes(item.id) && (
                         <div className="h-20 flex items-center justify-center text-on-surface-30 text-sm bg-slate-50 rounded-lg border border-dashed border-border">
                           {item.label} 세부 입력 폼이 조립될 영역입니다.
                         </div>
@@ -5144,7 +5212,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         </section>
 
         {/* 3. 우측 미리보기 패널 (화면 전체 높이, 위아래 20px 간격) */}
-        <main className="flex-1 flex flex-col items-center min-h-0 overflow-hidden py-5 px-6 bg-gray-50 shadow-none">
+        <main className="hidden flex-1 flex-col items-center min-h-0 overflow-hidden py-5 px-6 bg-gray-50 shadow-none">
           {/* 바깥 컨테이너는 고정, 내부 프레임만 스크롤 */}
           <div className="flex-1 min-h-0 flex justify-center w-full max-w-[400px] min-h-full bg-transparent items-stretch shadow-none">
             <div

@@ -127,6 +127,12 @@ export interface CardData {
     sourceType?: 'file' | 'url';
     fileUrl?: string;
   };
+  guestUpload: {
+    isOn: boolean;
+    title: string;
+    description: string;
+    storageGb: 2 | 5 | 10 | 20;
+  };
   share: {
     useThumbnail: boolean;
     thumbnail: string;
@@ -325,6 +331,12 @@ export const useCardStore = create<CardStore>((set) => ({
       entries: INITIAL_GUESTBOOK_ENTRIES,
     },
     youtube: { isOn: false, title: '영상으로 전하는 마음', url: '', isLoop: false, sourceType: 'url', fileUrl: '' },
+    guestUpload: {
+      isOn: true,
+      title: '추억을 공유해 주세요',
+      description: '예식 후 촬영하신 사진/영상을 업로드해 주세요.',
+      storageGb: 2,
+    },
     share: {
       useThumbnail: true,
       thumbnail: '',
