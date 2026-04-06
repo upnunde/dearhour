@@ -36,9 +36,16 @@ function makeHeartPoints(samples = 220) {
   }));
 }
 
-export default function ParticleCanvasOverlay({ effect }: { effect: ParticleEffect | string }) {
+export default function ParticleCanvasOverlay({
+  effect,
+  themeColor,
+}: {
+  effect: ParticleEffect | string;
+  themeColor?: string;
+}) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number | null>(null);
+  const petalImageRefs = useRef<HTMLImageElement[]>([]);
 
   const heartPoints = useMemo(() => makeHeartPoints(240), []);
 
@@ -69,6 +76,7 @@ export default function ParticleCanvasOverlay({ effect }: { effect: ParticleEffe
         kind: "petal" | "snow" | "sparkle" | "heart";
         hue: number;
         tw: number;
+        spriteIndex: number;
       }>,
     };
 
@@ -99,13 +107,13 @@ export default function ParticleCanvasOverlay({ effect }: { effect: ParticleEffe
       // 너무 많은 파티클은 성능 저하가 있으니 적당히 제한
       switch (targetEffect) {
         case "cherryBlossom":
-          return 90;
+          return 22;
         case "snow":
-          return 85;
+          return 42;
         case "sparkle":
-          return 55;
+          return 27;
         case "heart":
-          return 35;
+          return 17;
         default:
           return 0;
       }
@@ -128,14 +136,26 @@ export default function ParticleCanvasOverlay({ effect }: { effect: ParticleEffe
       }
     })();
 
+    const petalSpritePool = ["/petal01.svg", "/petal02.svg", "/petal03.svg"];
+    const exposureSizeMultiplier =
+      targetEffect === "snow" || targetEffect === "sparkle" || targetEffect === "heart" ? 1.2 : 1;
+
+    const randomPetalSpawn = () => ({
+      x: rand(state.w * 1.02, state.w * 1.28),
+      y: rand(-state.h * 0.12, state.h * 1.12),
+    });
+
     for (let i = 0; i < seedCount; i += 1) {
-      const size = rand(3, 7) * (targetEffect === "heart" ? 1.2 : 1);
+      const size = rand(3, 7) * (targetEffect === "heart" ? 1.2 : targetEffect === "cherryBlossom" ? 0.675 : 1);
+      const isPetal = kind === "petal";
+      const spawn = isPetal ? randomPetalSpawn() : null;
       state.particles.push({
-        x: rand(-state.w * 0.1, state.w * 1.1),
-        y: rand(-state.h, state.h),
-        vx: rand(-0.35, 0.35) * (kind === "petal" ? 1.1 : 1),
-        vy: rand(0.6, 1.7) * (kind === "snow" ? 1.0 : 1),
-        size,
+        x: isPetal ? spawn!.x : rand(-state.w * 0.1, state.w * 1.1),
+        y: isPetal ? spawn!.y : rand(-state.h, state.h),
+        // 꽃잎은 기본적으로 우 -> 좌로 흐르도록 음수 x 속도를 부여
+        vx: isPetal ? rand(-1.35, -0.55) : rand(-0.35, 0.35),
+        vy: isPetal ? rand(0.22, 0.78) : rand(0.6, 1.7) * (kind === "snow" ? 1.0 : 1),
+        size: size * exposureSizeMultiplier,
         rot: rand(0, Math.PI * 2),
         vr: rand(-0.02, 0.02) * (kind === "petal" ? 1.7 : 1),
         alpha: rand(0.25, 0.9),
@@ -143,38 +163,88 @@ export default function ParticleCanvasOverlay({ effect }: { effect: ParticleEffe
         kind,
         hue: rand(320, 360),
         tw: rand(0, Math.PI * 2),
+        spriteIndex: Math.floor(Math.random() * petalSpritePool.length),
       });
     }
 
     let last = performance.now();
 
     const drawPetal = (p: (typeof state.particles)[number]) => {
-      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2.2);
-      const base = `hsla(${p.hue}, 70%, 75%, ${p.alpha})`;
-      g.addColorStop(0, base);
-      g.addColorStop(1, `hsla(${p.hue}, 70%, 65%, 0)`);
-      ctx.fillStyle = g;
+      const sprite = petalImageRefs.current[p.spriteIndex];
+      if (sprite && sprite.complete && sprite.naturalWidth > 0 && sprite.naturalHeight > 0) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        const w = p.size * 4.8;
+        const h = p.size * 4.2;
+        ctx.globalAlpha = clamp(p.alpha, 0.2, 1);
+        ctx.drawImage(sprite, -w / 2, -h / 2, w, h);
+        ctx.restore();
+        return;
+      }
+
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(p.rot);
-      // 타원 + 작은 꼬리 느낌으로 단순화
+
+      // 꽃잎 형태(대칭 베지어) + 중앙 하이라이트
+      const w = p.size * 1.25;
+      const h = p.size * 0.95;
+
+      const base = `hsla(${p.hue}, 78%, 80%, ${p.alpha})`;
+      const edge = `hsla(${p.hue}, 72%, 66%, ${p.alpha * 0.9})`;
+      const highlight = `hsla(${p.hue}, 95%, 92%, ${Math.min(1, p.alpha * 0.7)})`;
+
+      const g = ctx.createLinearGradient(0, -h, 0, h);
+      g.addColorStop(0, highlight);
+      g.addColorStop(0.45, base);
+      g.addColorStop(1, edge);
+      ctx.fillStyle = g;
+
       ctx.beginPath();
-      ctx.ellipse(0, 0, p.size * 1.05, p.size * 0.65, 0, 0, Math.PI * 2);
+      ctx.moveTo(0, -h);
+      ctx.bezierCurveTo(w * 0.9, -h * 0.6, w, h * 0.45, 0, h);
+      ctx.bezierCurveTo(-w, h * 0.45, -w * 0.9, -h * 0.6, 0, -h);
+      ctx.closePath();
       ctx.fill();
+
+      // 꽃잎 중앙 결
+      ctx.strokeStyle = `hsla(${p.hue}, 70%, 60%, ${p.alpha * 0.45})`;
+      ctx.lineWidth = Math.max(0.6, p.size * 0.08);
+      ctx.beginPath();
+      ctx.moveTo(0, -h * 0.82);
+      ctx.lineTo(0, h * 0.72);
+      ctx.stroke();
+
       ctx.restore();
     };
 
+    if (targetEffect === "cherryBlossom") {
+      petalImageRefs.current = petalSpritePool.map((src) => {
+        const img = new Image();
+        img.src = src;
+        return img;
+      });
+    } else {
+      petalImageRefs.current = [];
+    }
+
     const drawSnow = (p: (typeof state.particles)[number]) => {
-      ctx.fillStyle = `rgba(255,255,255,${p.alpha})`;
+      const snowColor = themeColor?.trim() ? themeColor : "rgba(255,255,255,1)";
+      ctx.fillStyle = snowColor;
+      ctx.globalAlpha = clamp(p.alpha, 0.2, 1);
       ctx.beginPath();
       ctx.arc(p.x, p.y, Math.max(1.2, p.size * 0.55), 0, Math.PI * 2);
       ctx.fill();
+      ctx.globalAlpha = 1;
     };
 
     const drawSparkle = (p: (typeof state.particles)[number]) => {
       const t = p.tw;
       const a = p.alpha * (0.55 + 0.45 * Math.sin(t));
-      ctx.strokeStyle = `rgba(255,255,255,${a})`;
+      const sparkleColor = themeColor?.trim() ? themeColor : "rgba(255,255,255,1)";
+      ctx.strokeStyle = sparkleColor;
+      ctx.globalAlpha = clamp(a, 0.15, 1);
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(p.x - p.size, p.y);
@@ -182,13 +252,15 @@ export default function ParticleCanvasOverlay({ effect }: { effect: ParticleEffe
       ctx.moveTo(p.x, p.y - p.size);
       ctx.lineTo(p.x, p.y + p.size);
       ctx.stroke();
-      ctx.fillStyle = `rgba(255,255,255,${a})`;
+      ctx.fillStyle = sparkleColor;
       ctx.fillRect(p.x, p.y, 1.2, 1.2);
+      ctx.globalAlpha = 1;
     };
 
     const drawHeart = (p: (typeof state.particles)[number]) => {
-      const color = `rgba(255, 105, 180, ${clamp(p.alpha, 0, 1)})`;
+      const color = themeColor?.trim() ? themeColor : "rgba(255, 105, 180, 1)";
       ctx.fillStyle = color;
+      ctx.globalAlpha = clamp(p.alpha, 0.2, 1);
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(p.rot);
@@ -204,6 +276,7 @@ export default function ParticleCanvasOverlay({ effect }: { effect: ParticleEffe
       ctx.closePath();
       ctx.fill();
       ctx.restore();
+      ctx.globalAlpha = 1;
     };
 
     const tick = (now: number) => {
@@ -215,25 +288,43 @@ export default function ParticleCanvasOverlay({ effect }: { effect: ParticleEffe
 
       for (const p of state.particles) {
         // 공통 이동
-        p.x += p.vx * (dt * 60);
-        p.y += p.vy * (dt * 60);
+        if (p.kind === "petal") {
+          // 우 -> 좌 기본 흐름 + 살랑이는 바람(사인 곡선)
+          const windX = Math.sin(p.tw * 0.9 + p.y * 0.008) * 0.42;
+          const swayY = Math.sin(p.tw * 1.35 + p.x * 0.01) * 0.12;
+          p.x += (p.vx + windX) * (dt * 60);
+          p.y += (p.vy + swayY) * (dt * 60);
+        } else {
+          p.x += p.vx * (dt * 60);
+          p.y += p.vy * (dt * 60);
+        }
         p.rot += p.vr * (dt * 60);
         p.tw += dt * 3.2;
 
-        // 살짝 바람 효과
-        if (p.kind === "petal") p.vx += Math.sin((p.y / state.h) * Math.PI * 2) * 0.001;
+        // 꽃잎은 좌측/하단 바깥으로 벗어나면 재생성
+        const isOutForPetal = p.kind === "petal" && (p.x < -p.size * 3 || p.y > state.h + p.size * 2);
 
-        // 하단 밖으로 나가면 리셋
-        if (p.y > state.h + p.size * 2) {
-          p.y = -rand(20, 120);
-          p.x = rand(-state.w * 0.1, state.w * 1.1);
+        // 파티클이 화면 바깥으로 나가면 리셋
+        if (isOutForPetal || p.y > state.h + p.size * 2) {
+          if (p.kind === "petal") {
+            const spawn = randomPetalSpawn();
+            p.x = spawn.x;
+            p.y = spawn.y;
+          } else {
+            p.y = -rand(20, 120);
+            p.x = rand(-state.w * 0.1, state.w * 1.1);
+          }
           p.alpha = rand(0.25, 0.9);
-          p.size = rand(3, 7) * (targetEffect === "heart" ? 1.2 : 1);
+          p.size =
+            rand(3, 7) *
+            (targetEffect === "heart" ? 1.2 : targetEffect === "cherryBlossom" ? 0.675 : 1) *
+            exposureSizeMultiplier;
           p.rot = rand(0, Math.PI * 2);
-          p.vx = rand(-0.35, 0.35) * (kind === "petal" ? 1.1 : 1);
-          p.vy = rand(0.6, 1.7) * (kind === "snow" ? 1.0 : 1);
+          p.vx = p.kind === "petal" ? rand(-1.35, -0.55) : rand(-0.35, 0.35) * (kind === "petal" ? 1.1 : 1);
+          p.vy = p.kind === "petal" ? rand(0.22, 0.78) : rand(0.6, 1.7) * (kind === "snow" ? 1.0 : 1);
           p.life = rand(0.6, 1.0);
           p.hue = rand(320, 360);
+          p.spriteIndex = Math.floor(Math.random() * petalSpritePool.length);
         }
 
         // 그리기
@@ -263,7 +354,7 @@ export default function ParticleCanvasOverlay({ effect }: { effect: ParticleEffe
       if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
       ro.disconnect();
     };
-  }, [effect, heartPoints]);
+  }, [effect, heartPoints, themeColor]);
 
   return <canvas ref={canvasRef} className="absolute inset-0 z-10 pointer-events-none" />;
 }

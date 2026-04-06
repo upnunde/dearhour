@@ -1045,6 +1045,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       { id: 'flower03', label: '꽃 3', url: '/flower03.svg' },
       { id: 'flower04', label: '꽃 4', url: '/flower04.svg' },
       { id: 'flower05', label: '꽃 5', url: '/flower05.svg' },
+      { id: 'flower06', label: '꽃 6', url: '/flower06.svg' },
+      { id: 'flower07', label: '꽃 7', url: '/flower07.svg' },
+      { id: 'flower08', label: '꽃 8', url: '/flower08.svg' },
+      { id: 'flower09', label: '꽃 9', url: '/flower09.svg' },
+      { id: 'flower10', label: '꽃 10', url: '/flower10.svg' },
+      { id: 'flower11', label: '꽃 11', url: '/flower11.svg' },
     ],
     [],
   );
@@ -1137,6 +1143,29 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     (data.gallery as any)?.layoutType,
     (data.gallery as any)?.gridColumns,
     (data.gallery as any)?.useLoadMore,
+    Array.isArray((data.gallery as any)?.images) ? (data.gallery as any).images.length : 0,
+  ]);
+
+  useEffect(() => {
+    const layoutType = ((data.gallery as any)?.layoutType ?? 'grid') as 'grid' | 'slide';
+    const autoSlide = !!((data.gallery as any)?.autoSlide);
+    const intervalSec = Number((data.gallery as any)?.autoSlideIntervalSec ?? 3);
+    const images = Array.isArray((data.gallery as any)?.images)
+      ? (data.gallery as any).images.filter((u: unknown) => typeof u === 'string' && u.trim().length > 0)
+      : [];
+    if (layoutType !== 'slide' || !autoSlide || images.length <= 1) return;
+
+    const timerId = window.setInterval(() => {
+      setGalleryPreviewIndex((prev) => (prev + 1) % images.length);
+    }, Math.max(2, intervalSec) * 1000);
+
+    return () => {
+      window.clearInterval(timerId);
+    };
+  }, [
+    (data.gallery as any)?.layoutType,
+    (data.gallery as any)?.autoSlide,
+    (data.gallery as any)?.autoSlideIntervalSec,
     Array.isArray((data.gallery as any)?.images) ? (data.gallery as any).images.length : 0,
   ]);
 
@@ -3407,8 +3436,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         >
           <div ref={editorScrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-smooth no-scrollbar">
             <div
-              className="p-4 flex-1 flex flex-col gap-4 [&>div]:p-0"
-              style={{ backgroundColor: 'var(--surface-10)' }}
+              className="p-4 flex-1 flex flex-col gap-3 [&>div]:p-0"
+              style={{ backgroundColor: 'var(--surface-20)' }}
             >
               {orderedItems.map((item, idx) => {
                 const isInitiallyExpanded = true;
@@ -3557,7 +3586,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             <div className="flex flex-wrap gap-2">
                               {[
                                 { value: 'none', label: '사용 안 함' },
-                                { value: 'cherryBlossom', label: '벚꽃 날림' },
+                                { value: 'cherryBlossom', label: '꽃잎 날림' },
                                 { value: 'snow', label: '눈송이' },
                                 { value: 'sparkle', label: '반짝임' },
                                 { value: 'heart', label: '하트' },
@@ -3594,7 +3623,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 checked={!!data.theme.scrollEffect}
                                 onChange={(e) => updateData('theme.scrollEffect', e.target.checked)}
                               />
-                              스크롤 시 노출 효과
+                              자연스러운 스크롤 노출 효과
                             </span>
                           </FormItem>
                         </>
@@ -4370,21 +4399,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                       )}
                                     </div>
                                     <div className="h-full flex flex-col justify-start gap-2">
-                                      <label className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit self-start whitespace-nowrap leading-none flex-shrink-0">
-                                        사진 업로드
-                                        <input
-                                          type="file"
-                                          accept="image/*"
-                                          className="hidden"
-                                          onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (!file) return;
-                                            const url = URL.createObjectURL(file);
-                                            updateData('greeting.thumbnail', url);
-                                            e.currentTarget.value = '';
-                                          }}
-                                        />
-                                      </label>
                                       <button
                                         type="button"
                                         className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none flex-shrink-0 w-fit self-start"
@@ -4930,6 +4944,44 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             </div>
                           </FormItem>
 
+                          {(((data.gallery as any).layoutType ?? 'grid') === 'slide') && (
+                            <>
+                              <FormItem label="전환시간">
+                                <div className="flex flex-wrap gap-2">
+                                  {([2, 3, 4, 5] as const).map((sec) => (
+                                    <OptionChip
+                                      key={sec}
+                                      label={`${sec}초`}
+                                      active={Number((data.gallery as any).autoSlideIntervalSec ?? 3) === sec}
+                                      onClick={() => updateData('gallery.autoSlideIntervalSec', sec)}
+                                    />
+                                  ))}
+                                </div>
+                              </FormItem>
+                              <FormItem label="옵션">
+                                <div className="flex-1 flex flex-col gap-4">
+                                  <span
+                                    role="button"
+                                    tabIndex={0}
+                                    className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                                    onClick={() => updateData('gallery.autoSlide', !((data.gallery as any)?.autoSlide))}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' || e.key === ' ') {
+                                        updateData('gallery.autoSlide', !((data.gallery as any)?.autoSlide));
+                                      }
+                                    }}
+                                  >
+                                    <CircleCheckbox
+                                      checked={!!(data.gallery as any)?.autoSlide}
+                                      onChange={(e) => updateData('gallery.autoSlide', e.target.checked)}
+                                    />
+                                    이미지 자동 전환
+                                  </span>
+                                </div>
+                              </FormItem>
+                            </>
+                          )}
+
                           {(((data.gallery as any).layoutType ?? 'grid') === 'grid') && (
                             <>
                               <FormItem label="배치 방법">
@@ -4948,9 +5000,9 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 <div className="flex flex-wrap gap-2">
                                   {([
                                     { value: 'none', label: '없음' },
-                                    { value: 'small', label: '작게' },
-                                    { value: 'middle', label: '중간' },
-                                    { value: 'large', label: '많이' },
+                                    { value: 'small', label: '좁게' },
+                                    { value: 'middle', label: '보통' },
+                                    { value: 'large', label: '넓게' },
                                   ] as const).map((opt) => (
                                     <OptionChip
                                       key={opt.value}
@@ -4980,32 +5032,27 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                     />
                                     3줄 이상 더보기 사용
                                   </span>
+                                  <span
+                                    role="button"
+                                    tabIndex={0}
+                                    className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                                    onClick={() => updateData('gallery.enableDetailView', !((data.gallery as any)?.enableDetailView))}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' || e.key === ' ') {
+                                        updateData('gallery.enableDetailView', !((data.gallery as any)?.enableDetailView));
+                                      }
+                                    }}
+                                  >
+                                    <CircleCheckbox
+                                      checked={!!(data.gallery as any)?.enableDetailView}
+                                      onChange={(e) => updateData('gallery.enableDetailView', e.target.checked)}
+                                    />
+                                    상세보기 허용
+                                  </span>
                                 </div>
                               </FormItem>
                             </>
                           )}
-
-                          <FormItem label="옵션">
-                            <div className="flex-1 flex flex-col gap-4">
-                              <span
-                                role="button"
-                                tabIndex={0}
-                                className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
-                                onClick={() => updateData('gallery.enableDetailView', !((data.gallery as any)?.enableDetailView))}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === ' ') {
-                                    updateData('gallery.enableDetailView', !((data.gallery as any)?.enableDetailView));
-                                  }
-                                }}
-                              >
-                                <CircleCheckbox
-                                  checked={!!(data.gallery as any)?.enableDetailView}
-                                  onChange={(e) => updateData('gallery.enableDetailView', e.target.checked)}
-                                />
-                                상세보기 허용
-                              </span>
-                            </div>
-                          </FormItem>
                         </>
                       )}
 
@@ -5798,8 +5845,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           />
         </section>
 
-        {/* 3. 우측 미리보기 패널 — 숨김(다시 쓰려면 main에서 hidden 제거 후 flex flex-1 flex-col … 복구) */}
-        <main className="hidden" aria-hidden>
+        {/* 3. 우측 미리보기 패널 */}
+        <main className="flex flex-1 flex-col min-w-0 items-center px-4 py-4">
           {/* 바깥 컨테이너는 고정, 내부 프레임만 스크롤 */}
           <div className="flex-1 min-h-0 flex justify-center w-full max-w-[400px] min-h-full bg-transparent items-stretch shadow-none">
             <div
@@ -5819,15 +5866,18 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 } as React.CSSProperties
               }
             >
-              <ParticleCanvasOverlay effect={(data.theme as any)?.particleEffect ?? 'none'} />
+              <ParticleCanvasOverlay
+                effect={(data.theme as any)?.particleEffect ?? 'none'}
+                themeColor={selectedKeyColorPreset.key}
+              />
               <div ref={previewScrollRef} className="flex-1 overflow-y-auto no-scrollbar">
                 {layoutOrder.includes('main') && (
                   <div
                     data-preview-section-id="main"
                     className={`w-full flex flex-col items-stretch text-center ${data.theme.scrollEffect
                       ? (previewVisibleSections.main
-                        ? 'opacity-100 translate-y-0 duration-500 ease-out'
-                        : 'opacity-0 translate-y-3 duration-500 ease-out')
+                        ? 'opacity-100 translate-y-0 duration-[750ms] ease-out'
+                        : 'opacity-0 translate-y-3 duration-[750ms] ease-out')
                       : 'opacity-100 translate-y-0'
                     } transition-[opacity,transform]`}
                   >
@@ -5878,8 +5928,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             : "w-full py-6 px-6 flex flex-col items-center text-center"
                           } ${data.theme.scrollEffect
                             ? (previewVisibleSections[sectionId]
-                              ? 'opacity-100 translate-y-0 duration-500 ease-out'
-                              : 'opacity-0 translate-y-3 duration-500 ease-out')
+                              ? 'opacity-100 translate-y-0 duration-[750ms] ease-out'
+                              : 'opacity-0 translate-y-3 duration-[750ms] ease-out')
                             : 'opacity-100 translate-y-0'
                           } transition-[opacity,transform]`}
                       >
@@ -6243,7 +6293,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               원하는 이미지를 클릭하면 인사말 이미지로 적용됩니다.
             </div>
           </div>
-          <div className="p-5 w-[424px] h-fit bg-[color:var(--surface-10)]">
+          <div className="p-5 w-[424px] h-[360px] max-h-[360px] overflow-y-auto bg-[color:var(--surface-10)]">
             <div className="grid w-fit h-fit grid-cols-3 gap-3 justify-items-center">
               {flowerThumbnailPresets.map((t) => {
                 const selected = (data.greeting as any)?.thumbnail === t.url;

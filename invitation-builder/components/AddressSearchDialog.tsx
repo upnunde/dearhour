@@ -36,7 +36,7 @@ export default function AddressSearchDialog({
 
   useEffect(() => {
     if (!open) return;
-    const q = query.trim();
+    const q = query.replace(/\u3000/g, " ").replace(/\s+/g, " ").trim();
     setSelected(null);
 
     if (!q) {
@@ -113,7 +113,7 @@ export default function AddressSearchDialog({
             {loading && (
               <div className="px-3 py-6 text-center text-[13px] text-on-surface-30">검색 중…</div>
             )}
-            {!loading && query.trim().length > 0 && results.length === 0 && (
+            {!loading && query.replace(/\u3000/g, " ").replace(/\s+/g, " ").trim().length > 0 && results.length === 0 && (
               <div className="px-3 py-6 text-center text-[13px] text-on-surface-30">검색 결과가 없어요.</div>
             )}
           </div>
