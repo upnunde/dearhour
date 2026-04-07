@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Palette, Music, Image as ImageIcon, Users, MessageSquare, MessageCircle, Phone, CalendarHeart, MapPin, Bell, Images, Wallet, BookOpen, Youtube, Share2, Shield, CheckCircle2, GripVertical, Play, Pause, VolumeX, Volume2, X, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, RotateCw, RefreshCcw, Move, ArrowUpDown, ClipboardCheck, Calendar, Languages } from 'lucide-react';
+import { Palette, Music, Image as ImageIcon, Users, MessageSquare, MessageCircle, Phone, CalendarHeart, MapPin, Bell, Images, Wallet, BookOpen, Youtube, Share2, Shield, CheckCircle2, GripVertical, Play, Pause, VolumeX, Volume2, X, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, RotateCw, RefreshCcw, Move, ArrowUpDown, ClipboardCheck, Calendar, Settings } from 'lucide-react';
 
 const DEFAULT_LOCATION_PREVIEW_COORDS = { lat: 37.579617, lon: 126.977041 }; // 경복궁
 
@@ -461,7 +461,7 @@ const sidebarItems = [
   { id: 'share', icon: Share2, label: '공유', category: '선택' },
   { id: 'protect', icon: Shield, label: '보호', category: '선택' },
   { id: 'publish', icon: Calendar, label: '공개일 설정', category: '선택', hasSwitch: true },
-  { id: 'i18n', icon: Languages, label: '다국어', category: '선택' },
+  { id: 'i18n', icon: Settings, label: '설정', category: '선택' },
 ];
 
 const builtInTracks = [
@@ -1123,6 +1123,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const [accountPreviewExpandedMap, setAccountPreviewExpandedMap] = useState<Record<string, boolean>>({});
   const [contactPreviewExpanded, setContactPreviewExpanded] = useState(false);
   const [copyToastVisible, setCopyToastVisible] = useState(false);
+  const [copyToastMessage, setCopyToastMessage] = useState("계좌정보가 복사되었습니다.");
   const copyToastTimeoutRef = useRef<number | null>(null);
   const gallerySwipeStartXRef = useRef<number | null>(null);
   const [mainPreviewRandomEffect, setMainPreviewRandomEffect] = useState<
@@ -1211,7 +1212,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     };
   }, []);
 
-  const showCopyToast = () => {
+  const showCopyToast = (message = "계좌정보가 복사되었습니다.") => {
+    setCopyToastMessage(message);
     setCopyToastVisible(true);
     if (copyToastTimeoutRef.current) {
       window.clearTimeout(copyToastTimeoutRef.current);
@@ -1220,6 +1222,36 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       setCopyToastVisible(false);
       copyToastTimeoutRef.current = null;
     }, 2000);
+  };
+
+  const copyTextToClipboard = async (text: string) => {
+    const value = String(text ?? "").trim();
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      showCopyToast("계좌정보가 복사되었습니다.");
+      return;
+    } catch {
+      // ignore and fallback
+    }
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = value;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "absolute";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      if (copied) {
+        showCopyToast("계좌정보가 복사되었습니다.");
+      } else {
+        showCopyToast("복사에 실패했습니다.");
+      }
+    } catch {
+      showCopyToast("복사에 실패했습니다.");
+    }
   };
 
   const [imageEditorOpen, setImageEditorOpen] = useState(false);
@@ -2086,6 +2118,9 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       case 'main': {
         const groomName = data.hosts.groom.name;
         const brideName = data.hosts.bride.name;
+        const brideFirstInfo = !!((data as any).i18n?.brideFirstInfo ?? false);
+        const firstDisplayName = brideFirstInfo ? brideName : groomName;
+        const secondDisplayName = brideFirstInfo ? groomName : brideName;
         const mode = ((data.main as any).imageMode ?? 'single') as 'single' | 'multi';
         const normalizedEffect = normalizeTransitionEffect((data.main as any).transitionEffect ?? '없음');
         const transitionEffect = normalizedEffect === '랜덤' ? mainPreviewRandomEffect : normalizedEffect;
@@ -2178,7 +2213,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   {data.main.title}
                 </h1>
                 <p className="text-[0.875em] text-white/90">
-                  {groomName} &amp; {brideName}
+                  {firstDisplayName} &amp; {secondDisplayName}
                 </p>
               </div>
             </div>
@@ -2213,6 +2248,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       case 'hosts': {
         const groom = data.hosts.groom;
         const bride = data.hosts.bride;
+        const brideFirstInfo = !!((data as any).i18n?.brideFirstInfo ?? false);
         const groomRelation = (groom.relation ?? '').trim() || '아들';
         const brideRelation = (bride.relation ?? '').trim() || '딸';
         const renderParentLabel = (
@@ -2271,6 +2307,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       }
       case 'contact': {
         const contactEnabled = isSectionEnabled('contact');
+        const brideFirstInfo = !!((data as any).i18n?.brideFirstInfo ?? false);
         const groomName = (data.hosts.groom.name ?? '').trim() || '신랑';
         const brideName = (data.hosts.bride.name ?? '').trim() || '신부';
         const groomRelation = (data.hosts.groom.relation ?? '').trim() || '아들';
@@ -2329,16 +2366,36 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           data.hosts.bride.father.isDeceased,
           data.hosts.bride.mother.isDeceased,
         );
-        const contactRows = [
-          { role: '신랑', name: groomName, phone: data.hosts.groom.phone, hidden: false },
-          { role: '신부', name: brideName, phone: data.hosts.bride.phone, hidden: false },
-          { role: '신랑 아버님', name: groomFatherName, phone: data.hosts.groom.father.phone, hidden: data.hosts.groom.father.isDeceased || groomFatherName.length === 0 },
-          { role: '신랑 어머님', name: groomMotherName, phone: data.hosts.groom.mother.phone, hidden: data.hosts.groom.mother.isDeceased || groomMotherName.length === 0 },
-          { role: '신부 아버님', name: brideFatherName, phone: data.hosts.bride.father.phone, hidden: data.hosts.bride.father.isDeceased || brideFatherName.length === 0 },
-          { role: '신부 어머님', name: brideMotherName, phone: data.hosts.bride.mother.phone, hidden: data.hosts.bride.mother.isDeceased || brideMotherName.length === 0 },
-        ]
+        const contactRows = (
+          brideFirstInfo
+            ? [
+                { role: '신부', name: brideName, phone: data.hosts.bride.phone, hidden: false },
+                { role: '신랑', name: groomName, phone: data.hosts.groom.phone, hidden: false },
+                { role: '신부 아버님', name: brideFatherName, phone: data.hosts.bride.father.phone, hidden: data.hosts.bride.father.isDeceased || brideFatherName.length === 0 },
+                { role: '신부 어머님', name: brideMotherName, phone: data.hosts.bride.mother.phone, hidden: data.hosts.bride.mother.isDeceased || brideMotherName.length === 0 },
+                { role: '신랑 아버님', name: groomFatherName, phone: data.hosts.groom.father.phone, hidden: data.hosts.groom.father.isDeceased || groomFatherName.length === 0 },
+                { role: '신랑 어머님', name: groomMotherName, phone: data.hosts.groom.mother.phone, hidden: data.hosts.groom.mother.isDeceased || groomMotherName.length === 0 },
+              ]
+            : [
+                { role: '신랑', name: groomName, phone: data.hosts.groom.phone, hidden: false },
+                { role: '신부', name: brideName, phone: data.hosts.bride.phone, hidden: false },
+                { role: '신랑 아버님', name: groomFatherName, phone: data.hosts.groom.father.phone, hidden: data.hosts.groom.father.isDeceased || groomFatherName.length === 0 },
+                { role: '신랑 어머님', name: groomMotherName, phone: data.hosts.groom.mother.phone, hidden: data.hosts.groom.mother.isDeceased || groomMotherName.length === 0 },
+                { role: '신부 아버님', name: brideFatherName, phone: data.hosts.bride.father.phone, hidden: data.hosts.bride.father.isDeceased || brideFatherName.length === 0 },
+                { role: '신부 어머님', name: brideMotherName, phone: data.hosts.bride.mother.phone, hidden: data.hosts.bride.mother.isDeceased || brideMotherName.length === 0 },
+              ]
+        )
           .filter((row) => !row.hidden)
           .filter((row) => (row.phone ?? '').trim().length > 0);
+        const orderedCoupleRows = brideFirstInfo
+          ? [
+              { role: '신부', name: brideName, relation: brideRelation, parentsText: brideParentsText, parentsInline: brideParentsInline },
+              { role: '신랑', name: groomName, relation: groomRelation, parentsText: groomParentsText, parentsInline: groomParentsInline },
+            ]
+          : [
+              { role: '신랑', name: groomName, relation: groomRelation, parentsText: groomParentsText, parentsInline: groomParentsInline },
+              { role: '신부', name: brideName, relation: brideRelation, parentsText: brideParentsText, parentsInline: brideParentsInline },
+            ];
 
         if (contactRows.length === 0) {
           return (
@@ -2352,28 +2409,22 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           <div className="mx-auto w-full space-y-4">
             {hasParentsText ? (
               <div className="space-y-1 text-[0.875em] text-on-surface-20 tracking-tight text-center">
-                <div className="min-h-[27px] flex items-center justify-center" style={{ fontSize: '14px', gap: '8px' }}>
-                  {groomParentsText ? (
-                    <div className="flex items-center gap-1">
-                      {groomParentsInline} 의 {groomRelation}
-                    </div>
-                  ) : ''}
-                  <span className="font-semibold text-on-surface-10">{groomName}</span>
-                </div>
-                <div className="min-h-[27px] flex items-center justify-center" style={{ fontSize: '14px', gap: '8px' }}>
-                  {brideParentsText ? (
-                    <div className="flex items-center gap-1">
-                      {brideParentsInline} 의 {brideRelation}
-                    </div>
-                  ) : ''}
-                  <span className="font-semibold text-on-surface-10">{brideName}</span>
-                </div>
+                {orderedCoupleRows.map((row) => (
+                  <div key={row.role} className="min-h-[27px] flex items-center justify-center" style={{ fontSize: '14px', gap: '8px' }}>
+                    {row.parentsText ? (
+                      <div className="flex items-center gap-1">
+                        {row.parentsInline} 의 {row.relation}
+                      </div>
+                    ) : ''}
+                    <span className="font-semibold text-on-surface-10">{row.name}</span>
+                  </div>
+                ))}
               </div>
             ) : (
               <p className="min-h-[27px] flex items-center justify-center text-[18px] text-on-surface-20 tracking-tight text-center">
-                신랑 <span className="font-semibold text-on-surface-10">{groomName}</span>
+                {orderedCoupleRows[0].role} <span className="font-semibold text-on-surface-10">{orderedCoupleRows[0].name}</span>
                 <span className="mx-2 text-on-surface-30">·</span>
-                신부 <span className="font-semibold text-on-surface-10">{brideName}</span>
+                {orderedCoupleRows[1].role} <span className="font-semibold text-on-surface-10">{orderedCoupleRows[1].name}</span>
               </p>
             )}
 
@@ -2446,6 +2497,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         );
       }
       case 'eventInfo': {
+        const brideFirstInfo = !!((data as any).i18n?.brideFirstInfo ?? false);
         const dateText = (data.eventInfo.date ?? "").trim();
         const eventDate = dateText ? new Date(`${dateText}T00:00:00`) : null;
         const isValidEventDate = !!eventDate && Number.isFinite(eventDate.getTime());
@@ -2456,6 +2508,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           ? `${eventDate!.getFullYear()}년 ${String(eventDate!.getMonth() + 1).padStart(2, "0")}월 ${String(eventDate!.getDate()).padStart(2, "0")}일 · ${weekdayText}요일`
           : data.eventInfo.date;
         const showCalendar = !!(data.eventInfo as any)?.useCalendar;
+        const showCalendarBackground = !!((data.eventInfo as any)?.showCalendarBackground ?? true);
         const showDday = !!(data.eventInfo as any)?.showDday;
 
         let ddayLabel = "";
@@ -2497,9 +2550,13 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         }
 
         return (
-          <div className="max-w-full w-full mx-auto space-y-3 text-[0.8125em] text-on-surface-20">
+          <div
+            className={`max-w-full w-full mx-auto space-y-3 text-[0.8125em] text-on-surface-20 ${
+              showCalendar && showCalendarBackground ? 'bg-[color:var(--primary-container)]' : 'bg-transparent'
+            }`}
+          >
             {showCalendar && isValidEventDate && (
-              <div className="w-full rounded-none border-0 bg-[color:var(--primary-container)] px-0 py-10 text-left shadow-none mt-0 mb-0 flex flex-col gap-10">
+              <div className="w-full rounded-none border-0 px-0 py-10 text-left shadow-none mt-0 mb-0 flex flex-col gap-10">
                 <div className="flex h-fit items-center justify-center mx-0">
                     <div className="text-center text-[16px] text-[color:var(--on-primary-container)]/80 mb-0">
                       <p>{formattedDateWithWeekday}</p>
@@ -2532,20 +2589,21 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   </div>
                 </div>
 
-                {ddayStatusText && (
-                  <div className="w-full text-center text-[16px] font-normal text-on-surface-10 leading-none">
-                    신랑 <span className="text-[color:var(--key)]">&hearts;</span> 신부의 결혼식이{" "}
-                    {ddayNumber ? (
-                      <>
-                        <span className="text-[color:var(--key-dark)]">{ddayNumber}</span>
-                        {ddaySuffix}
-                      </>
-                    ) : (
-                      ddayStatusText
-                    )}
-                    .
-                  </div>
+              </div>
+            )}
+
+            {ddayStatusText && (
+              <div className="w-full text-center text-[16px] font-normal text-on-surface-10 leading-none">
+                {brideFirstInfo ? '신부' : '신랑'} <span className="text-[color:var(--key)]">&hearts;</span> {brideFirstInfo ? '신랑' : '신부'}의 결혼식이{" "}
+                {ddayNumber ? (
+                  <>
+                    <span className="text-[color:var(--key-dark)]">{ddayNumber}</span>
+                    {ddaySuffix}
+                  </>
+                ) : (
+                  ddayStatusText
                 )}
+                .
               </div>
             )}
 
@@ -2910,26 +2968,21 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                     )}
                     {isOpen && (
                       <div className={`${displayMode === 'accordion' ? 'px-3 pb-3' : 'px-3 py-3'}`}>
+                        <div className="text-[color:var(--on-primary-container)]/75">{acc.holder || "예금주"}</div>
                         <div className="flex items-center justify-between gap-2">
                           <div className="font-semibold text-[color:var(--on-primary-container)]">{acc.bank || "은행"} {acc.accountNumber || "계좌번호"}</div>
                           <button
                             type="button"
                             className="h-7 px-2 rounded-md border border-[color:var(--key)]/30 bg-white/70 text-[11px] font-medium text-[color:var(--on-primary-container)] hover:bg-white transition-colors"
-                            onClick={async () => {
+                            onClick={() => {
                               const accountNumber = String(acc.accountNumber ?? "").trim();
                               if (!accountNumber) return;
-                              try {
-                                await navigator.clipboard.writeText(accountNumber);
-                                showCopyToast();
-                              } catch {
-                                // ignore clipboard permission failures
-                              }
+                              copyTextToClipboard(accountNumber);
                             }}
                           >
                             복사
                           </button>
                         </div>
-                        <div className="text-[color:var(--on-primary-container)]/75">{acc.holder || "예금주"}</div>
                       </div>
                     )}
                   </div>
@@ -2942,11 +2995,13 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       case 'guestbook': {
         const title = ((data.guestbook as any)?.title ?? "방명록") as string;
         const description = ((data.guestbook as any)?.description ?? "축하 인사를 남겨주세요.") as string;
+        const showCreatedAt = ((data.guestbook as any)?.showCreatedAt ?? true) as boolean;
         const hasPassword = Boolean(data.guestbook?.password?.trim());
         const entries = Array.isArray((data.guestbook as any)?.entries) ? (data.guestbook as any).entries : [];
         const masterPassword = ((data.guestbook as any)?.password ?? "").trim();
         const orderedEntries = entries;
-        const perPage = 5;
+        const perPageRaw = Number((data.guestbook as any)?.displayCount ?? 5);
+        const perPage = perPageRaw === 7 || perPageRaw === 10 ? perPageRaw : 5;
         const totalPages = Math.max(1, Math.ceil(orderedEntries.length / perPage));
         const currentPage = Math.min(guestbookPreviewPage, totalPages);
         const pagedEntries = orderedEntries.slice((currentPage - 1) * perPage, currentPage * perPage);
@@ -2968,6 +3023,21 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           if (entryPassword && pass === entryPassword) return true;
           return false;
         };
+        const getEntryDateText = (entry: any) => {
+          const createdAtRaw = String((entry as any)?.createdAt ?? "").trim();
+          const fromCreatedAt = createdAtRaw ? new Date(createdAtRaw) : null;
+          if (fromCreatedAt && Number.isFinite(fromCreatedAt.getTime())) {
+            return fromCreatedAt.toLocaleDateString("ko-KR");
+          }
+          const id = String((entry as any)?.id ?? "");
+          const match = id.match(/guestbook-(\d{10,13})/);
+          if (!match) return "";
+          const ts = Number(match[1]);
+          if (!Number.isFinite(ts)) return "";
+          const d = new Date(ts);
+          if (!Number.isFinite(d.getTime())) return "";
+          return d.toLocaleDateString("ko-KR");
+        };
         return (
           <div className="max-w-full mx-auto w-full space-y-3 text-[0.8125em] text-on-surface-20 text-left">
             <p className="text-[0.875em] font-semibold text-on-surface-10">{title}</p>
@@ -2981,9 +3051,16 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               {pagedEntries.map((entry: any) => (
                 <div key={entry.id} className="rounded-lg border border-border bg-white px-4 pt-3 pb-3 flex flex-col gap-1 space-y-0 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
                   <div className="flex items-center justify-between -mr-2">
-                    <span className="font-semibold text-on-surface-10">
-                      {entry.name || "작성자"}
-                    </span>
+                    <div className="min-w-0 flex flex-col">
+                      <span className="font-semibold text-on-surface-10 truncate">
+                        {entry.name || "작성자"}
+                      </span>
+                      {showCreatedAt && getEntryDateText(entry) && (
+                        <span className="text-[11px] text-on-surface-30 leading-none mt-0.5">
+                          {getEntryDateText(entry)}
+                        </span>
+                      )}
+                    </div>
                     <div className="relative">
                       <button
                         type="button"
@@ -3156,6 +3233,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             name: guestbookDraftName.trim(),
                             message,
                             password,
+                            createdAt: new Date().toISOString(),
                           };
                           updateData("guestbook.entries", [nextEntry, ...orderedEntries]);
                           setGuestbookPreviewPage(1);
@@ -3374,7 +3452,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
             })}
           </div>
 
-          <div className="w-full border-t border-border mb-4"></div>
+          <div className="w-full border-t border-border my-2"></div>
           
           <div className="w-full text-center mb-2"><span className="text-[12px] font-bold text-on-surface-30">선택 사항</span></div>
           <div className="flex flex-col gap-y-2 pb-5 w-full items-center">
@@ -3404,7 +3482,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
             })}
           </div>
 
-          <div className="w-full border-t border-border mb-4"></div>
+          <div className="w-full border-t border-border my-2"></div>
           <div className="w-full text-center mb-2"><span className="text-[12px] font-bold text-on-surface-30">옵션</span></div>
           <div className="flex flex-col gap-y-2 pb-5 w-full items-center">
             {otherOptionItems.map((item) => {
@@ -3579,7 +3657,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             </div>
                           </FormItem>
 
-                          <div className="w-full h-px bg-border/60" />
+                          <div className="w-full h-px bg-border/60 my-2" />
 
                           {/* 파티클 효과 */}
                           <FormItem label="파티클 효과">
@@ -3607,7 +3685,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           </FormItem>
 
                           {/* 스크롤 등장 효과 */}
-                          <FormItem label="옵션">
+                          <FormItem label="다국어">
                             <span
                               role="button"
                               tabIndex={0}
@@ -3645,7 +3723,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             </div>
                           </FormItem>
 
-                          <div className="border-t border-dashed border-[color:var(--border-20)]" />
+                          <div className="border-t border-dashed border-[color:var(--border-20)] my-2" />
 
                           <FormItem label="사진타입">
                             <div className="flex flex-wrap gap-2">
@@ -3839,7 +3917,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             </FormItem>
                           )}
 
-                          <div className="border-t border-dashed border-[color:var(--border-20)]" />
+                          <div className="border-t border-dashed border-[color:var(--border-20)] my-2" />
 
                           <FormItem label="프레임 이펙트">
                             <div className="flex flex-wrap gap-2">
@@ -4125,7 +4203,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           </FormItem>
 
                           {/* Options */}
-                          <FormItem label="옵션">
+                          <FormItem label="다국어">
                             <span
                               role="button"
                               tabIndex={0}
@@ -4208,7 +4286,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               onDeceasedChange={(checked) => updateData('hosts.groom.mother.isDeceased', checked)}
                               keepDeceasedInline
                             />
-                            <div className="border-t border-dashed border-[color:var(--border-20)]" />
+                            <div className="border-t border-dashed border-[color:var(--border-20)] my-2" />
                             <HostContactField
                               label="신부"
                               nameValue={data.hosts.bride.name}
@@ -4610,7 +4688,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               </div>
                             </FormItem>
 
-                            <div className="border-t border-dashed border-[color:var(--border-20)]" />
+                            <div className="border-t border-dashed border-[color:var(--border-20)] my-2" />
 
                             {transportItems.map((t, idx) => (
                               <div key={idx} className="flex flex-col gap-2">
@@ -4711,12 +4789,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               <div className="flex flex-col gap-1 text-[13px] text-on-surface-20">
                                 <div className="flex items-center gap-2">
                                   <CircleCheckbox
-                                    checked={(((data.accounts as any)?.displayMode ?? 'accordion') === 'accordion')}
+                                    checked={(((data.accounts as any)?.displayMode ?? 'accordion') === 'expanded')}
                                     onChange={(e) => {
-                                      const useAccordion = e.target.checked;
-                                      // 체크: 접힘/펼침 모드(초기 접힘), 해제: 전체 노출
-                                      updateData('accounts.displayMode', useAccordion ? 'accordion' : 'expanded');
-                                      if (useAccordion) {
+                                      const showAccounts = e.target.checked;
+                                      // 체크: 전체 노출, 해제: 접힘/펼침 모드(초기 접힘)
+                                      updateData('accounts.displayMode', showAccounts ? 'expanded' : 'accordion');
+                                      if (!showAccounts) {
                                         setAccountPreviewExpandedMap({});
                                       }
                                     }}
@@ -4730,7 +4808,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           {/* 2. 계좌 리스트 */}
                           {data.accounts.list.map((item, index) => (
                             <React.Fragment key={item.id}>
-                              <div className="border-t border-dashed border-[color:var(--border-20)]" />
+                              <div className="border-t border-dashed border-[color:var(--border-20)] my-2" />
                               <div className="flex flex-col gap-5 mb-0">
                                 {/* 상단 행: 그룹명 + 삭제 */}
                                 <FormItem label="그룹명">
@@ -5061,7 +5139,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                         <>
                           {noticeSections.map((section, idx) => (
                             <React.Fragment key={section.id}>
-                              {idx > 0 && <div className="border-t border-dashed border-[color:var(--border-20)]" />}
+                              {idx > 0 && <div className="border-t border-dashed border-[color:var(--border-20)] my-2" />}
                               <div className="flex flex-col gap-5 mb-0">
                                 <FormItem label="제목">
                                   {idx > 0 ? (
@@ -5336,12 +5414,51 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               </div>
                             </div>
                           </FormItem>
+                          <FormItem label="노출 수">
+                            <div className="flex flex-wrap gap-2">
+                              {([5, 7, 10] as const).map((count) => (
+                                <OptionChip
+                                  key={count}
+                                  label={`${count}개`}
+                                  active={Number((data.guestbook as any)?.displayCount ?? 5) === count}
+                                  onClick={() => updateData('guestbook.displayCount', count)}
+                                />
+                              ))}
+                            </div>
+                          </FormItem>
+                          <FormItem label="옵션">
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                              onClick={() => updateData('guestbook.showCreatedAt', !(((data.guestbook as any)?.showCreatedAt ?? true)))}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  updateData('guestbook.showCreatedAt', !(((data.guestbook as any)?.showCreatedAt ?? true)));
+                                }
+                              }}
+                            >
+                              <CircleCheckbox
+                                checked={!!(((data.guestbook as any)?.showCreatedAt ?? true))}
+                                onChange={(e) => updateData('guestbook.showCreatedAt', e.target.checked)}
+                              />
+                              작성일 공개
+                            </span>
+                          </FormItem>
                         </>
                       )}
 
                       {/* 유튜브 섹션 */}
                       {item.id === 'youtube' && (
                         <>
+                          <FormItem label="제목">
+                            <Input
+                              value={(data.youtube as any)?.title ?? ""}
+                              onChange={(e) => updateData('youtube.title', e.target.value)}
+                              placeholder="영상으로 전하는 마음"
+                              className="shadow-none flex-1"
+                            />
+                          </FormItem>
                           <FormItem label="타입">
                             <div className="flex flex-wrap gap-2">
                               <OptionChip
@@ -5413,14 +5530,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               />
                             </FormItem>
                           )}
-                          <FormItem label="제목">
-                            <Input
-                              value={(data.youtube as any)?.title ?? ""}
-                              onChange={(e) => updateData('youtube.title', e.target.value)}
-                              placeholder="영상으로 전하는 마음"
-                              className="shadow-none flex-1"
-                            />
-                          </FormItem>
                           <FormItem label="옵션">
                             <span
                               role="button"
@@ -5769,7 +5878,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
                       {item.id === "i18n" && (
                         <>
-                          <FormItem label="옵션">
+                          <FormItem label="다국어">
                             <div className="flex flex-col gap-2 flex-1">
                               <span
                                 role="button"
@@ -5786,12 +5895,31 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                   checked={!!(data as any).i18n?.enabled}
                                   onChange={(e) => updateData("i18n.enabled", e.target.checked)}
                                 />
-                                다국어 지원설정
+                                다국어 지원
                               </span>
                               <div className="text-[12px] text-on-surface-30 leading-relaxed">
                                 기본 제공 국가: 대한민국, 미국, 일본, 중국(간체), 대만(번체), 베트남, 태국. (추가/삭제 불가)
                               </div>
                             </div>
+                          </FormItem>
+                          <FormItem label="정보순서">
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                              onClick={() => updateData("i18n.brideFirstInfo", !((data as any).i18n?.brideFirstInfo ?? false))}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  updateData("i18n.brideFirstInfo", !((data as any).i18n?.brideFirstInfo ?? false));
+                                }
+                              }}
+                            >
+                              <CircleCheckbox
+                                checked={!!((data as any).i18n?.brideFirstInfo ?? false)}
+                                onChange={(e) => updateData("i18n.brideFirstInfo", e.target.checked)}
+                              />
+                              신부측 정보 먼저 노출
+                            </span>
                           </FormItem>
                         </>
                       )}
@@ -5845,8 +5973,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           />
         </section>
 
-        {/* 3. 우측 미리보기 패널 — 숨김(다시 쓰려면 main에서 hidden 제거 후 flex flex-1 flex-col … 복구) */}
-        <main className="hidden" aria-hidden>
+        {/* 3. 우측 미리보기 패널 */}
+        <main className="flex flex-1 flex-col min-w-0 items-center px-4 py-4">
           {/* 바깥 컨테이너는 고정, 내부 프레임만 스크롤 */}
           <div className="flex-1 min-h-0 flex justify-center w-full max-w-[400px] min-h-full bg-transparent items-stretch shadow-none">
             <div
@@ -5855,13 +5983,14 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               style={
                 {
                   // 향후 theme.bgColor / theme.fontFamily를 전역 테마로 사용
-                  backgroundColor: selectedKeyColorPreset.background,
+                  // 미리보기에서는 배경 톤을 더 연하게 보이도록 화이트와 강하게 혼합
+                  backgroundColor: `color-mix(in srgb, ${selectedKeyColorPreset.background} 42%, white)`,
                   fontFamily: data.theme.fontFamily,
                   fontSize: `${fontScaleToPercent((data.theme as any).fontScale)}%`,
                   '--primary-custom': selectedKeyColorPreset.key,
-                  '--key': selectedKeyColorPreset.key,
+                  '--key': `color-mix(in srgb, ${selectedKeyColorPreset.key} 82%, ${selectedKeyColorPreset.keyDark})`,
                   '--key-dark': selectedKeyColorPreset.keyDark,
-                  '--primary-container': selectedKeyColorPreset.primaryContainer,
+                  '--primary-container': `color-mix(in srgb, ${selectedKeyColorPreset.primaryContainer} 46%, white)`,
                   '--on-primary-container': selectedKeyColorPreset.onPrimaryContainer,
                 } as React.CSSProperties
               }
@@ -5888,9 +6017,13 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   <div className="w-full py-8 px-6 flex flex-col items-center text-center">
                     <div className="w-full max-w-[340px] mx-auto space-y-5">
                       <p className="text-[2em] font-medium tracking-[0.02em] text-on-surface-10 leading-none">
-                        {(data.hosts.groom.name ?? '').trim() || '신랑'}
+                        {(((data as any).i18n?.brideFirstInfo ?? false)
+                          ? ((data.hosts.bride.name ?? '').trim() || '신부')
+                          : ((data.hosts.groom.name ?? '').trim() || '신랑'))}
                         <span className="mx-4 text-on-surface-30">|</span>
-                        {(data.hosts.bride.name ?? '').trim() || '신부'}
+                        {(((data as any).i18n?.brideFirstInfo ?? false)
+                          ? ((data.hosts.groom.name ?? '').trim() || '신랑')
+                          : ((data.hosts.bride.name ?? '').trim() || '신부'))}
                       </p>
                       <div className="space-y-2 text-on-surface-30">
                         <p className="text-[1.5em] leading-relaxed">
@@ -6019,7 +6152,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               {copyToastVisible && (
                 <div className="absolute left-1/2 bottom-6 -translate-x-1/2 z-30 pointer-events-none">
                   <div className="rounded-full bg-black/85 px-4 py-2 text-[13px] font-medium text-white shadow-lg whitespace-nowrap">
-                    계좌번호가 복사되었습니다.
+                    {copyToastMessage}
                   </div>
                 </div>
               )}
