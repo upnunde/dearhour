@@ -5845,8 +5845,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           />
         </section>
 
-        {/* 3. 우측 미리보기 패널 */}
-        <main className="flex flex-1 flex-col min-w-0 items-center px-4 py-4">
+        {/* 3. 우측 미리보기 패널 — 숨김(다시 쓰려면 main에서 hidden 제거 후 flex flex-1 flex-col … 복구) */}
+        <main className="hidden" aria-hidden>
           {/* 바깥 컨테이너는 고정, 내부 프레임만 스크롤 */}
           <div className="flex-1 min-h-0 flex justify-center w-full max-w-[400px] min-h-full bg-transparent items-stretch shadow-none">
             <div
