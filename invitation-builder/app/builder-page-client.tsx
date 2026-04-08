@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Palette, Music, Image as ImageIcon, Users, MessageSquare, MessageCircle, Phone, CalendarHeart, MapPin, Bell, Images, Wallet, BookOpen, Youtube, Share2, Shield, CheckCircle2, GripVertical, Play, Pause, VolumeX, Volume2, X, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, RotateCw, RefreshCcw, Move, ArrowUpDown, ClipboardCheck, Calendar, Settings } from 'lucide-react';
+import AppHeader from '@/components/AppHeader';
 
 const DEFAULT_LOCATION_PREVIEW_COORDS = { lat: 37.579617, lon: 126.977041 }; // 경복궁
 
@@ -3402,13 +3403,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
   return (
     <div className="flex flex-col gap-0 h-screen w-full bg-gray-50 overflow-hidden">
-      
-      {/* 상단 헤더 */}
-      <header className="w-full flex-shrink-0 bg-white border-b border-border z-30">
-            <div className="h-16 flex items-center justify-between px-6">
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-extrabold tracking-tighter text-on-surface-10">dearhour</span>
-          </div>
+      <AppHeader
+        rightSlot={
           <button
             type="button"
             className="bg-[color:var(--key)] text-white text-sm font-bold px-5 py-2 rounded-lg hover:bg-[color:var(--key-dark)] transition-colors shadow-none"
@@ -3421,8 +3417,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           >
             저장하기
           </button>
-        </div>
-      </header>
+        }
+      />
 
       <div className="flex flex-1 overflow-hidden relative">
 
