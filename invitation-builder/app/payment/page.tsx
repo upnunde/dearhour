@@ -1,7 +1,7 @@
  "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import AppHeader from "@/components/AppHeader";
 
@@ -16,7 +16,7 @@ const watermarkDurationOptions = [
   { id: "12m", label: "1년", months: 12, price: "29,000원" },
 ] as const;
 
-export default function PaymentPage() {
+function PaymentPageContent() {
   const searchParams = useSearchParams();
   const invitationId = searchParams.get("invitationId") ?? "";
   const intent = searchParams.get("intent") ?? "";
@@ -111,5 +111,24 @@ export default function PaymentPage() {
         </div>
       </main>
     </>
+  );
+}
+
+export default function PaymentPage() {
+  return (
+    <Suspense
+      fallback={
+        <>
+          <AppHeader />
+          <main className="min-h-[calc(100vh-64px)] bg-white px-6 py-14">
+            <div className="mx-auto w-full max-w-4xl">
+              <h1 className="text-2xl font-semibold text-[#111]">결제</h1>
+            </div>
+          </main>
+        </>
+      }
+    >
+      <PaymentPageContent />
+    </Suspense>
   );
 }
