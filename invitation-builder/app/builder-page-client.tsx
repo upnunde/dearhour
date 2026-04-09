@@ -545,7 +545,7 @@ function BankLogo({ name }: { name: (typeof BANK_OPTIONS)[number] }) {
 
 function FormItem({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-4">
+    <div className="flex items-start gap-3">
       <AppLabel
         className={`w-[90px] flex-shrink-0 text-[13px] font-medium text-on-surface-30 leading-tight ${
           label ? 'pt-1' : ''
@@ -1108,6 +1108,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     const weddingTime = pickSearchParam('weddingTime').trim();
     const venueName = pickSearchParam('venueName').trim();
     const venueDetail = pickSearchParam('venueDetail').trim();
+    const mergedVenueName = [venueName, venueDetail].filter(Boolean).join(' ');
     const venueAddress = pickSearchParam('venueAddress').trim();
     const themeType = pickSearchParam('themeType').trim().toUpperCase();
 
@@ -1115,7 +1116,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     if (brideName) updateData('hosts.bride.name', brideName);
     if (weddingDate) updateData('eventInfo.date', weddingDate);
     if (weddingTime) updateData('eventInfo.time', weddingTime);
-    if (venueName) updateData('eventInfo.venueName', venueName);
+    if (mergedVenueName) updateData('eventInfo.venueName', mergedVenueName);
     if (venueDetail) updateData('eventInfo.venueDetail', venueDetail);
     if (venueAddress) updateData('location.address', venueAddress);
     if (['A', 'B', 'C', 'D', 'E'].includes(themeType)) {
@@ -1222,6 +1223,10 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     ],
     [],
   );
+  const greetingRandomThumbnail = useMemo(() => {
+    const randomIndex = Math.floor(Math.random() * flowerThumbnailPresets.length);
+    return flowerThumbnailPresets[randomIndex]?.url ?? '/flower01.svg';
+  }, [flowerThumbnailPresets]);
 
   useEffect(() => {
     setNaverPreviewFailed(false);
@@ -2363,20 +2368,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               ? 'animate-[preview-fade-out_650ms_ease-out_forwards]'
               : '';
 
-        const frameEffect = ((data.main as any).frameEffect ?? '적용 안함') as
-          | '적용 안함'
-          | '물결'
-          | '안개'
-          | '방울';
-        const frameEffectOverlayClass =
-          frameEffect === '물결'
-            ? 'frame-effect-wave'
-            : frameEffect === '안개'
-              ? 'frame-effect-fog'
-              : frameEffect === '방울'
-                ? 'frame-effect-drops'
-                : '';
-
         return (
           <div className="w-full flex flex-col items-stretch gap-0">
             <div className="w-full aspect-[9/16] rounded-none flex flex-col justify-end items-stretch text-white shadow-none overflow-hidden relative">
@@ -2422,24 +2413,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 </>
               )}
 
-              {frameEffectOverlayClass ? (
-                <div
-                  aria-hidden
-                  className={`pointer-events-none absolute inset-0 z-[1] overflow-hidden ${frameEffectOverlayClass}`}
-                />
-              ) : null}
-
-              <div className="relative z-[2] w-full bg-black/35 px-3 py-3 flex flex-col items-center text-center">
-                <p className="text-[0.75em] tracking-[0.2em] uppercase text-white/80">
-                  Wedding Invitation
-                </p>
-                <h1 className="text-[1.25em] font-semibold tracking-tight">
-                  {data.main.title}
-                </h1>
-                <p className="text-[0.875em] text-white/90">
-                  {firstDisplayName} &amp; {secondDisplayName}
-                </p>
-              </div>
             </div>
           </div>
         );
@@ -2447,24 +2420,19 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       case 'greeting': {
         const greetingUseImage = !!((data.greeting as any)?.useImage ?? false);
         const greetingThumb = ((data.greeting as any)?.thumbnail ?? '').trim();
+        const greetingThumbnailForPreview = greetingThumb || greetingRandomThumbnail;
         return (
           <div className="max-w-[320px] mx-auto">
             {greetingUseImage && (
-              <div className="w-[64px] h-[64px] mx-auto rounded-xl bg-white overflow-hidden mb-3 flex items-center justify-center">
-                {greetingThumb ? (
-                  <img src={greetingThumb} alt="인사말 이미지" className="w-16 h-16 object-contain" />
-                ) : (
-                  <div className="w-full h-full bg-[color:var(--surface-20)] flex items-center justify-center text-[12px] text-on-surface-30 text-center px-3">
-                    이미지가 없습니다.
-                  </div>
-                )}
+              <div className="w-[56px] h-[56px] mx-auto rounded-xl bg-white overflow-hidden mb-3 flex items-center justify-center">
+                <img src={greetingThumbnailForPreview} alt="인사말 이미지" className="w-[56px] h-[56px] object-contain" />
               </div>
             )}
             <div className="space-y-5">
               {greetingEntries.map((entry, idx) => (
                 <div key={`greeting-entry-${idx}`}>
-                  <h3 className="text-[1em] font-semibold text-on-surface-10 mb-3">{entry.title}</h3>
-                  <p className="text-[0.875em] leading-relaxed text-on-surface-20 whitespace-pre-wrap">
+                  <h3 className="text-[1em] font-semibold text-on-surface-10 mb-2">{entry.title}</h3>
+                  <p className="text-[14px] leading-[26px] text-on-surface-20 whitespace-pre-wrap">
                     {entry.content}
                   </p>
                 </div>
@@ -2634,14 +2602,29 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         }
 
         return (
-          <div className="mx-auto w-full space-y-4">
+          <div className="mx-auto w-full space-y-5">
+            {!!(data.share?.thumbnail ?? '').trim() && (
+              <div className="w-full aspect-video rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden">
+                <img
+                  src={(data.share?.thumbnail ?? '').trim()}
+                  alt="혼주 섹션 이미지"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
             {hasParentsText ? (
               <div className="preview-hosts-parents-line space-y-1 text-[93.75%] text-on-surface-20 tracking-tight text-center">
                 {orderedCoupleRows.map((row) => (
                   <div key={row.role} className="min-h-[27px] flex items-center justify-center" style={{ gap: '8px' }}>
                     {row.parentsText ? (
                       <div className="flex items-center gap-1">
-                        {row.parentsInline} 의 {row.relation}
+                        {row.parentsInline}
+                        <span
+                          className="text-[13px]"
+                          style={{ color: 'color-mix(in srgb, var(--on-surface-disabled) 60%, var(--on-surface-30) 40%)' }}
+                        >
+                          의 {row.relation}
+                        </span>
                       </div>
                     ) : ''}
                     <span className="font-semibold text-on-surface-10">{row.name}</span>
@@ -2650,14 +2633,14 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               </div>
             ) : (
               <p className="min-h-[27px] flex items-center justify-center text-[18px] text-on-surface-20 tracking-tight text-center">
-                {orderedCoupleRows[0].role} <span className="font-semibold text-on-surface-10">{orderedCoupleRows[0].name}</span>
+                {orderedCoupleRows[0].role} <span className="font-semibold text-on-surface-10 ml-1">{orderedCoupleRows[0].name}</span>
                 <span className="mx-2 text-on-surface-30">·</span>
                 {orderedCoupleRows[1].role} <span className="font-semibold text-on-surface-10">{orderedCoupleRows[1].name}</span>
               </p>
             )}
 
             {contactEnabled && (
-              <div className="w-full rounded-2xl border border-border bg-white/85 pt-0 pb-0 px-0 shadow-[0_1px_2px_rgba(0,0,0,0.03)] overflow-hidden">
+              <div className="w-[320px] mx-auto rounded-2xl border border-border bg-white/85 pt-0 pb-0 px-0 shadow-[0_1px_2px_rgba(0,0,0,0.03)] overflow-hidden">
                 <button
                   type="button"
                   onClick={() => setContactPreviewExpanded((prev) => !prev)}
@@ -2671,18 +2654,18 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 </button>
 
                 {contactPreviewExpanded ? (
-                  <div className="mt-2 mx-2 mb-2 space-y-0 animate-[preview-fade-in_220ms_ease-out_forwards]">
+                  <div className="mt-2 mx-0 mb-2 space-y-0 animate-[preview-fade-in_220ms_ease-out_forwards]">
                     {contactRows.map((row) => {
                       const phone = (row.phone ?? '').trim();
                       return (
-                      <div key={row.role} className="rounded-xl mb-0 bg-white px-3 py-2.5 flex items-center justify-between gap-2">
+                      <div key={row.role} className="rounded-xl mb-0 bg-white px-4 py-2.5 flex items-center justify-between gap-2">
                         <div className="min-w-0 text-left">
                           <p className="text-[15px] font-medium tracking-[0.06em] text-on-surface-30">{row.role}</p>
                         </div>
                         <div className="inline-flex items-center gap-1.5 shrink-0">
                           <a
                             href={`tel:${phone}`}
-                            className="w-8 h-8 rounded-full inline-flex items-center justify-center border border-border bg-[color:var(--surface-20)] text-on-surface-30 hover:bg-[color:var(--surface-10)]"
+                            className="w-8 h-8 rounded-full inline-flex items-center justify-center bg-[color:var(--key)]/12 text-[color:var(--key)] hover:text-[color:var(--key-dark)] hover:bg-[color:var(--key)]/20"
                             aria-label={`${row.name} 전화하기`}
                             onClick={(event) => {
                               if (!phone) {
@@ -2699,7 +2682,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           </a>
                           <a
                             href={`sms:${phone}`}
-                            className="w-8 h-8 rounded-full inline-flex items-center justify-center border border-border bg-[color:var(--surface-20)] text-on-surface-30 hover:bg-[color:var(--surface-10)]"
+                            className="w-8 h-8 rounded-full inline-flex items-center justify-center bg-[color:var(--key)]/12 text-[color:var(--key)] hover:text-[color:var(--key-dark)] hover:bg-[color:var(--key)]/20"
                             aria-label={`${row.name} 문자 보내기`}
                             onClick={(event) => {
                               if (!phone) {
@@ -2756,6 +2739,20 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         const ddayMatch = ddayStatusText.match(/^(\d+)(일 .+)$/);
         const ddayNumber = ddayMatch?.[1] ?? "";
         const ddaySuffix = ddayMatch?.[2] ?? ddayStatusText;
+        const ddayMessage = ddayStatusText ? (
+          <>
+            {brideFirstInfo ? '신부' : '신랑'} <span className="text-[color:var(--key)]">&hearts;</span> {brideFirstInfo ? '신랑' : '신부'}의 결혼식이{" "}
+            {ddayNumber ? (
+              <>
+                <span className="text-[color:var(--key-dark)]">{ddayNumber}</span>
+                {ddaySuffix}
+              </>
+            ) : (
+              ddayStatusText
+            )}
+            .
+          </>
+        ) : null;
 
         let monthLabel = "";
         let calendarCells: Array<{ key: string; day?: number; isEvent?: boolean }> = [];
@@ -2789,6 +2786,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                     <div className="text-center text-[16px] text-[color:var(--on-primary-container)]/80 mb-0">
                       <p>{formattedDateWithWeekday}</p>
                       <p className="text-[18px] mt-1 font-medium">{data.eventInfo.time}</p>
+                      <div className="mx-auto mt-3 h-px w-80 bg-[color:var(--key)]/45" aria-hidden />
                     </div>
                 </div>
                 <div className="mx-10">
@@ -2816,27 +2814,23 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                     ))}
                   </div>
                 </div>
-
-              </div>
-            )}
-
-            {ddayStatusText && (
-              <div className="w-full text-center text-[16px] font-normal text-on-surface-10 leading-none">
-                {brideFirstInfo ? '신부' : '신랑'} <span className="text-[color:var(--key)]">&hearts;</span> {brideFirstInfo ? '신랑' : '신부'}의 결혼식이{" "}
-                {ddayNumber ? (
+                {ddayMessage && (
                   <>
-                    <span className="text-[color:var(--key-dark)]">{ddayNumber}</span>
-                    {ddaySuffix}
+                    <div className="mx-auto mt-3 h-px w-80 bg-[color:var(--key)]/45" aria-hidden />
+                    <div className="w-full text-center text-[16px] font-normal text-on-surface-10 leading-none">
+                      {ddayMessage}
+                    </div>
                   </>
-                ) : (
-                  ddayStatusText
                 )}
-                .
+
+              </div>
+            )}
+            {!showCalendar && ddayMessage && (
+              <div className="w-full py-6 text-center text-[16px] font-normal text-on-surface-10 leading-none">
+                {ddayMessage}
               </div>
             )}
 
-            <p>{data.eventInfo.venueName}</p>
-            <p className="text-on-surface-30">{data.eventInfo.venueDetail}</p>
           </div>
         );
       }
@@ -2844,6 +2838,37 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         {
           const addressInput = (data.location.address || '').trim();
           const address = addressInput || '경복궁';
+          const venueName = String((data.eventInfo as any)?.venueName ?? '').trim();
+          const venueDetail = String((data.eventInfo as any)?.venueDetail ?? '').trim();
+          const venueDisplay = venueName
+            ? (venueDetail && !venueName.includes(venueDetail) ? `${venueName} ${venueDetail}` : venueName)
+            : address;
+          const simplifiedAddress = (() => {
+            const normalized = address
+              .replace(/\b대한민국\b/g, '')
+              .replace(/\b\d{5,6}\b/g, '')
+              .replace(/\s{2,}/g, ' ')
+              .trim();
+            const stripVenueWords = (value: string) => {
+              let next = value;
+              if (venueName) next = next.replace(venueName, '').trim();
+              if (venueDetail) next = next.replace(venueDetail, '').trim();
+              return next.replace(/\s{2,}/g, ' ').trim();
+            };
+
+            if (!normalized.includes(',')) return stripVenueWords(normalized);
+
+            const parts = normalized
+              .split(',')
+              .map((part) => stripVenueWords(part.trim()))
+              .filter(Boolean)
+              .filter((part) => !/^\d{5,6}$/.test(part))
+              .filter((part) => part !== '대한민국');
+
+            const locationLikeParts = parts.filter((part) => /[시군구읍면동리로길]/.test(part));
+            const compactParts = (locationLikeParts.length > 0 ? locationLikeParts : parts).slice(-3);
+            return compactParts.join(' ').trim();
+          })();
           const title = ((data.location as any).title ?? '오시는 길') as string;
           const enc = encodeURIComponent(address);
           const naverWeb = address ? `https://map.naver.com/v5/search/${enc}` : '';
@@ -2891,10 +2916,13 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
           return (
             <div className="w-full px-0 space-y-3 text-[0.8125em] text-on-surface-20 text-center">
-              <p className="text-[0.875em] font-semibold text-on-surface-10">{title}</p>
+              <p className="text-[16px] font-normal text-on-surface-10">{title}</p>
 
               <>
-                <p className="font-semibold text-on-surface-10">{address}</p>
+                <p className="text-[14px] font-semibold text-on-surface-10 mb-1">{venueDisplay}</p>
+                {simplifiedAddress && simplifiedAddress !== venueDisplay && (
+                  <p className="text-[14px] text-on-surface-30 mb-8">{simplifiedAddress}</p>
+                )}
 
                 <div className="w-full rounded-xl overflow-hidden border border-border bg-[color:var(--surface-20)]">
                   <div className="w-full aspect-[16/10] relative">
@@ -2976,14 +3004,14 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 </div>
 
                 {transportsClean.length > 0 && (
-                  <div className="pt-1 space-y-2">
+                  <div className="pt-2 space-y-2">
                     {transportsClean.map((t, idx) => (
-                      <div key={`${t.mode}-${idx}`} className="text-[0.8125em] text-on-surface-20">
+                      <div key={`${t.mode}-${idx}`} className="mt-4 mb-8 text-[0.8125em] text-on-surface-20">
                         {t.mode && (
-                          <div className="font-semibold text-on-surface-10">{t.mode}</div>
+                          <div className="text-[16px] mb-1 font-semibold text-on-surface-10">{t.mode}</div>
                         )}
                         {t.detail && (
-                          <div className="text-on-surface-30 whitespace-pre-line">{t.detail}</div>
+                          <div className="text-[14px] text-on-surface-30 whitespace-pre-line">{t.detail}</div>
                         )}
                       </div>
                     ))}
@@ -3000,7 +3028,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         const rawContent = String(activeSection?.content ?? "");
         const content = rawContent.trim().length > 0 ? rawContent : "안내 내용을 입력해 주세요.";
         return (
-          <div className="max-w-full mx-auto w-full text-[0.8125em] text-on-surface-20 space-y-0">
+          <div className="max-w-full mx-auto w-full text-[13px] text-on-surface-20 space-y-0">
             {hasTabs ? (
               <>
                 <div className="flex items-end w-full">
@@ -3024,7 +3052,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   })}
                 </div>
                 <div className="border border-border bg-white px-5 py-6">
-                  <p className="whitespace-pre-line leading-relaxed text-[1.1em] text-center">{content}</p>
+                  <p className="whitespace-pre-line leading-[26px] text-[14px] text-center">{content}</p>
                 </div>
               </>
             ) : (
@@ -3905,7 +3933,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   </div>
 
                   {isInitiallyExpanded && (!item.hasSwitch || isSectionEnabled(item.id)) && (
-                    <div className="p-6 bg-white flex flex-col gap-5 border-t border-border">
+                    <div className="p-6 bg-white flex flex-col gap-3 border-t border-border">
                       {/* 테마 섹션 */}
                       {item.id === 'theme' && (
                         <>
@@ -4239,19 +4267,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
                           <div className="border-t border-dashed border-[color:var(--border-20)] my-2" />
 
-                          <FormItem label="프레임 이펙트">
-                            <div className="flex flex-wrap gap-2">
-                              {(['적용 안함', '물결', '안개', '방울'] as const).map((v) => (
-                                <OptionChip
-                                  key={v}
-                                  label={v}
-                                  active={(data.main as any).frameEffect === v}
-                                  onClick={() => updateData('main.frameEffect', v)}
-                                />
-                              ))}
-                            </div>
-                          </FormItem>
-
                           <FormItem label="제목 색상">
                             <div className="relative w-10 h-10 flex-shrink-0">
                               <button
@@ -4546,32 +4561,108 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       {/* 신랑신부 섹션 (입력 폼 + 요약 레이아웃) */}
                       {item.id === 'hosts' && (
                         <>
+                          <FormItem label="옵션">
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                              onClick={() => updateData('share.useThumbnail', !((data.share as any)?.useThumbnail ?? true))}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  updateData('share.useThumbnail', !((data.share as any)?.useThumbnail ?? true));
+                                }
+                              }}
+                            >
+                              <CircleCheckbox
+                                checked={!!((data.share as any)?.useThumbnail ?? true)}
+                                onChange={(e) => updateData('share.useThumbnail', e.target.checked)}
+                              />
+                              이미지
+                            </span>
+                          </FormItem>
+                          {((data.share as any)?.useThumbnail ?? true) && (
+                            <FormItem label="썸네일">
+                              <div className="flex-1 flex flex-col gap-2">
+                                <div className="w-full h-[120px] flex items-center gap-2">
+                                  <div className="h-full aspect-video rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden">
+                                    {data.share?.thumbnail ? (
+                                      <img
+                                        src={data.share.thumbnail}
+                                        alt="공유 썸네일 미리보기"
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center text-[clamp(10px,1.6vw,12px)] text-on-surface-30">
+                                        썸네일 이미지가 없습니다.
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="h-full flex flex-col justify-start gap-2">
+                                    <label className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit self-start whitespace-nowrap leading-none flex-shrink-0">
+                                      사진 업로드
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (!file) return;
+                                          const url = URL.createObjectURL(file);
+                                          updateData('share.thumbnail', url);
+                                          e.currentTarget.value = '';
+                                        }}
+                                      />
+                                    </label>
+                                    <button
+                                      type="button"
+                                      className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none flex-shrink-0 w-fit self-start"
+                                      onClick={() => setShareThumbnailPickerOpen(true)}
+                                    >
+                                      이미지 고르기
+                                    </button>
+                                    {data.share?.thumbnail && (
+                                      <button
+                                        type="button"
+                                        className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit self-start whitespace-nowrap leading-none flex-shrink-0"
+                                        onClick={() => updateData('share.thumbnail', '')}
+                                      >
+                                        삭제
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </FormItem>
+                          )}
+                          <div className="border-t border-dashed border-[color:var(--border-20)] my-2" />
                           <div className="flex flex-col gap-5">
                             <FormItem label="옵션">
-                              <span
-                                role="button"
-                                tabIndex={0}
-                                className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
-                                onClick={() => {
-                                  const nextChecked = !isSectionEnabled('contact');
-                                  setSectionEnabled((prev) => ({ ...prev, contact: nextChecked }));
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === ' ') {
+                              <div className="flex-1 flex flex-col gap-3">
+                                <span
+                                  role="button"
+                                  tabIndex={0}
+                                  className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                                  onClick={() => {
                                     const nextChecked = !isSectionEnabled('contact');
                                     setSectionEnabled((prev) => ({ ...prev, contact: nextChecked }));
-                                  }
-                                }}
-                              >
-                                <CircleCheckbox
-                                  checked={isSectionEnabled('contact')}
-                                  onChange={(e) => {
-                                    const checked = e.target.checked;
-                                    setSectionEnabled((prev) => ({ ...prev, contact: checked }));
                                   }}
-                                />
-                                연락처 추가
-                              </span>
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                      const nextChecked = !isSectionEnabled('contact');
+                                      setSectionEnabled((prev) => ({ ...prev, contact: nextChecked }));
+                                    }
+                                  }}
+                                >
+                                  <CircleCheckbox
+                                    checked={isSectionEnabled('contact')}
+                                    onChange={(e) => {
+                                      const checked = e.target.checked;
+                                      setSectionEnabled((prev) => ({ ...prev, contact: checked }));
+                                    }}
+                                  />
+                                  연락처 추가
+                                </span>
+                              </div>
                             </FormItem>
                             <HostContactField
                               label="신랑"
@@ -4713,10 +4804,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           <FormItem label="웨딩홀">
                             <Input placeholder="예: 더 신라 서울" value={data.eventInfo.venueName} onChange={(e) => updateData('eventInfo.venueName', e.target.value)} className="shadow-none flex-1" />
                           </FormItem>
-                          <FormItem label="상세 위치">
-                            <Input placeholder="예: 다이너스티 홀 3F" value={data.eventInfo.venueDetail} onChange={(e) => updateData('eventInfo.venueDetail', e.target.value)} className="shadow-none flex-1" />
-                          </FormItem>
-
                           <FormItem label="옵션">
                             <div className="flex flex-col gap-3 w-full">
                               <span
@@ -4784,17 +4871,11 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 <div className="flex-1 flex flex-col gap-2">
                                   <div className="w-full min-h-[120px] flex items-start gap-3">
                                     <div className="w-[120px] h-[120px] rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden flex items-center justify-center">
-                                      {(data.greeting as any)?.thumbnail ? (
-                                        <img
-                                          src={(data.greeting as any).thumbnail}
-                                          alt="인사말 썸네일 미리보기"
-                                          className="w-full h-full object-fill"
-                                        />
-                                      ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-[12px] text-on-surface-30 text-center px-3">
-                                          썸네일 이미지가 없습니다.
-                                        </div>
-                                      )}
+                                      <img
+                                        src={((data.greeting as any)?.thumbnail || greetingRandomThumbnail)}
+                                        alt="인사말 썸네일 미리보기"
+                                        className="w-full h-full object-fill"
+                                      />
                                     </div>
                                     <div className="h-full flex flex-col justify-start gap-2">
                                       <button
@@ -5493,7 +5574,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 </div>
                               </FormItem>
                               <FormItem label="옵션">
-                                <div className="flex-1 flex flex-col gap-4">
+                                <div className="flex-1 flex flex-col gap-3">
                                   <span
                                     role="button"
                                     tabIndex={0}
@@ -6212,7 +6293,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       {item.id === 'protect' && (
                         <>
                           <FormItem label="옵션">
-                            <div className="flex-1 flex flex-col gap-4">
+                            <div className="flex-1 flex flex-col gap-3">
                               <span
                                 role="button"
                                 tabIndex={0}
@@ -6384,7 +6465,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           <div className="flex-1 min-h-0 flex justify-center w-full max-w-[400px] min-h-full bg-transparent items-stretch shadow-none">
             <div
               ref={previewFrameRef}
-              className="w-full border border-border rounded-lg bg-white flex flex-col items-stretch text-center overflow-hidden relative"
+              className="preview-font-floor w-full border border-border rounded-lg bg-white flex flex-col items-stretch text-center overflow-hidden relative"
               style={
                 {
                   // 향후 theme.bgColor / theme.fontFamily를 전역 테마로 사용
@@ -6397,6 +6478,10 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   '--key-dark': selectedKeyColorPreset.keyDark,
                   '--primary-container': `color-mix(in srgb, ${selectedKeyColorPreset.primaryContainer} 46%, white)`,
                   '--on-primary-container': selectedKeyColorPreset.onPrimaryContainer,
+                  '--on-surface-10': `color-mix(in srgb, #282828 95%, ${selectedKeyColorPreset.key} 5%)`,
+                  '--on-surface-20': `color-mix(in srgb, #424242 95%, ${selectedKeyColorPreset.key} 5%)`,
+                  '--on-surface-30': `color-mix(in srgb, #616161 95%, ${selectedKeyColorPreset.key} 5%)`,
+                  '--on-surface-disabled': `color-mix(in srgb, rgba(0, 0, 0, 0.22) 95%, ${selectedKeyColorPreset.key} 5%)`,
                 } as React.CSSProperties
               }
             >
@@ -6419,19 +6504,22 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   </div>
                 )}
                 {layoutOrder.includes('hosts') && (
-                  <div className="w-full py-8 px-6 flex flex-col items-center text-center">
+                  <div className="w-full py-[50px] px-6 flex flex-col items-center text-center">
                     <div className="w-full max-w-[340px] mx-auto space-y-5">
-                      <p className="flex justify-center items-center text-[2em] font-medium tracking-[0.02em] text-on-surface-10 leading-none">
+                      <p
+                        className="flex justify-center items-center text-[22px] font-medium tracking-[0.02em] leading-none"
+                        style={{ color: data.main.titleColor }}
+                      >
                         {(((data as any).i18n?.brideFirstInfo ?? false)
                           ? ((data.hosts.bride.name ?? '').trim() || '신부')
                           : ((data.hosts.groom.name ?? '').trim() || '신랑'))}
-                        <span className="mx-4 inline-flex items-center align-middle text-on-surface-30 leading-none">·</span>
+                        <span className="mx-2 inline-flex items-center align-middle leading-none" style={{ color: data.main.titleColor }}>·</span>
                         {(((data as any).i18n?.brideFirstInfo ?? false)
                           ? ((data.hosts.groom.name ?? '').trim() || '신랑')
                           : ((data.hosts.bride.name ?? '').trim() || '신부'))}
                       </p>
-                      <div className="space-y-2 text-on-surface-30">
-                        <p className="text-[1.5em] leading-relaxed">
+                      <div className="space-y-2">
+                        <p className="text-[1em] leading-relaxed whitespace-nowrap" style={{ color: data.main.bodyColor }}>
                           {(() => {
                             const eventDateText = (data.eventInfo.date ?? '').trim();
                             const eventDate = eventDateText ? new Date(`${eventDateText}T00:00:00`) : null;
@@ -6446,18 +6534,13 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             return (
                               <>
                                 {summaryDateLine}
-                                {summaryTimeLine && (
-                                  <>
-                                    <br />
-                                    {summaryTimeLine}
-                                  </>
-                                )}
+                                {summaryTimeLine && ` ${summaryTimeLine}`}
                               </>
                             );
                           })()}
                         </p>
                         {!!(data.eventInfo.venueName ?? '').trim() && (
-                          <p className="text-[1.5em] leading-relaxed">{(data.eventInfo.venueName ?? '').trim()}</p>
+                          <p className="text-[1em] leading-relaxed" style={{ color: data.main.bodyColor }}>{(data.eventInfo.venueName ?? '').trim()}</p>
                         )}
                       </div>
                     </div>
@@ -6473,7 +6556,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           ? "w-full flex flex-col items-stretch text-center"
                           : sectionId === 'eventInfo' && (data.eventInfo as any)?.useCalendar
                             ? "w-full p-0 flex flex-col items-center text-center"
-                            : "w-full py-10 px-6 flex flex-col items-center text-center"
+                          : "w-full py-[50px] px-6 flex flex-col items-center text-center"
                           } ${data.theme.scrollEffect
                             ? (previewVisibleSections[sectionId]
                               ? 'opacity-100 translate-y-0 duration-[750ms] ease-out'
@@ -6650,7 +6733,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
             {/* 컨트롤 */}
             <div className="self-stretch inline-flex justify-center items-center gap-5">
-              <div className="w-full flex items-center gap-4">
+              <div className="w-full flex items-center gap-3">
                 {/* 반전 / 회전 */}
                 <div className="flex items-center gap-2">
                   <Button
