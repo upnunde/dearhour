@@ -12,6 +12,11 @@ function normalizeSpace(value: string) {
   return value.replace(/\s+/g, "").trim();
 }
 
+/** 글자와 숫자 사이에 공백이 없을 때(예: 수정로288) 지오코더가 잘 찾도록 공백 삽입 */
+function insertSpaceBeforeDigitRuns(value: string) {
+  return value.replace(/([^\d\s])(\d)/g, "$1 $2").replace(/\s+/g, " ").trim();
+}
+
 async function fetchNominatim(query: string, limit: number, signal: AbortSignal) {
   const nomUrl = new URL("https://nominatim.openstreetmap.org/search");
   nomUrl.searchParams.set("format", "json");
@@ -50,7 +55,11 @@ export async function GET(req: Request) {
     const controller = new AbortController();
     const t = setTimeout(() => controller.abort(), 7000);
     const qNoSpace = normalizeSpace(q);
-    const queries = Array.from(new Set([q, qNoSpace])).filter(Boolean);
+    const qSpacedDigits = insertSpaceBeforeDigitRuns(q);
+    const qNoSpaceSpacedDigits = insertSpaceBeforeDigitRuns(qNoSpace);
+    const queries = Array.from(
+      new Set([q, qNoSpace, qSpacedDigits, qNoSpaceSpacedDigits]),
+    ).filter(Boolean);
     const merged: string[] = [];
 
     try {

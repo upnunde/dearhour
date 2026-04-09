@@ -139,6 +139,8 @@ export default function ParticleCanvasOverlay({
     const petalSpritePool = ["/petal01.svg", "/petal02.svg", "/petal03.svg"];
     const exposureSizeMultiplier =
       targetEffect === "snow" || targetEffect === "sparkle" || targetEffect === "heart" ? 1.2 : 1;
+    const sparkleSizeBoost = targetEffect === "sparkle" ? 1.2 : 1;
+    const heartSizeBoost = targetEffect === "heart" ? 1.3 : 1;
 
     const randomPetalSpawn = () => ({
       x: rand(state.w * 1.02, state.w * 1.28),
@@ -146,7 +148,11 @@ export default function ParticleCanvasOverlay({
     });
 
     for (let i = 0; i < seedCount; i += 1) {
-      const size = rand(3, 7) * (targetEffect === "heart" ? 1.2 : targetEffect === "cherryBlossom" ? 0.675 : 1);
+      const size =
+        rand(3, 7) *
+        (targetEffect === "heart" ? 1.2 : targetEffect === "cherryBlossom" ? 0.675 : 1) *
+        heartSizeBoost *
+        sparkleSizeBoost;
       const isPetal = kind === "petal";
       const spawn = isPetal ? randomPetalSpawn() : null;
       state.particles.push({
@@ -154,10 +160,17 @@ export default function ParticleCanvasOverlay({
         y: isPetal ? spawn!.y : rand(-state.h, state.h),
         // 꽃잎은 기본적으로 우 -> 좌로 흐르도록 음수 x 속도를 부여
         vx: isPetal ? rand(-1.35, -0.55) : rand(-0.35, 0.35),
-        vy: isPetal ? rand(0.22, 0.78) : rand(0.6, 1.7) * (kind === "snow" ? 1.0 : 1),
+        vy: isPetal
+          ? rand(0.22, 0.78)
+          : kind === "sparkle" || kind === "heart"
+            ? rand(0.22, 0.62)
+            : rand(0.6, 1.7) * (kind === "snow" ? 1.0 : 1),
         size: size * exposureSizeMultiplier,
         rot: rand(0, Math.PI * 2),
-        vr: rand(-0.02, 0.02) * (kind === "petal" ? 1.7 : 1),
+        vr:
+          kind === "sparkle" || kind === "heart"
+            ? rand(-0.008, 0.008)
+            : rand(-0.02, 0.02) * (kind === "petal" ? 1.7 : 1),
         alpha: rand(0.25, 0.9),
         life: rand(0.6, 1.0),
         kind,
@@ -243,18 +256,22 @@ export default function ParticleCanvasOverlay({
       const t = p.tw;
       const a = p.alpha * (0.55 + 0.45 * Math.sin(t));
       const sparkleColor = themeColor?.trim() ? themeColor : "rgba(255,255,255,1)";
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
       ctx.strokeStyle = sparkleColor;
       ctx.globalAlpha = clamp(a, 0.15, 1);
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(p.x - p.size, p.y);
-      ctx.lineTo(p.x + p.size, p.y);
-      ctx.moveTo(p.x, p.y - p.size);
-      ctx.lineTo(p.x, p.y + p.size);
+      ctx.moveTo(-p.size, 0);
+      ctx.lineTo(p.size, 0);
+      ctx.moveTo(0, -p.size);
+      ctx.lineTo(0, p.size);
       ctx.stroke();
       ctx.fillStyle = sparkleColor;
-      ctx.fillRect(p.x, p.y, 1.2, 1.2);
+      ctx.fillRect(-0.6, -0.6, 1.2, 1.2);
       ctx.globalAlpha = 1;
+      ctx.restore();
     };
 
     const drawHeart = (p: (typeof state.particles)[number]) => {
@@ -299,7 +316,7 @@ export default function ParticleCanvasOverlay({
           p.y += p.vy * (dt * 60);
         }
         p.rot += p.vr * (dt * 60);
-        p.tw += dt * 3.2;
+        p.tw += dt * (p.kind === "sparkle" || p.kind === "heart" ? 1.6 : 3.2);
 
         // 꽃잎은 좌측/하단 바깥으로 벗어나면 재생성
         const isOutForPetal = p.kind === "petal" && (p.x < -p.size * 3 || p.y > state.h + p.size * 2);
@@ -318,10 +335,21 @@ export default function ParticleCanvasOverlay({
           p.size =
             rand(3, 7) *
             (targetEffect === "heart" ? 1.2 : targetEffect === "cherryBlossom" ? 0.675 : 1) *
+            heartSizeBoost *
+            sparkleSizeBoost *
             exposureSizeMultiplier;
           p.rot = rand(0, Math.PI * 2);
           p.vx = p.kind === "petal" ? rand(-1.35, -0.55) : rand(-0.35, 0.35) * (kind === "petal" ? 1.1 : 1);
-          p.vy = p.kind === "petal" ? rand(0.22, 0.78) : rand(0.6, 1.7) * (kind === "snow" ? 1.0 : 1);
+          p.vy =
+            p.kind === "petal"
+              ? rand(0.22, 0.78)
+              : p.kind === "sparkle" || p.kind === "heart"
+                ? rand(0.22, 0.62)
+                : rand(0.6, 1.7) * (kind === "snow" ? 1.0 : 1);
+          p.vr =
+            p.kind === "sparkle" || p.kind === "heart"
+              ? rand(-0.008, 0.008)
+              : rand(-0.02, 0.02) * (p.kind === "petal" ? 1.7 : 1);
           p.life = rand(0.6, 1.0);
           p.hue = rand(320, 360);
           p.spriteIndex = Math.floor(Math.random() * petalSpritePool.length);

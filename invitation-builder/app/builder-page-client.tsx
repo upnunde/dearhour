@@ -563,6 +563,13 @@ function FormItem({ label, children }: { label: string; children: React.ReactNod
 const BRIDE_RELATION_OPTIONS = ['딸', '장녀', '차녀', '삼녀', '사녀', '오녀', '육녀', '독녀', '막내', '조카', '손녀', '동생', '외동'] as const;
 const GROOM_RELATION_OPTIONS = ['아들', '장남', '차남', '삼남', '사남', '오남', '육남', '독남', '막내', '조카', '손자', '동생', '외동'] as const;
 
+function formatKoreanPhone(value: string) {
+  const digits = (value || '').replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+}
+
 function HostContactField({
   label,
   nameValue,
@@ -642,7 +649,9 @@ function HostContactField({
           <Input
             placeholder="전화번호를 입력하세요"
             value={phoneValue ?? ''}
-            onChange={(e) => onPhoneChange(e.target.value)}
+            onChange={(e) => onPhoneChange(formatKoreanPhone(e.target.value))}
+            inputMode="numeric"
+            autoComplete="tel"
             className="shadow-none"
           />
         )}
@@ -954,6 +963,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const [greetingSampleOpen, setGreetingSampleOpen] = useState(false);
   const [greetingSampleTab, setGreetingSampleTab] = useState<'general' | 'hosts' | 'religion'>('general');
   const [greetingSelectedSample, setGreetingSelectedSample] = useState<{ title: string; content: string } | null>(null);
+  const [greetingEditorIndex, setGreetingEditorIndex] = useState(0);
   const [noticeSampleOpen, setNoticeSampleOpen] = useState(false);
   const [noticeSampleTab, setNoticeSampleTab] = useState<'general' | 'parking' | 'meal'>('general');
   const [noticeSelectedSample, setNoticeSelectedSample] = useState<{ title: string; content: string } | null>(null);
@@ -975,10 +985,17 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const [sharePreviewOpen, setSharePreviewOpen] = useState(false);
   const [shareThumbnailPickerOpen, setShareThumbnailPickerOpen] = useState(false);
   const [greetingThumbnailPickerOpen, setGreetingThumbnailPickerOpen] = useState(false);
+  const [rsvpPreviewModalOpen, setRsvpPreviewModalOpen] = useState(false);
+  const [rsvpPreviewSide, setRsvpPreviewSide] = useState<'신랑측' | '신부측'>('신랑측');
+  const [rsvpPreviewIntent, setRsvpPreviewIntent] = useState<'참석' | '불참'>('참석');
+  const [rsvpPreviewName, setRsvpPreviewName] = useState('');
+  const [rsvpPreviewGuestCount, setRsvpPreviewGuestCount] = useState('0');
+  const [rsvpPreviewPrivacyAgreed, setRsvpPreviewPrivacyAgreed] = useState(false);
   const [galleryDetailOpen, setGalleryDetailOpen] = useState(false);
   const [galleryDetailIndex, setGalleryDetailIndex] = useState(0);
   const previewScrollRef = useRef<HTMLDivElement | null>(null);
   const previewFrameRef = useRef<HTMLDivElement | null>(null);
+  const sidebarRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (invitationTabs.length > 0) return;
@@ -1021,6 +1038,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
   const removeInvitationTab = (tabId: string) => {
     if (invitationTabs.length <= 1) return;
+    // 첫 번째 기본 탭은 항상 유지
+    if (invitationTabs[0]?.id === tabId) return;
     const targetIndex = invitationTabs.findIndex((tab) => tab.id === tabId);
     if (targetIndex < 0) return;
 
@@ -1198,6 +1217,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       { id: 'flower09', label: '꽃 9', url: '/flower09.svg' },
       { id: 'flower10', label: '꽃 10', url: '/flower10.svg' },
       { id: 'flower11', label: '꽃 11', url: '/flower11.svg' },
+      { id: 'flower12', label: '꽃 12', url: '/flower12.svg' },
+      { id: 'flower13', label: '꽃 13', url: '/flower13.svg' },
     ],
     [],
   );
@@ -1254,6 +1275,14 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
   useEffect(() => {
     scrollPreviewToSection(activeSection);
+  }, [activeSection]);
+
+  useEffect(() => {
+    const sidebar = sidebarRef.current;
+    if (!sidebar) return;
+    const target = sidebar.querySelector<HTMLElement>(`[data-sidebar-item-id="${activeSection}"]`);
+    if (!target) return;
+    target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
   }, [activeSection]);
 
   const [mainPreviewIndex, setMainPreviewIndex] = useState(0);
@@ -1629,6 +1658,33 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       ],
     } as const;
   }, []);
+
+  const greetingEntries = useMemo(() => {
+    const raw = (data.greeting as any)?.entries;
+    if (Array.isArray(raw) && raw.length > 0) {
+      return raw.map((entry: any) => ({
+        title: String(entry?.title ?? ''),
+        content: String(entry?.content ?? ''),
+      }));
+    }
+    return [
+      {
+        title: String((data.greeting as any)?.title ?? ''),
+        content: String((data.greeting as any)?.content ?? ''),
+      },
+    ];
+  }, [data.greeting]);
+
+  useEffect(() => {
+    setGreetingEditorIndex((prev) => Math.min(prev, Math.max(0, greetingEntries.length - 1)));
+  }, [greetingEntries.length]);
+
+  const setGreetingEntries = (next: Array<{ title: string; content: string }>) => {
+    const normalized = next.length > 0 ? next : [{ title: '', content: '' }];
+    updateData('greeting.entries', normalized);
+    updateData('greeting.title', normalized[0].title);
+    updateData('greeting.content', normalized[0].content);
+  };
 
   const noticeSamples = useMemo(() => {
     return {
@@ -2307,6 +2363,20 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               ? 'animate-[preview-fade-out_650ms_ease-out_forwards]'
               : '';
 
+        const frameEffect = ((data.main as any).frameEffect ?? '적용 안함') as
+          | '적용 안함'
+          | '물결'
+          | '안개'
+          | '방울';
+        const frameEffectOverlayClass =
+          frameEffect === '물결'
+            ? 'frame-effect-wave'
+            : frameEffect === '안개'
+              ? 'frame-effect-fog'
+              : frameEffect === '방울'
+                ? 'frame-effect-drops'
+                : '';
+
         return (
           <div className="w-full flex flex-col items-stretch gap-0">
             <div className="w-full aspect-[9/16] rounded-none flex flex-col justify-end items-stretch text-white shadow-none overflow-hidden relative">
@@ -2352,7 +2422,14 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 </>
               )}
 
-              <div className="w-full bg-black/35 px-3 py-3 flex flex-col items-center text-center">
+              {frameEffectOverlayClass ? (
+                <div
+                  aria-hidden
+                  className={`pointer-events-none absolute inset-0 z-[1] overflow-hidden ${frameEffectOverlayClass}`}
+                />
+              ) : null}
+
+              <div className="relative z-[2] w-full bg-black/35 px-3 py-3 flex flex-col items-center text-center">
                 <p className="text-[0.75em] tracking-[0.2em] uppercase text-white/80">
                   Wedding Invitation
                 </p>
@@ -2373,9 +2450,9 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         return (
           <div className="max-w-[320px] mx-auto">
             {greetingUseImage && (
-              <div className="w-[120px] h-[120px] mx-auto rounded-xl border border-border bg-white overflow-hidden mb-3 flex items-center justify-center">
+              <div className="w-[64px] h-[64px] mx-auto rounded-xl bg-white overflow-hidden mb-3 flex items-center justify-center">
                 {greetingThumb ? (
-                  <img src={greetingThumb} alt="인사말 이미지" className="w-full h-full object-fill" />
+                  <img src={greetingThumb} alt="인사말 이미지" className="w-16 h-16 object-contain" />
                 ) : (
                   <div className="w-full h-full bg-[color:var(--surface-20)] flex items-center justify-center text-[12px] text-on-surface-30 text-center px-3">
                     이미지가 없습니다.
@@ -2383,12 +2460,16 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 )}
               </div>
             )}
-            <h3 className="text-[0.875em] font-semibold text-on-surface-10 mb-3">
-              {data.greeting.title}
-            </h3>
-            <p className="text-[0.8125em] leading-relaxed text-on-surface-20 whitespace-pre-wrap">
-              {data.greeting.content}
-            </p>
+            <div className="space-y-5">
+              {greetingEntries.map((entry, idx) => (
+                <div key={`greeting-entry-${idx}`}>
+                  <h3 className="text-[1em] font-semibold text-on-surface-10 mb-3">{entry.title}</h3>
+                  <p className="text-[0.875em] leading-relaxed text-on-surface-20 whitespace-pre-wrap">
+                    {entry.content}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         );
       }
@@ -2555,9 +2636,9 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         return (
           <div className="mx-auto w-full space-y-4">
             {hasParentsText ? (
-              <div className="space-y-1 text-[0.875em] text-on-surface-20 tracking-tight text-center">
+              <div className="preview-hosts-parents-line space-y-1 text-[93.75%] text-on-surface-20 tracking-tight text-center">
                 {orderedCoupleRows.map((row) => (
-                  <div key={row.role} className="min-h-[27px] flex items-center justify-center" style={{ fontSize: '14px', gap: '8px' }}>
+                  <div key={row.role} className="min-h-[27px] flex items-center justify-center" style={{ gap: '8px' }}>
                     {row.parentsText ? (
                       <div className="flex items-center gap-1">
                         {row.parentsInline} 의 {row.relation}
@@ -2916,7 +2997,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         const hasTabs = noticeSections.length > 1;
         const activeTabIndex = Math.min(noticePreviewTabIndex, noticeSections.length - 1);
         const activeSection = noticeSections[activeTabIndex] ?? noticeSections[0];
-        const content = activeSection?.content?.trim() || "안내 내용을 입력해 주세요.";
+        const rawContent = String(activeSection?.content ?? "");
+        const content = rawContent.trim().length > 0 ? rawContent : "안내 내용을 입력해 주세요.";
         return (
           <div className="max-w-full mx-auto w-full text-[0.8125em] text-on-surface-20 space-y-0">
             {hasTabs ? (
@@ -2932,7 +3014,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                         className={[
                           'h-10 flex-1 min-w-0 px-2 text-[0.875em] border border-border border-b-0 -mr-px',
                           active
-                            ? 'bg-white text-on-surface-10 rounded-t-xl relative z-[1]'
+                            ? 'bg-white text-on-surface-10 relative z-[1]'
                             : 'bg-[color:var(--surface-10)] text-[color:var(--on-surface-disabled)]',
                         ].join(' ')}
                       >
@@ -2941,7 +3023,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                     );
                   })}
                 </div>
-                <div className="rounded-b-xl rounded-tr-xl border border-border bg-white px-5 py-6">
+                <div className="border border-border bg-white px-5 py-6">
                   <p className="whitespace-pre-line leading-relaxed text-[1.1em] text-center">{content}</p>
                 </div>
               </>
@@ -3063,15 +3145,21 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 </div>
               ))}
             </div>
-            {shouldShowLoadMoreButton && visibleRows < totalRows && (
+            {shouldShowLoadMoreButton && (
               <div className="flex justify-center">
                 <Button
                   type="button"
                   variant="outline"
                   className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
-                  onClick={() => setGalleryGridVisibleRows((prev) => Math.min(prev + 3, totalRows))}
+                  onClick={() => {
+                    if (visibleRows < totalRows) {
+                      setGalleryGridVisibleRows((prev) => Math.min(prev + 3, totalRows));
+                      return;
+                    }
+                    setGalleryGridVisibleRows(3);
+                  }}
                 >
-                  더보기
+                  {visibleRows < totalRows ? '더보기' : '접기'}
                 </Button>
               </div>
             )}
@@ -3455,7 +3543,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         const r = (data as any).rsvp ?? {};
         const title = (r.title ?? "참석 여부") as string;
         const description = (r.description ?? "") as string;
-        const collectGuestCount = !!r.collectGuestCount;
         const deadline = String(r.deadline ?? "").trim();
         return (
           <div className="max-w-full mx-auto w-full space-y-3 text-[0.8125em] text-on-surface-20 text-left">
@@ -3464,26 +3551,17 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
             {deadline ? (
               <p className="text-[12px] text-on-surface-30 text-center">응답 마감: {deadline}</p>
             ) : null}
-            <div className="rounded-xl border border-border bg-white p-3 space-y-3">
-              <div className="flex gap-2 justify-center">
-                <span className="h-9 px-4 rounded-lg bg-[color:var(--key)] text-white text-[13px] font-medium inline-flex items-center justify-center">
-                  참석
-                </span>
-                <span className="h-9 px-4 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 inline-flex items-center justify-center">
-                  불참
-                </span>
-              </div>
-              <div className="h-10 w-full rounded-lg border border-border bg-[color:var(--surface-10)] px-2.5 flex items-center text-[13px] text-on-surface-30">
-                이름
-              </div>
-              {collectGuestCount && (
-                <div className="h-10 w-full rounded-lg border border-border bg-[color:var(--surface-10)] px-2.5 flex items-center text-[13px] text-on-surface-30">
-                  동반 인원 (본인 제외)
-                </div>
-              )}
-              <p className="text-[11px] text-on-surface-30 text-center leading-relaxed">
-                미리보기 화면입니다. 실제 응답 수집은 발행 후 하객용 링크에서 진행됩니다.
+            <div className="rounded-xl border border-border bg-white p-4 space-y-3">
+              <p className="text-[12px] text-on-surface-30 text-center leading-relaxed">
+                안내 메시지를 확인한 뒤, 아래 버튼으로 참석 여부를 전달해 주세요.
               </p>
+              <button
+                type="button"
+                onClick={() => setRsvpPreviewModalOpen(true)}
+                className="h-10 w-full rounded-lg bg-[color:var(--key)] text-white text-[13px] font-semibold inline-flex items-center justify-center hover:brightness-95 transition"
+              >
+                참석여부 전달하기
+              </button>
             </div>
           </div>
         );
@@ -3578,7 +3656,10 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       <div className="flex flex-1 overflow-hidden relative">
 
         {/* 1. 좌측 사이드바 내비게이션 */}
-        <aside className="w-[100px] flex-shrink-0 bg-white border-r border-border flex flex-col items-center py-6 z-20 overflow-y-auto no-scrollbar">
+        <aside
+          ref={sidebarRef}
+          className="w-[100px] flex-shrink-0 bg-white border-r border-border flex flex-col items-center py-6 z-20 overflow-y-auto no-scrollbar"
+        >
           
           <div className="w-full text-center mb-2"><span className="text-[12px] font-bold text-on-surface-30">필수 사항</span></div>
           <div className="flex flex-col gap-y-2 mb-6 w-full items-center">
@@ -3588,6 +3669,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               return (
                 <div 
                   key={item.id} onClick={() => { if (item.id === 'bgm' || !isDisabled) scrollToSection(item.id); }}
+                  data-sidebar-item-id={item.id}
                   className={`flex flex-col items-center justify-center gap-y-1 w-[80px] h-[64px] rounded-lg cursor-pointer transition-colors shadow-none ${
                     isDisabled
                       ? 'opacity-50 text-on-surface-30 hover:bg-slate-100'
@@ -3615,6 +3697,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 <div
                   key={item.id}
                   {...wrapperProps}
+                  data-sidebar-item-id={item.id}
                   className={`${wrapperProps.className} relative flex flex-col items-center justify-center gap-y-1 w-[80px] h-[64px] rounded-lg shadow-none cursor-grab active:cursor-grabbing ${
                     isDisabled
                       ? 'opacity-50 text-on-surface-30 hover:bg-slate-100'
@@ -3643,6 +3726,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 <div
                   key={item.id}
                   onClick={() => scrollToSection(item.id)}
+                  data-sidebar-item-id={item.id}
                   className={`flex flex-col items-center justify-center gap-y-1 w-[80px] h-[64px] rounded-lg cursor-pointer transition-colors shadow-none ${
                     isDisabled
                       ? 'opacity-50 text-on-surface-30 hover:bg-slate-100'
@@ -3668,6 +3752,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
                 {invitationTabs.map((tab) => {
                   const isActive = tab.id === activeInvitationTabId;
+                  const isDefaultTab = invitationTabs[0]?.id === tab.id;
                   return (
                     <div key={tab.id} className="group flex items-center">
                       {editingInvitationTabId === tab.id ? (
@@ -3701,7 +3786,11 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           >
                             {tab.label}
                           </button>
-                          <div className="flex h-full max-w-0 items-center gap-1 overflow-hidden pr-0 opacity-0 transition-all duration-200 group-hover:max-w-28 group-hover:pr-2 group-hover:opacity-100">
+                          <div
+                            className={`flex h-full items-center gap-1 overflow-hidden transition-all duration-200 ${
+                              isActive ? 'max-w-28 pr-2 opacity-100' : 'max-w-0 pr-0 opacity-0'
+                            }`}
+                          >
                             <button
                               type="button"
                               onClick={() => startEditInvitationTabName(tab.id, tab.label)}
@@ -3711,16 +3800,18 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             >
                               <Pencil className="h-3 w-3" />
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => removeInvitationTab(tab.id)}
-                              disabled={invitationTabs.length <= 1}
-                              className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border bg-white text-on-surface-20 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                              aria-label={`${tab.label} 탭 제거`}
-                              title={invitationTabs.length <= 1 ? "탭은 최소 1개 유지됩니다" : "탭 제거"}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </button>
+                            {!isDefaultTab ? (
+                              <button
+                                type="button"
+                                onClick={() => removeInvitationTab(tab.id)}
+                                disabled={invitationTabs.length <= 1}
+                                className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border bg-white text-on-surface-20 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                                aria-label={`${tab.label} 탭 제거`}
+                                title={invitationTabs.length <= 1 ? "탭은 최소 1개 유지됩니다" : "탭 제거"}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            ) : null}
                           </div>
                         </div>
                       )}
@@ -3846,19 +3937,19 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           <FormItem label="글꼴">
                             <div className="flex flex-wrap gap-2">
                               {[
-                                'Pretendard',
-                                'Noto Sans KR',
-                                'Noto Serif KR',
-                                'Gowun Dodum',
-                                'Gowun Batang',
-                              ].map((font) => {
-                                const isActive = data.theme.fontFamily === font;
+                                { value: 'Pretendard', label: '모던고딕' },
+                                { value: 'Noto Sans KR', label: '정갈한 고딕' },
+                                { value: 'Noto Serif KR', label: '클래식 명조' },
+                                { value: 'Gowun Dodum', label: '캐주얼 손글씨' },
+                                { value: 'Gowun Batang', label: '감성 캘리체' },
+                              ].map((fontOpt) => {
+                                const isActive = data.theme.fontFamily === fontOpt.value;
                                 return (
                                   <OptionChip
-                                    key={font}
-                                    label={font}
+                                    key={fontOpt.value}
+                                    label={fontOpt.label}
                                     active={isActive}
-                                    onClick={() => updateData('theme.fontFamily', font)}
+                                    onClick={() => updateData('theme.fontFamily', fontOpt.value)}
                                   />
                                 );
                               })}
@@ -4727,27 +4818,102 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 </div>
                               </FormItem>
                             )}
-                            <FormItem label="제목">
-                              <Input type="text" value={data.greeting.title} onChange={(e) => updateData('greeting.title', e.target.value)} className="shadow-none flex-1" />
-                            </FormItem>
-                            <FormItem label="본문">
-                              <Textarea rows={4} value={data.greeting.content} onChange={(e) => updateData('greeting.content', e.target.value)} className="resize-none shadow-none flex-1" />
-                            </FormItem>
+                            {greetingEntries.map((entry, idx) => (
+                              <React.Fragment key={`greeting-entry-editor-${idx}`}>
+                                {idx > 0 && <div className="border-t border-dashed border-[color:var(--border-20)] my-2" />}
+                                <div className="flex flex-col gap-5 mb-0">
+                                  <FormItem label="제목">
+                                    {idx > 0 ? (
+                                      <div className="flex items-center gap-2 flex-1">
+                                        <Input
+                                          type="text"
+                                          value={entry.title ?? ''}
+                                          onChange={(e) => {
+                                            const next = greetingEntries.map((it, sectionIdx) =>
+                                              sectionIdx === idx ? { ...it, title: e.target.value } : it,
+                                            );
+                                            setGreetingEntries(next);
+                                          }}
+                                          className="shadow-none flex-1"
+                                          placeholder="제목"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const next = greetingEntries.filter((_, sectionIdx) => sectionIdx !== idx);
+                                            setGreetingEntries(next);
+                                          }}
+                                          aria-label="인사말 삭제"
+                                          className="flex-shrink-0 text-[12px] text-on-surface-30 hover:text-on-surface-10 transition-colors"
+                                        >
+                                          삭제
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <Input
+                                        type="text"
+                                        value={entry.title ?? ''}
+                                        onChange={(e) => {
+                                          const next = greetingEntries.map((it, sectionIdx) =>
+                                            sectionIdx === idx ? { ...it, title: e.target.value } : it,
+                                          );
+                                          setGreetingEntries(next);
+                                        }}
+                                        className="shadow-none flex-1"
+                                        placeholder="제목"
+                                      />
+                                    )}
+                                  </FormItem>
+                                  <FormItem label="본문">
+                                    <Textarea
+                                      rows={4}
+                                      value={entry.content ?? ''}
+                                      onChange={(e) => {
+                                        const next = greetingEntries.map((it, sectionIdx) =>
+                                          sectionIdx === idx ? { ...it, content: e.target.value } : it,
+                                        );
+                                        setGreetingEntries(next);
+                                      }}
+                                      className="resize-none shadow-none flex-1"
+                                      placeholder="본문"
+                                    />
+                                  </FormItem>
+                                  <div className="flex justify-end">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
+                                      onClick={() => {
+                                        setGreetingEditorIndex(idx);
+                                        setGreetingSampleTab('general');
+                                        setGreetingSelectedSample(null);
+                                        setGreetingSampleOpen(true);
+                                      }}
+                                    >
+                                      샘플보기
+                                    </Button>
+                                  </div>
+                                </div>
+                              </React.Fragment>
+                            ))}
 
-                            <div className="flex justify-end">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
-                                onClick={() => {
-                                  setGreetingSampleTab('general');
-                                  setGreetingSelectedSample(null);
-                                  setGreetingSampleOpen(true);
-                                }}
-                              >
-                                샘플보기
-                              </Button>
-                            </div>
+                            {greetingEntries.length < 3 && (
+                              <div className="pt-0 flex justify-center">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="rounded-lg px-4 h-10 text-[13px]"
+                                  onClick={() => {
+                                    if (greetingEntries.length >= 3) return;
+                                    const next = [...greetingEntries, { title: '', content: '' }];
+                                    setGreetingEntries(next);
+                                    setGreetingEditorIndex(next.length - 1);
+                                  }}
+                                >
+                                  + 추가하기
+                                </Button>
+                              </div>
+                            )}
                           </div>
 
                           {greetingSampleOpen && createPortal(
@@ -4844,7 +5010,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                         <div className="text-[13px] font-semibold text-on-surface-10 text-center mb-2">
                                           {sample.title}
                                         </div>
-                                        <div className="text-[14px] leading-relaxed text-on-surface-10 text-center whitespace-pre-line">
+                                        <div className="text-[14px] leading-relaxed text-on-surface-10 text-center whitespace-pre-wrap">
                                           {sample.content}
                                         </div>
                                       </div>
@@ -4870,8 +5036,14 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                     disabled={!greetingSelectedSample}
                                     onClick={() => {
                                       if (!greetingSelectedSample) return;
-                                      updateData('greeting.title', greetingSelectedSample.title);
-                                      updateData('greeting.content', greetingSelectedSample.content);
+                                      const next = [...greetingEntries];
+                                      const targetIndex = Math.max(0, Math.min(greetingEditorIndex, next.length - 1));
+                                      if (!next[targetIndex]) next[targetIndex] = { title: '', content: '' };
+                                      next[targetIndex] = {
+                                        title: String(greetingSelectedSample.title),
+                                        content: String(greetingSelectedSample.content).replace(/\r\n?/g, '\n'),
+                                      };
+                                      setGreetingEntries(next);
                                       setGreetingSampleOpen(false);
                                     }}
                                   >
@@ -5537,7 +5709,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                         <div className="text-[13px] font-semibold text-on-surface-10 text-center mb-2">
                                           {sample.title}
                                         </div>
-                                        <div className="text-[14px] leading-relaxed text-on-surface-10 text-center whitespace-pre-line">
+                                        <div className="text-[14px] leading-relaxed text-on-surface-10 text-center whitespace-pre-wrap">
                                           {sample.content}
                                         </div>
                                       </div>
@@ -5566,7 +5738,11 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                       const targetIndex = Math.min(noticeEditorTabIndex, noticeSections.length - 1);
                                       const nextSections = noticeSections.map((section, idx) =>
                                         idx === targetIndex
-                                          ? { ...section, title: noticeSelectedSample.title, content: noticeSelectedSample.content }
+                                          ? {
+                                              ...section,
+                                              title: String(noticeSelectedSample.title),
+                                              content: String(noticeSelectedSample.content).replace(/\r\n?/g, '\n'),
+                                            }
                                           : section,
                                       );
                                       updateNoticeSections(nextSections);
@@ -6249,7 +6425,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                         {(((data as any).i18n?.brideFirstInfo ?? false)
                           ? ((data.hosts.bride.name ?? '').trim() || '신부')
                           : ((data.hosts.groom.name ?? '').trim() || '신랑'))}
-                        <span className="mx-4 text-on-surface-30">|</span>
+                        <span className="mx-4 inline-block text-on-surface-30" style={{ width: '1px' }}>|</span>
                         {(((data as any).i18n?.brideFirstInfo ?? false)
                           ? ((data.hosts.groom.name ?? '').trim() || '신랑')
                           : ((data.hosts.bride.name ?? '').trim() || '신부'))}
@@ -6287,7 +6463,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           ? "w-full flex flex-col items-stretch text-center"
                           : sectionId === 'eventInfo' && (data.eventInfo as any)?.useCalendar
                             ? "w-full p-0 flex flex-col items-center text-center"
-                            : "w-full py-6 px-6 flex flex-col items-center text-center"
+                            : "w-full py-10 px-6 flex flex-col items-center text-center"
                           } ${data.theme.scrollEffect
                             ? (previewVisibleSections[sectionId]
                               ? 'opacity-100 translate-y-0 duration-[750ms] ease-out'
@@ -6689,6 +6865,106 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               onClick={() => setGreetingThumbnailPickerOpen(false)}
             >
               닫기
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={rsvpPreviewModalOpen} onOpenChange={setRsvpPreviewModalOpen}>
+        <DialogContent className="w-[420px] max-w-[calc(100vw-2rem)] rounded-2xl border border-border p-0 overflow-hidden">
+          <div className="p-5 border-b border-border bg-white">
+            <DialogTitle className="text-[16px] font-semibold text-on-surface-10">참석의사 전달</DialogTitle>
+          </div>
+          <div className="p-5 bg-[color:var(--surface-10)] space-y-4">
+            <div className="space-y-2">
+              <p className="text-[12px] font-medium text-on-surface-20">구분</p>
+              <div className="grid grid-cols-2 gap-2">
+                {(['신랑측', '신부측'] as const).map((side) => (
+                  <button
+                    key={side}
+                    type="button"
+                    onClick={() => setRsvpPreviewSide(side)}
+                    className={`h-10 rounded-lg border text-[13px] font-medium ${
+                      rsvpPreviewSide === side
+                        ? 'border-[color:var(--key)] bg-white text-on-surface-10'
+                        : 'border-border bg-white text-on-surface-20'
+                    }`}
+                  >
+                    {side}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-[12px] font-medium text-on-surface-20">참석의사</p>
+              <div className="grid grid-cols-2 gap-2">
+                {(['참석', '불참'] as const).map((intent) => (
+                  <button
+                    key={intent}
+                    type="button"
+                    onClick={() => setRsvpPreviewIntent(intent)}
+                    className={`h-10 rounded-lg border text-[13px] font-medium ${
+                      rsvpPreviewIntent === intent
+                        ? 'border-[color:var(--key)] bg-white text-on-surface-10'
+                        : 'border-border bg-white text-on-surface-20'
+                    }`}
+                  >
+                    {intent}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-[12px] font-medium text-on-surface-20">성함</p>
+              <input
+                value={rsvpPreviewName}
+                onChange={(e) => setRsvpPreviewName(e.target.value)}
+                placeholder="성함을 입력해 주세요"
+                className="h-10 w-full rounded-lg border border-border bg-white px-3 text-[13px] outline-none focus:border-[color:var(--key)]"
+              />
+            </div>
+
+            {rsvpPreviewIntent === '참석' ? (
+              <div className="space-y-2">
+                <p className="text-[12px] font-medium text-on-surface-20">동반 인원 (본인 제외)</p>
+                <input
+                  type="number"
+                  min={0}
+                  value={rsvpPreviewGuestCount}
+                  onChange={(e) => setRsvpPreviewGuestCount(e.target.value)}
+                  className="h-10 w-full rounded-lg border border-border bg-white px-3 text-[13px] outline-none focus:border-[color:var(--key)]"
+                />
+              </div>
+            ) : null}
+
+            <label className="flex items-start gap-2 text-[12px] text-on-surface-20">
+              <input
+                type="checkbox"
+                checked={rsvpPreviewPrivacyAgreed}
+                onChange={(e) => setRsvpPreviewPrivacyAgreed(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-[color:var(--key)]"
+              />
+              <span>개인정보 수집 및 이용에 동의합니다.</span>
+            </label>
+          </div>
+          <div className="p-4 border-t border-border bg-white flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10"
+              onClick={() => setRsvpPreviewModalOpen(false)}
+            >
+              취소
+            </Button>
+            <Button
+              type="button"
+              className="h-9 px-3 rounded-lg bg-[color:var(--key)] hover:brightness-95 text-white text-[13px]"
+              disabled={!rsvpPreviewName.trim() || !rsvpPreviewPrivacyAgreed}
+              onClick={() => setRsvpPreviewModalOpen(false)}
+            >
+              참석여부 전달하기
             </Button>
           </div>
         </DialogContent>
