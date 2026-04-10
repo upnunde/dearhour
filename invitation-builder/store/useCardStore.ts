@@ -192,7 +192,7 @@ export const useCardStore = create<CardStore>((set) => ({
       bodyColor: '#666666',
       animation: '없음',
       introType: 'A',
-      imageMode: 'single',
+      imageMode: 'default',
       presetImage: DEFAULT_MAIN_PRESET_URL,
       transitionEffect: '없음',
       transitionIntervalSec: 3,

@@ -2,10 +2,10 @@
 
 import AppHeader from "@/components/AppHeader";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
-const invitations = [
+const baseInvitations = [
   {
     id: "moment-001",
     title: "모먼트",
@@ -31,6 +31,31 @@ export default function MyPage() {
   const [activeTab, setActiveTab] = useState<"invitation" | "payment">("invitation");
   const [shareModalInvitation, setShareModalInvitation] = useState<{ id: string; title: string } | null>(null);
   const [selectedShareVariant, setSelectedShareVariant] = useState<"basic" | "friends" | "family" | "coworkers">("basic");
+  const [invitations, setInvitations] = useState(baseInvitations);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("mcard:lastDraft");
+      if (!raw) return;
+      const draft = JSON.parse(raw) as { id?: string; title?: string; deleteAt?: string; status?: string };
+      if (!draft?.id || !draft?.title) return;
+      setInvitations((prev) => {
+        if (prev.some((item) => item.id === draft.id)) return prev;
+        return [
+          {
+            id: draft.id,
+            title: draft.title,
+            code: "DRAFT",
+            deleteAt: draft.deleteAt || "저장 직후",
+            status: draft.status || "결제 전",
+          },
+          ...prev,
+        ];
+      });
+    } catch {
+      // ignore malformed localStorage data
+    }
+  }, []);
 
   const handleShareCopy = async () => {
     if (!shareModalInvitation) return;

@@ -66,7 +66,7 @@ function buildOsmEmbedUrl(lat: number, lon: number) {
 function normalizeMainImageMode(m: unknown): 'single' | 'multi' | 'default' {
   if (m === 'single' || m === 'multi' || m === 'default') return m;
   if (m === 'none') return 'default';
-  return 'single';
+  return 'default';
 }
 
 function AppLabel({
@@ -3908,14 +3908,21 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
             className="bg-[color:var(--key)] text-white text-sm font-bold px-5 py-2 rounded-lg hover:bg-[color:var(--key-dark)] transition-colors shadow-none"
             onClick={() => {
               updateData("billing.savedAt", new Date().toISOString());
-              window.alert(
-                "저장되었습니다.\n\n마이페이지에서 제작한 청첩장 목록을 확인할 수 있어요.\n실제 하객 공개·링크 활용은 결제 완료 후 가능하며, 결제 전 미리보기에는 워터마크가 표시됩니다.",
-              );
               try {
                 window.localStorage.setItem('mcard:hasDraft', '1');
+                window.localStorage.setItem(
+                  'mcard:lastDraft',
+                  JSON.stringify({
+                    id: `draft-${Date.now()}`,
+                    title: String(data.main?.title || "새 청첩장").trim() || "새 청첩장",
+                    deleteAt: "저장 직후",
+                    status: "결제 전",
+                  }),
+                );
               } catch (_e) {
                 // ignore localStorage errors
               }
+              router.push('/mypage?saved=1');
             }}
           >
             저장하기
