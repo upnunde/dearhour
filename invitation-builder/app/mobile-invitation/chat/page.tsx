@@ -19,8 +19,8 @@ type Question = {
 };
 
 const questions: Question[] = [
-  { id: "groomName", question: "신랑의 이름을 알려 주세요.", placeholder: "예: 홍길동" },
-  { id: "brideName", question: "신부의 이름을 알려 주세요.", placeholder: "예: 김여사" },
+  { id: "groomName", question: "신랑의 이름을 알려 주세요.", placeholder: "예: 김신랑" },
+  { id: "brideName", question: "신부의 이름을 알려 주세요.", placeholder: "예: 김신부" },
   { id: "weddingDate", question: "예식 날짜를 입력해 주세요.", placeholder: "예: 2026-10-17" },
   { id: "weddingTime", question: "예식 시간을 입력해 주세요.", placeholder: "예: 오후 1:00" },
   { id: "venueName", question: "웨딩홀 이름을 알려 주세요.", placeholder: "예: OOO웨딩홀" },

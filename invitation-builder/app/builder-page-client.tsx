@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Palette, Music, Image as ImageIcon, Users, MessageSquare, MessageCircle, Phone, CalendarHeart, MapPin, Bell, Images, Wallet, BookOpen, Youtube, Share2, Shield, CheckCircle2, GripVertical, Play, Pause, VolumeX, Volume2, X, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, RotateCw, RefreshCcw, Move, ArrowUpDown, ClipboardCheck, Calendar, Settings } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
+import type { CardData } from "../store/useCardStore";
+import { DEFAULT_MAIN_PRESET_URL, MAIN_IMAGE_PRESETS } from "@/lib/main-image-presets";
+import { SHARE_THUMBNAIL_PRESETS } from "@/lib/share-thumbnail-presets";
 
 const DEFAULT_LOCATION_PREVIEW_COORDS = { lat: 37.579617, lon: 126.977041 }; // 경복궁
 
@@ -34,6 +37,368 @@ function buildOsmEmbedUrl(lat: number, lon: number) {
   const right = lon + delta;
   const top = lat + delta;
   return `https://www.openstreetmap.org/export/embed.html?bbox=${left}%2C${bottom}%2C${right}%2C${top}&layer=mapnik&marker=${lat}%2C${lon}`;
+}
+
+function normalizeMainImageMode(m: unknown): 'single' | 'multi' | 'default' {
+  if (m === 'single' || m === 'multi' || m === 'default') return m;
+  if (m === 'none') return 'default';
+  return 'single';
+}
+
+/** 이름·일정·장소 블록 — 인트로 타입(A~E). `hero`가 있으면 메인 이미지와 한 묶음으로 배치 */
+function HostsIntroPreview({ data, hero }: { data: CardData; hero?: React.ReactNode }) {
+  const introType = ((data.main as any).introType ?? "A") as "A" | "B" | "C" | "D" | "E";
+  const titleColor = data.main.titleColor;
+  const bodyColor = data.main.bodyColor;
+  const brideFirst = !!(data as any).i18n?.brideFirstInfo;
+  const groom = (data.hosts.groom.name ?? "").trim() || "신랑";
+  const bride = (data.hosts.bride.name ?? "").trim() || "신부";
+  const firstName = brideFirst ? bride : groom;
+  const secondName = brideFirst ? groom : bride;
+  const eventDateText = (data.eventInfo.date ?? "").trim();
+  const eventDate = eventDateText ? new Date(`${eventDateText}T00:00:00`) : null;
+  const hasValidDate = !!eventDate && Number.isFinite(eventDate.getTime());
+  const weekdayKo = hasValidDate ? ["일", "월", "화", "수", "목", "금", "토"][eventDate!.getDay()] : "";
+  const summaryDateLine = hasValidDate
+    ? `${eventDate!.getFullYear()}년 ${eventDate!.getMonth() + 1}월 ${eventDate!.getDate()}일 ${weekdayKo}요일`
+    : eventDateText;
+  const summaryTimeLine = (data.eventInfo.time ?? "").trim();
+  const venueName = String((data.eventInfo as any)?.venueName ?? "").trim();
+  const venueDetail = String((data.eventInfo as any)?.venueDetail ?? "").trim();
+  const venueDisplay = venueName
+    ? venueDetail && !venueName.includes(venueDetail)
+      ? `${venueName} ${venueDetail}`
+      : venueName
+    : "";
+  const yy = hasValidDate ? String(eventDate!.getFullYear()).slice(2) : "—";
+  const mm = hasValidDate ? String(eventDate!.getMonth() + 1).padStart(2, "0") : "—";
+  const dd = hasValidDate ? String(eventDate!.getDate()).padStart(2, "0") : "—";
+
+  const dateTimeLine = (
+    <>
+      {summaryDateLine}
+      {summaryTimeLine && ` ${summaryTimeLine}`}
+    </>
+  );
+
+  const venueBlock =
+    !!venueDisplay && (
+      <p className="text-[1em] leading-relaxed" style={{ color: bodyColor }}>
+        {venueDisplay}
+      </p>
+    );
+
+  /** 히어로는 라운드 없음. 타입별로 `full` 풀블리드 / `inset` 여백·채움 혼합 */
+  const renderHeroShell = (mode: "full" | "inset" = "full") => {
+    if (!hero) return null;
+    if (mode === "inset") {
+      return (
+        <div className="w-full max-w-[400px] mx-auto overflow-hidden rounded-none px-4 sm:px-6">
+          {hero}
+        </div>
+      );
+    }
+    return <div className="w-full overflow-hidden rounded-none">{hero}</div>;
+  };
+
+  const decoSideLine = (side: "left" | "right") => (
+    <div
+      className={`block w-px shrink-0 self-stretch min-h-[100px] sm:min-h-[120px] opacity-25 ${side === "left" ? "mr-0.5 sm:mr-1" : "ml-0.5 sm:ml-1"}`}
+      style={{ background: `linear-gradient(to bottom, transparent, ${titleColor}, transparent)` }}
+      aria-hidden
+    />
+  );
+
+  /* ---- 메인 이미지 + 인트로 통합 ---- */
+  if (hero) {
+    if (introType === "B") {
+      return (
+        <div className="w-full flex flex-col items-stretch">
+          <div className="px-5 pt-8 pb-2 flex flex-col items-center text-center gap-2">
+            <div className="flex items-baseline justify-center gap-2 sm:gap-3 font-serif">
+              <span className="text-[clamp(22px,6vw,30px)] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
+                {yy}
+              </span>
+              <span className="text-[14px] font-extralight opacity-35" style={{ color: bodyColor }}>
+                |
+              </span>
+              <span className="text-[clamp(22px,6vw,30px)] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
+                {mm}
+              </span>
+              <span className="text-[14px] font-extralight opacity-35" style={{ color: bodyColor }}>
+                |
+              </span>
+              <span className="text-[clamp(22px,6vw,30px)] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
+                {dd}
+              </span>
+            </div>
+            {hasValidDate && (
+              <p className="text-[13px] tracking-[0.3em] opacity-65" style={{ color: bodyColor }}>
+                {weekdayKo}요일
+              </p>
+            )}
+            <div className="w-12 h-px opacity-25 mt-2 mx-auto" style={{ backgroundColor: titleColor }} aria-hidden />
+          </div>
+          {/* B: 히어로는 가로 풀블리드, 상단 날짜만 패딩 + 구분 데코라인 */}
+          <div className="w-full">{renderHeroShell("full")}</div>
+          <div className="max-w-[340px] mx-auto w-full px-6 py-10 flex flex-col items-center text-center gap-4">
+            <p className="text-[1.05em] font-medium tracking-[0.04em]" style={{ color: titleColor }}>
+              {firstName}
+              <span className="mx-2 opacity-40">·</span>
+              {secondName}
+            </p>
+            <div className="space-y-2 w-full">
+              <p className="text-[0.95em] leading-relaxed" style={{ color: bodyColor }}>
+                {dateTimeLine}
+              </p>
+              {venueBlock}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (introType === "C") {
+      return (
+        <div className="w-full flex flex-col items-stretch">
+          <div className="px-6 pt-8 flex flex-col items-center text-center gap-2">
+            <p className="text-[1.15em] font-medium tracking-[0.02em]" style={{ color: titleColor }}>
+              {firstName}
+            </p>
+            <div className="w-12 h-px opacity-35" style={{ backgroundColor: titleColor }} aria-hidden />
+            <p className="text-[1.15em] font-medium tracking-[0.02em]" style={{ color: titleColor }}>
+              {secondName}
+            </p>
+          </div>
+          {/* C: 히어로는 인셋(좌우 여백)으로 카드형 채움 */}
+          <div className="mt-5 w-full">{renderHeroShell("inset")}</div>
+          <div className="max-w-[340px] mx-auto w-full px-6 py-8 space-y-2 text-center">
+            <div className="w-8 h-px mx-auto opacity-20 mb-3" style={{ backgroundColor: titleColor }} aria-hidden />
+            <p className="text-[1em] leading-relaxed" style={{ color: bodyColor }}>
+              {dateTimeLine}
+            </p>
+            {venueBlock}
+          </div>
+        </div>
+      );
+    }
+
+    if (introType === "D") {
+      return (
+        <div className="w-full flex flex-col items-stretch pt-10">
+          <div className="max-w-[340px] mx-auto w-full px-4 pt-0 flex flex-row items-center justify-center gap-2 text-center">
+            <p className="text-[22px] font-extralight flex-1 text-left leading-snug break-keep" style={{ color: bodyColor }}>
+              {firstName}
+            </p>
+            <div className="flex flex-col items-center justify-end shrink-0 px-1 min-w-[48px]">
+              <span className="text-[20px] font-semibold tabular-nums leading-none" style={{ color: titleColor }}>
+                {mm}
+              </span>
+              <div className="w-8 h-px my-1 opacity-35" style={{ backgroundColor: titleColor }} aria-hidden />
+              <span className="text-[20px] font-semibold tabular-nums leading-none" style={{ color: titleColor }}>
+                {dd}
+              </span>
+            </div>
+            <p className="text-[22px] font-extralight flex-1 text-center leading-snug break-keep" style={{ color: bodyColor }}>
+              {secondName}
+            </p>
+          </div>
+          {/* D: 좁은 바깥 여백 + 세로 데코 라인, 히어로는 중앙 풀블리드 */}
+          <div className="mt-4 flex flex-row items-stretch gap-0 px-1 sm:px-2">
+            {decoSideLine("left")}
+            <div className="flex-1 min-w-0">{renderHeroShell("full")}</div>
+            {decoSideLine("right")}
+          </div>
+          <div className="max-w-[340px] mx-auto w-full px-6 py-8 space-y-2 text-center">
+            <p className="text-[0.95em] leading-relaxed" style={{ color: bodyColor }}>
+              {dateTimeLine}
+            </p>
+            {venueBlock}
+          </div>
+        </div>
+      );
+    }
+
+    if (introType === "E") {
+      return (
+        <div className="w-full flex flex-col items-stretch">
+          <div className="px-8 pt-8 pb-2 flex flex-col items-center text-center">
+            <p className="text-[1.25em] font-medium tracking-[0.08em]" style={{ color: titleColor }}>
+              {firstName}{" "}
+              <span className="inline-block opacity-40 mx-0.5 font-normal text-[0.9em]" aria-hidden>
+                &
+              </span>{" "}
+              {secondName}
+            </p>
+            <div className="w-14 h-px opacity-30 mt-4 mx-auto" style={{ backgroundColor: titleColor }} aria-hidden />
+          </div>
+          {/* E: 제목은 패딩, 히어로는 가로 풀블리드 */}
+          <div className="w-full pt-3">{renderHeroShell("full")}</div>
+          <div className="max-w-[340px] mx-auto w-full px-6 py-9 space-y-1.5 text-[0.95em] text-center">
+            <p className="leading-relaxed" style={{ color: bodyColor }}>
+              {dateTimeLine}
+            </p>
+            {venueBlock}
+          </div>
+        </div>
+      );
+    }
+
+    /* A + hero: 이미지 → 텍스트 (이름 위 장식선, 양옆 여백) */
+    return (
+      <div className="w-full flex flex-col items-stretch">
+        <div className="w-full">{renderHeroShell("full")}</div>
+        <div className="max-w-[340px] mx-auto w-full px-6 py-[50px] space-y-5 text-center">
+          <div className="flex justify-center">
+            <div className="h-px w-12 opacity-25" style={{ backgroundColor: titleColor }} aria-hidden />
+          </div>
+          <p className="flex justify-center items-center text-[22px] font-medium tracking-[0.02em] leading-none" style={{ color: titleColor }}>
+            {firstName}
+            <span className="mx-2 inline-flex items-center align-middle leading-none" style={{ color: titleColor }}>
+              ·
+            </span>
+            {secondName}
+          </p>
+          <div className="space-y-2">
+            <p className="text-[1em] leading-relaxed whitespace-nowrap" style={{ color: bodyColor }}>
+              {dateTimeLine}
+            </p>
+            {venueBlock}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ---- 텍스트만 (hosts만 켜진 경우 등) ---- */
+  if (introType === "B") {
+    return (
+      <div className="w-full max-w-[340px] mx-auto flex flex-col items-center text-center gap-4">
+        <div className="flex items-baseline justify-center gap-2 sm:gap-3 font-serif">
+          <span className="text-[clamp(26px,7vw,34px)] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
+            {yy}
+          </span>
+          <span className="text-[15px] font-extralight opacity-40" style={{ color: bodyColor }}>
+            |
+          </span>
+          <span className="text-[clamp(26px,7vw,34px)] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
+            {mm}
+          </span>
+          <span className="text-[15px] font-extralight opacity-40" style={{ color: bodyColor }}>
+            |
+          </span>
+          <span className="text-[clamp(26px,7vw,34px)] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
+            {dd}
+          </span>
+        </div>
+        {hasValidDate && (
+          <p className="text-[10px] tracking-[0.35em] uppercase opacity-70" style={{ color: bodyColor }}>
+            {weekdayKo}요일
+          </p>
+        )}
+        <p className="text-[1.05em] font-medium tracking-[0.04em]" style={{ color: titleColor }}>
+          {firstName}
+          <span className="mx-2 opacity-40">·</span>
+          {secondName}
+        </p>
+        <div className="space-y-2 w-full">
+          <p className="text-[0.95em] leading-relaxed" style={{ color: bodyColor }}>
+            {dateTimeLine}
+          </p>
+          {venueBlock}
+        </div>
+      </div>
+    );
+  }
+
+  if (introType === "C") {
+    return (
+      <div className="w-full max-w-[340px] mx-auto flex flex-col items-center text-center gap-3">
+        <p className="text-[1.2em] font-medium tracking-[0.02em]" style={{ color: titleColor }}>
+          {firstName}
+        </p>
+        <div className="w-10 h-px opacity-30" style={{ backgroundColor: titleColor }} aria-hidden />
+        <p className="text-[1.2em] font-medium tracking-[0.02em]" style={{ color: titleColor }}>
+          {secondName}
+        </p>
+        <div className="mt-2 space-y-2 w-full">
+          <p className="text-[1em] leading-relaxed" style={{ color: bodyColor }}>
+            {dateTimeLine}
+          </p>
+          {venueBlock}
+        </div>
+      </div>
+    );
+  }
+
+  if (introType === "D") {
+    return (
+      <div className="w-full max-w-[340px] mx-auto flex flex-col items-stretch text-center gap-5">
+        <div className="flex flex-row items-center justify-center gap-2 px-1">
+          <p className="text-[13px] flex-1 text-left leading-snug break-keep" style={{ color: bodyColor }}>
+            {firstName}
+          </p>
+          <div className="flex flex-col items-center justify-end shrink-0 px-1 min-w-[52px]">
+            <span className="text-[22px] font-semibold tabular-nums leading-none" style={{ color: titleColor }}>
+              {mm}
+            </span>
+            <div className="w-9 h-px my-1 opacity-35" style={{ backgroundColor: titleColor }} aria-hidden />
+            <span className="text-[22px] font-semibold tabular-nums leading-none" style={{ color: titleColor }}>
+              {dd}
+            </span>
+          </div>
+          <p className="text-[13px] flex-1 text-right leading-snug break-keep" style={{ color: bodyColor }}>
+            {secondName}
+          </p>
+        </div>
+        <div className="space-y-2">
+          <p className="text-[0.95em] leading-relaxed" style={{ color: bodyColor }}>
+            {dateTimeLine}
+          </p>
+          {venueBlock}
+        </div>
+      </div>
+    );
+  }
+
+  if (introType === "E") {
+    return (
+      <div className="w-full max-w-[340px] mx-auto flex flex-col items-center text-center gap-4">
+        <p className="text-[1.35em] font-medium tracking-[0.06em]" style={{ color: titleColor }}>
+          {firstName}{" "}
+          <span className="inline-block opacity-45 mx-0.5 font-normal text-[0.95em]" aria-hidden>
+            &
+          </span>{" "}
+          {secondName}
+        </p>
+        <div className="w-12 h-px opacity-25 mx-auto" style={{ backgroundColor: titleColor }} aria-hidden />
+        <div className="space-y-1.5 text-[0.95em] w-full">
+          <p className="leading-relaxed" style={{ color: bodyColor }}>
+            {dateTimeLine}
+          </p>
+          {venueBlock}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-[340px] mx-auto space-y-5">
+      <p className="flex justify-center items-center text-[22px] font-medium tracking-[0.02em] leading-none" style={{ color: titleColor }}>
+        {firstName}
+        <span className="mx-2 inline-flex items-center align-middle leading-none" style={{ color: titleColor }}>
+          ·
+        </span>
+        {secondName}
+      </p>
+      <div className="space-y-2">
+        <p className="text-[1em] leading-relaxed whitespace-nowrap" style={{ color: bodyColor }}>
+          {dateTimeLine}
+        </p>
+        {venueBlock}
+      </div>
+    </div>
+  );
 }
 
 function AppLabel({
@@ -238,7 +603,6 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useCardStore } from "../store/useCardStore";
-import type { CardData } from "../store/useCardStore";
 import { useSortable } from "@/lib/useSortable";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import GuestPhotoUploadForm from "@/components/GuestPhotoUploadForm";
@@ -718,7 +1082,7 @@ function MultiImageGrid({
           <div
             key={slot.id}
             {...wrapperProps}
-            className={`${wrapperProps.className} relative w-[100px] aspect-[9/16] group`}
+            className={`${wrapperProps.className} relative w-[100px] aspect-[3/4] group`}
           >
             <button
               type="button"
@@ -789,7 +1153,7 @@ function GalleryImageGrid({
     items: slots,
     onReorder: (reordered) => onChange(reordered.map((x) => x.src)),
   });
-  const thumbAspectClass = imageRatio === "square" ? "aspect-square" : "aspect-[9/16]";
+  const thumbAspectClass = imageRatio === "square" ? "aspect-square" : "aspect-[3/4]";
 
   return (
     <div className="w-full flex flex-col gap-2">
@@ -923,6 +1287,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const [activeInvitationTabId, setActiveInvitationTabId] = useState<string>("");
   const [editingInvitationTabId, setEditingInvitationTabId] = useState<string | null>(null);
   const [editingInvitationTabName, setEditingInvitationTabName] = useState("");
+  const [invitationTabRemoveConfirmId, setInvitationTabRemoveConfirmId] = useState<string | null>(null);
   const isSwitchingInvitationRef = useRef(false);
   const onboardingAppliedRef = useRef(false);
   const editorAccessGuardAppliedRef = useRef(false);
@@ -985,6 +1350,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const [sharePreviewOpen, setSharePreviewOpen] = useState(false);
   const [shareThumbnailPickerOpen, setShareThumbnailPickerOpen] = useState(false);
   const [greetingThumbnailPickerOpen, setGreetingThumbnailPickerOpen] = useState(false);
+  const [mainPresetPickerOpen, setMainPresetPickerOpen] = useState(false);
   const [rsvpPreviewModalOpen, setRsvpPreviewModalOpen] = useState(false);
   const [rsvpPreviewSide, setRsvpPreviewSide] = useState<'신랑측' | '신부측'>('신랑측');
   const [rsvpPreviewIntent, setRsvpPreviewIntent] = useState<'참석' | '불참'>('참석');
@@ -994,7 +1360,10 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const [galleryDetailOpen, setGalleryDetailOpen] = useState(false);
   const [galleryDetailIndex, setGalleryDetailIndex] = useState(0);
   const previewScrollRef = useRef<HTMLDivElement | null>(null);
-  const previewFrameRef = useRef<HTMLDivElement | null>(null);
+  const [previewPortalContainer, setPreviewPortalContainer] = useState<HTMLDivElement | null>(null);
+  const setPreviewFrameNode = useCallback((node: HTMLDivElement | null) => {
+    setPreviewPortalContainer(node);
+  }, []);
   const sidebarRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -1128,82 +1497,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       updateData('share.title', composedTitle);
     }
   }, [initialSearchParams, updateData]);
-
-  // 공유 섹션 기본 썸네일 프리셋 (SVG를 data-uri로 생성)
-  const shareThumbnailPresets = useMemo(() => {
-    const makeDataUri = (svg: string) =>
-      `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-
-    const makeBase = (bg1: string, bg2: string, inner: string) => `
-      <svg xmlns="http://www.w3.org/2000/svg" width="300" height="157" viewBox="0 0 300 157">
-        <defs>
-          <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="${bg1}"/>
-            <stop offset="1" stop-color="${bg2}"/>
-          </linearGradient>
-        </defs>
-        <rect width="300" height="157" rx="22" fill="url(#bg)"/>
-        <rect x="0" y="0" width="300" height="157" rx="22" fill="rgba(255,255,255,0.12)"/>
-        ${inner}
-      </svg>
-    `;
-
-    const heart = (color: string) => `
-      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="${color}" transform="translate(132 45) scale(4.2)"/>
-      <path d="M150 87c-10-7-22-17-22-29 0-6 5-11 11-11 4 0 8 3 11 7 3-4 7-7 11-7 6 0 11 5 11 11 0 12-12 22-22 29z" fill="rgba(255,255,255,0.25)"/>
-    `;
-
-    const ring = (stroke: string) => `
-      <g fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round">
-        <path d="M150 54c-44 0-80 25-80 54s36 54 80 54 80-25 80-54-36-54-80-54z" opacity="0.12"/>
-        <circle cx="150" cy="90" r="44"/>
-        <circle cx="150" cy="90" r="30" stroke="rgba(255,255,255,0.35)" stroke-width="6"/>
-      </g>
-      <path d="M150 56c-26 6-42 22-42 34 0 14 18 31 42 34 24-3 42-20 42-34 0-12-16-28-42-34z" fill="rgba(255,255,255,0.12)"/>
-    `;
-
-    const flower = (color: string) => `
-      <g opacity="0.95">
-        ${[0, 60, 120, 180, 240, 300].map((a) => {
-          const rad = (a * Math.PI) / 180;
-          const x = 150 + Math.cos(rad) * 36;
-          const y = 90 + Math.sin(rad) * 26;
-          return `<circle cx="${x}" cy="${y}" r="14" fill="${color}" opacity="0.75"/>`;
-        }).join("")}
-        <circle cx="150" cy="90" r="16" fill="${color}"/>
-        <circle cx="150" cy="90" r="8" fill="rgba(255,255,255,0.35)"/>
-      </g>
-    `;
-
-    const bow = (color: string) => `
-      <path d="M135 70c-18-14-40-12-52 2-8 10-7 23 2 32 12 12 31 12 46 4 9-5 15-12 17-16z" fill="${color}" opacity="0.8"/>
-      <path d="M165 70c18-14 40-12 52 2 8 10 7 23-2 32-12 12-31 12-46 4-9-5-15-12-17-16z" fill="${color}" opacity="0.8"/>
-      <path d="M150 74c-10 0-18 8-18 18s8 18 18 18 18-8 18-18-8-18-18-18z" fill="${color}"/>
-      <path d="M150 92c-18 0-30 10-30 18 0 6 12 14 30 14s30-8 30-14c0-8-12-18-30-18z" fill="rgba(255,255,255,0.18)"/>
-    `;
-
-    const sparkle = (color: string) => `
-      <g>
-        <path d="M150 52l10 24 24 10-24 10-10 24-10-24-24-10 24-10z" fill="${color}"/>
-        <circle cx="210" cy="95" r="10" fill="${color}" opacity="0.75"/>
-        <circle cx="90" cy="95" r="8" fill="${color}" opacity="0.65"/>
-        <path d="M62 78l4 9 9 4-9 4-4 9-4-9-9-4 9-4z" fill="rgba(255,255,255,0.35)"/>
-      </g>
-    `;
-
-    const presets = [
-      { id: 'heart', label: '하트', bg1: '#FCE7F3', bg2: '#EDE0FD', icon: heart('#7A2FEB') },
-      { id: 'flower', label: '플라워', bg1: '#EAF8F5', bg2: '#FDEFF6', icon: flower('#2D8C7F') },
-      { id: 'ring', label: '링', bg1: '#EEF3FF', bg2: '#EDE0FD', icon: ring('#5D76C9') },
-      { id: 'bow', label: '리본', bg1: '#FFFDFE', bg2: '#F3ECFF', icon: bow('#7A2FEB') },
-      { id: 'sparkle', label: '반짝', bg1: '#F8F9FA', bg2: '#EDE0FD', icon: sparkle('#7A2FEB') },
-    ];
-
-    return presets.map((p) => ({
-      ...p,
-      url: p.id === 'flower' ? '/chrysanthemum.svg' : makeDataUri(makeBase(p.bg1, p.bg2, p.icon)),
-    }));
-  }, []);
 
   const flowerThumbnailPresets = useMemo(
     () => [
@@ -2087,7 +2380,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   }, [data.location.address]);
 
   useEffect(() => {
-    const mode = ((data.main as any).imageMode ?? 'single') as 'single' | 'multi';
+    const mode = normalizeMainImageMode((data.main as any).imageMode);
     const imagesRaw = Array.isArray((data.main as any).images) ? (data.main as any).images : [];
     const images = (imagesRaw as any[]).filter((u) => typeof u === 'string' && u.trim().length > 0) as string[];
     if (mode !== 'multi' || images.length < 2) {
@@ -2184,6 +2477,9 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           id !== "i18n",
       ),
   ];
+  /** 메인 히어로 + 신랑·신부 인트로를 한 블록으로 묶어 인트로 타입(A~E) 레이아웃 적용 */
+  const mergeMainAndHostsIntro =
+    layoutOrder.includes("main") && layoutOrder.includes("hosts");
   const orderedItems = [...requiredItems, ...orderedContentOptionalItems, ...otherOptionItems];
 
   const sidebarSortable = useSortable({
@@ -2235,7 +2531,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     if (!canvas || !imageEditorTarget) return;
 
     const cropH = canvas.height;
-    const cropRatio = imageEditorAspect === 'square' ? 1 : (9 / 16);
+    const cropRatio = imageEditorAspect === 'square' ? 1 : (3 / 4);
     const cropW = Math.round(cropH * cropRatio);
     const offsetX = Math.round((canvas.width - cropW) / 2);
 
@@ -2321,19 +2617,34 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const renderPreviewSection = (sectionId: string) => {
     switch (sectionId) {
       case 'main': {
+        const mode = normalizeMainImageMode((data.main as any).imageMode);
+        if (mode === 'default') {
+          const presetUrl = String((data.main as any).presetImage ?? '').trim() || DEFAULT_MAIN_PRESET_URL;
+          return (
+            <div className="w-full flex flex-col items-stretch gap-0">
+              <div className="w-full aspect-square max-w-full mx-auto rounded-none overflow-hidden relative bg-[color:var(--surface-20)]">
+                <div
+                  className="absolute inset-0 bg-center bg-cover"
+                  style={{ backgroundImage: `url(${presetUrl})` }}
+                />
+              </div>
+            </div>
+          );
+        }
         const groomName = data.hosts.groom.name;
         const brideName = data.hosts.bride.name;
         const brideFirstInfo = !!((data as any).i18n?.brideFirstInfo ?? false);
         const firstDisplayName = brideFirstInfo ? brideName : groomName;
         const secondDisplayName = brideFirstInfo ? groomName : brideName;
-        const mode = ((data.main as any).imageMode ?? 'single') as 'single' | 'multi';
         const normalizedEffect = normalizeTransitionEffect((data.main as any).transitionEffect ?? '없음');
         const transitionEffect = normalizedEffect === '랜덤' ? mainPreviewRandomEffect : normalizedEffect;
         const imagesRaw = Array.isArray((data.main as any).images) ? (data.main as any).images : [];
         const images = (imagesRaw as any[]).filter((u) => typeof u === 'string' && u.trim().length > 0) as string[];
         const singleUrl = typeof (data.main as any).image === 'string' ? (data.main as any).image : '';
         const currentUrl =
-          mode === 'multi' && images.length > 0 ? images[Math.min(mainPreviewIndex, images.length - 1)] : singleUrl;
+          mode === 'multi' && images.length > 0
+            ? images[Math.min(mainPreviewIndex, images.length - 1)]
+            : singleUrl;
         const prevUrl =
           mode === 'multi' && mainPreviewPrevIndex !== null && images.length > 0
             ? images[Math.min(mainPreviewPrevIndex, images.length - 1)]
@@ -2367,7 +2678,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
         return (
           <div className="w-full flex flex-col items-stretch gap-0">
-            <div className="w-full aspect-[9/16] rounded-none flex flex-col justify-end items-stretch text-white shadow-none overflow-hidden relative">
+            <div className="w-full aspect-[3/4] rounded-none flex flex-col justify-end items-stretch text-white shadow-none overflow-hidden relative">
               {/* 배경 이미지 레이어 */}
               {transitionEffect === '디졸브' || transitionEffect === '크로스페이드' ? (
                 <>
@@ -2655,7 +2966,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                     {contactRows.map((row) => {
                       const phone = (row.phone ?? '').trim();
                       return (
-                      <div key={row.role} className="rounded-xl mb-0 bg-white px-4 py-2.5 flex items-center justify-between gap-2">
+                      <div key={row.role} className="rounded-xl mb-0 bg-white px-4 py-2 flex items-center justify-between gap-2">
                         <div className="min-w-0 text-left">
                           <p className="text-[15px] font-medium tracking-[0.06em] text-on-surface-30">{row.role}</p>
                         </div>
@@ -2751,14 +3062,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           </>
         ) : null;
 
-        let monthLabel = "";
         let calendarCells: Array<{ key: string; day?: number; isEvent?: boolean }> = [];
         if (showCalendar && isValidEventDate) {
           const year = eventDate!.getFullYear();
           const month = eventDate!.getMonth();
           const firstWeekday = new Date(year, month, 1).getDay();
           const lastDay = new Date(year, month + 1, 0).getDate();
-          monthLabel = `${year}.${String(month + 1).padStart(2, "0")}`;
           for (let i = 0; i < firstWeekday; i += 1) {
             calendarCells.push({ key: `blank-${i}` });
           }
@@ -2779,13 +3088,13 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           >
             {showCalendar && isValidEventDate && (
               <div className="w-full rounded-none border-0 px-0 py-10 text-left shadow-none mt-0 mb-0 flex flex-col gap-10">
-                <div className="flex h-fit items-center justify-center mx-0">
+                <div className="flex h-fit flex-col items-center justify-center mx-0 mb-0">
                     <div className="text-center text-[16px] text-[color:var(--on-primary-container)]/80 mb-0">
                       <p>{formattedDateWithWeekday}</p>
                       <p className="text-[18px] mt-1 font-medium">{data.eventInfo.time}</p>
-                      <div className="mx-auto mt-3 h-px w-80 bg-[color:var(--key)]/45" aria-hidden />
                     </div>
                 </div>
+                <div className="mx-[40px] mt-0 h-px w-80 bg-[color:var(--key)]/45" aria-hidden />
                 <div className="mx-10">
                   <div className="grid grid-cols-7 gap-1 px-0 text-center text-[clamp(12px,1.2vw,12px)] text-[color:var(--on-primary-container)]/70">
                     {["일", "월", "화", "수", "목", "금", "토"].map((w) => (
@@ -2813,7 +3122,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 </div>
                 {ddayMessage && (
                   <>
-                    <div className="mx-auto mt-3 h-px w-80 bg-[color:var(--key)]/45" aria-hidden />
+                    <div className="mx-[40px] mt-0 h-px w-80 bg-[color:var(--key)]/45" aria-hidden />
                     <div className="w-full text-center text-[16px] font-normal text-on-surface-10 leading-none">
                       {ddayMessage}
                     </div>
@@ -2965,11 +3274,11 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
                   {/* 하단 앱 전송 바 (캡처 스타일) */}
                   {appLinks && (
-                    <div className="w-full bg-[color:var(--surface-10)] border-t border-black/5 grid grid-cols-3 divide-x divide-black/10 text-[13px]">
+                    <div className="preview-map-app-links w-full bg-[color:var(--surface-10)] border-t border-black/5 grid grid-cols-3 divide-x divide-black/10 text-[13px]">
                       <a
                         href={appLinks.naver.scheme}
                         onClick={openAppOrWeb(appLinks.naver.scheme, appLinks.naver.web)}
-                        className="h-12 flex items-center justify-center gap-2 text-on-surface-10 min-w-0 px-2"
+                        className="h-12 flex items-center justify-center gap-1 text-on-surface-10 min-w-0 px-2"
                       >
                         <span className="w-6 h-6 rounded-md bg-white border border-black/10 flex items-center justify-center text-[12px] font-bold text-green-600">
                           N
@@ -2979,7 +3288,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       <a
                         href={appLinks.kakao.scheme}
                         onClick={openAppOrWeb(appLinks.kakao.scheme, appLinks.kakao.web)}
-                        className="h-12 flex items-center justify-center gap-2 text-on-surface-10 min-w-0 px-2"
+                        className="h-12 flex items-center justify-center gap-1 text-on-surface-10 min-w-0 px-2"
                       >
                         <span className="w-6 h-6 rounded-md bg-[#FEE500] border border-black/10 flex items-center justify-center text-[12px] font-black text-black">
                           K
@@ -2989,7 +3298,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       <a
                         href={appLinks.tmap.scheme}
                         onClick={openAppOrWeb(appLinks.tmap.scheme, appLinks.tmap.web)}
-                        className="h-12 flex items-center justify-center gap-2 text-on-surface-10 min-w-0 px-2"
+                        className="h-12 flex items-center justify-center gap-1 text-on-surface-10 min-w-0 px-2"
                       >
                         <span className="w-6 h-6 rounded-md bg-white border border-black/10 flex items-center justify-center text-[12px] font-black text-[#4B6BFF]">
                           T
@@ -3432,7 +3741,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 </Button>
               </>
             )}
-            {guestbookComposerOpen && previewFrameRef.current &&
+            {guestbookComposerOpen && previewPortalContainer &&
               createPortal(
                 <div
                   className="absolute inset-0 z-40 bg-black/45 p-4 flex items-center justify-center"
@@ -3509,7 +3818,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                     </div>
                   </div>
                 </div>,
-                previewFrameRef.current
+                previewPortalContainer
               )}
             <div className="flex flex-wrap gap-2 text-[0.75em] text-on-surface-30">
               {hasPassword && <span>비밀번호 보호</span>}
@@ -3773,7 +4082,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           style={{ width: editorWidth }}
         >
           <div ref={editorScrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-smooth no-scrollbar">
-            <div className="px-4 pt-4 pb-2 bg-[color:var(--surface-20)]">
+            <div className="px-4 pt-4 pb-0 bg-[color:var(--surface-20)]">
               <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
                 {invitationTabs.map((tab) => {
                   const isActive = tab.id === activeInvitationTabId;
@@ -3796,18 +4105,18 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               setEditingInvitationTabName("");
                             }
                           }}
-                          className="h-8 w-[120px] rounded-lg border border-[color:var(--key)] bg-white px-2 text-xs font-semibold text-[color:var(--key)] outline-none"
+                          className="h-10 w-[120px] rounded-lg border border-[color:var(--key)] bg-white px-2 text-xs font-semibold text-[color:var(--key)] outline-none"
                         />
                       ) : (
                         <div
-                          className={`inline-flex h-8 shrink-0 items-center rounded-lg border bg-white transition-all ${
+                          className={`inline-flex h-10 shrink-0 items-center rounded-lg border bg-white transition-all ${
                             isActive ? "border-[color:var(--key)] text-[color:var(--key)]" : "border-border text-on-surface-20"
                           }`}
                         >
                           <button
                             type="button"
                             onClick={() => switchInvitationTab(tab.id)}
-                            className={`h-full px-3 text-xs font-semibold ${isActive ? "text-[color:var(--key)]" : "text-on-surface-20"}`}
+                            className={`h-full min-h-[40px] px-3 text-xs font-semibold ${isActive ? "text-[color:var(--key)]" : "text-on-surface-20"}`}
                           >
                             {tab.label}
                           </button>
@@ -3819,22 +4128,22 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             <button
                               type="button"
                               onClick={() => startEditInvitationTabName(tab.id, tab.label)}
-                              className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border bg-white text-on-surface-20 hover:bg-slate-50"
+                              className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border bg-white text-on-surface-20 hover:bg-slate-50"
                               aria-label={`${tab.label} 탭 이름 수정`}
                               title="탭 이름 수정"
                             >
-                              <Pencil className="h-3 w-3" />
+                              <Pencil className="h-3.5 w-3.5" />
                             </button>
                             {!isDefaultTab ? (
                               <button
                                 type="button"
-                                onClick={() => removeInvitationTab(tab.id)}
+                                onClick={() => setInvitationTabRemoveConfirmId(tab.id)}
                                 disabled={invitationTabs.length <= 1}
-                                className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border bg-white text-on-surface-20 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border bg-white text-on-surface-20 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                                 aria-label={`${tab.label} 탭 제거`}
                                 title={invitationTabs.length <= 1 ? "탭은 최소 1개 유지됩니다" : "탭 제거"}
                               >
-                                <Trash2 className="h-3 w-3" />
+                                <Trash2 className="h-3.5 w-3.5" />
                               </button>
                             ) : null}
                           </div>
@@ -3846,12 +4155,60 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 <button
                   type="button"
                   onClick={addInvitationTab}
-                  className="inline-flex h-8 shrink-0 items-center rounded-lg border border-dashed border-border bg-white px-3 text-xs font-semibold text-on-surface-20 hover:bg-slate-50"
+                  className="inline-flex h-10 shrink-0 items-center rounded-lg border border-dashed border-border bg-white px-3 text-xs font-semibold text-on-surface-20 hover:bg-slate-50"
                 >
                   + 탭 추가
                 </button>
               </div>
             </div>
+            {invitationTabRemoveConfirmId !== null &&
+              createPortal(
+                <div
+                  className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50"
+                  onClick={() => setInvitationTabRemoveConfirmId(null)}
+                  role="presentation"
+                >
+                  <div
+                    className="w-full max-w-sm rounded-2xl bg-white border border-[color:var(--border-10)] p-6 flex flex-col gap-4 shadow-lg"
+                    onClick={(e) => e.stopPropagation()}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="invitation-tab-remove-title"
+                  >
+                    <h3 id="invitation-tab-remove-title" className="text-[15px] font-semibold text-on-surface-10">
+                      탭 삭제
+                    </h3>
+                    <p className="text-[13px] text-on-surface-20 leading-relaxed">
+                      &quot;
+                      {invitationTabs.find((t) => t.id === invitationTabRemoveConfirmId)?.label ?? ""}
+                      &quot; 탭을 삭제할까요? 이 탭의 편집 내용은 복구할 수 없습니다.
+                    </p>
+                    <div className="flex justify-end gap-2 pt-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-10 px-5 rounded-lg text-[14px] font-semibold border-[color:var(--border-30)] bg-white text-on-surface-20 hover:bg-slate-50"
+                        onClick={() => setInvitationTabRemoveConfirmId(null)}
+                      >
+                        취소
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        className="h-10 px-5 rounded-lg text-[14px] font-semibold"
+                        onClick={() => {
+                          if (invitationTabRemoveConfirmId === null) return;
+                          removeInvitationTab(invitationTabRemoveConfirmId);
+                          setInvitationTabRemoveConfirmId(null);
+                        }}
+                      >
+                        삭제
+                      </Button>
+                    </div>
+                  </div>
+                </div>,
+                document.body,
+              )}
             <div
               className="p-4 flex-1 flex flex-col gap-3 [&>div]:p-0"
               style={{ backgroundColor: 'var(--surface-20)' }}
@@ -4082,14 +4439,43 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 active={((data.main as any).imageMode ?? 'single') === 'multi'}
                                 onClick={() => updateData('main.imageMode', 'multi')}
                               />
+                              <OptionChip
+                                label="기본 이미지"
+                                active={normalizeMainImageMode((data.main as any).imageMode) === 'default'}
+                                onClick={() => {
+                                  updateData('main.imageMode', 'default');
+                                  if (!String((data.main as any).presetImage ?? '').trim()) {
+                                    updateData('main.presetImage', DEFAULT_MAIN_PRESET_URL);
+                                  }
+                                }}
+                              />
                             </div>
                           </FormItem>
 
                           <FormItem label="사진">
                             <div className="flex flex-col gap-2 w-full">
-                              {((data.main as any).imageMode ?? 'single') === 'single' ? (
+                              {normalizeMainImageMode((data.main as any).imageMode) === 'default' ? (
+                                <div className="w-full min-h-[120px] flex items-start gap-3">
+                                  <div className="w-[120px] h-[120px] rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden flex items-center justify-center shrink-0">
+                                    <img
+                                      src={String((data.main as any).presetImage ?? '').trim() || DEFAULT_MAIN_PRESET_URL}
+                                      alt="메인 기본 이미지 미리보기"
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                  <div className="h-full flex flex-col justify-start gap-2 min-w-0">
+                                    <button
+                                      type="button"
+                                      className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none flex-shrink-0 w-fit self-start"
+                                      onClick={() => setMainPresetPickerOpen(true)}
+                                    >
+                                      이미지 고르기
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : normalizeMainImageMode((data.main as any).imageMode) === 'single' ? (
                                 <div className="w-full">
-                                  <div className="relative w-[120px] aspect-[9/16] group">
+                                  <div className="relative w-[120px] aspect-[3/4] group">
                                     <button
                                       type="button"
                                       className={[
@@ -6461,7 +6847,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           {/* 바깥 컨테이너는 고정, 내부 프레임만 스크롤 */}
           <div className="flex-1 min-h-0 flex justify-center w-full max-w-[400px] min-h-full bg-transparent items-stretch shadow-none">
             <div
-              ref={previewFrameRef}
+              ref={setPreviewFrameNode}
               className="preview-font-floor w-full border border-border rounded-lg bg-white flex flex-col items-stretch text-center overflow-hidden relative"
               style={
                 {
@@ -6487,7 +6873,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 themeColor={selectedKeyColorPreset.key}
               />
               <div ref={previewScrollRef} className="flex-1 overflow-y-auto no-scrollbar">
-                {layoutOrder.includes('main') && (
+                {mergeMainAndHostsIntro ? (
                   <div
                     data-preview-section-id="main"
                     className={`w-full flex flex-col items-stretch text-center ${data.theme.scrollEffect
@@ -6497,51 +6883,29 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       : 'opacity-100 translate-y-0'
                     } transition-[opacity,transform]`}
                   >
-                    {renderPreviewSection('main')}
+                    <HostsIntroPreview data={data} hero={renderPreviewSection('main')} />
                   </div>
-                )}
-                {layoutOrder.includes('hosts') && (
-                  <div className="w-full py-[50px] px-6 flex flex-col items-center text-center">
-                    <div className="w-full max-w-[340px] mx-auto space-y-5">
-                      <p
-                        className="flex justify-center items-center text-[22px] font-medium tracking-[0.02em] leading-none"
-                        style={{ color: data.main.titleColor }}
+                ) : (
+                  <>
+                    {layoutOrder.includes('main') && (
+                      <div
+                        data-preview-section-id="main"
+                        className={`w-full flex flex-col items-stretch text-center ${data.theme.scrollEffect
+                          ? (previewVisibleSections.main
+                            ? 'opacity-100 translate-y-0 duration-[750ms] ease-out'
+                            : 'opacity-0 translate-y-3 duration-[750ms] ease-out')
+                          : 'opacity-100 translate-y-0'
+                        } transition-[opacity,transform]`}
                       >
-                        {(((data as any).i18n?.brideFirstInfo ?? false)
-                          ? ((data.hosts.bride.name ?? '').trim() || '신부')
-                          : ((data.hosts.groom.name ?? '').trim() || '신랑'))}
-                        <span className="mx-2 inline-flex items-center align-middle leading-none" style={{ color: data.main.titleColor }}>·</span>
-                        {(((data as any).i18n?.brideFirstInfo ?? false)
-                          ? ((data.hosts.groom.name ?? '').trim() || '신랑')
-                          : ((data.hosts.bride.name ?? '').trim() || '신부'))}
-                      </p>
-                      <div className="space-y-2">
-                        <p className="text-[1em] leading-relaxed whitespace-nowrap" style={{ color: data.main.bodyColor }}>
-                          {(() => {
-                            const eventDateText = (data.eventInfo.date ?? '').trim();
-                            const eventDate = eventDateText ? new Date(`${eventDateText}T00:00:00`) : null;
-                            const hasValidDate = !!eventDate && Number.isFinite(eventDate.getTime());
-                            const weekday = hasValidDate
-                              ? ['일', '월', '화', '수', '목', '금', '토'][eventDate!.getDay()]
-                              : '';
-                            const summaryDateLine = hasValidDate
-                              ? `${eventDate!.getFullYear()}년 ${eventDate!.getMonth() + 1}월 ${eventDate!.getDate()}일 ${weekday}요일`
-                              : eventDateText;
-                            const summaryTimeLine = (data.eventInfo.time ?? '').trim();
-                            return (
-                              <>
-                                {summaryDateLine}
-                                {summaryTimeLine && ` ${summaryTimeLine}`}
-                              </>
-                            );
-                          })()}
-                        </p>
-                        {!!(data.eventInfo.venueName ?? '').trim() && (
-                          <p className="text-[1em] leading-relaxed" style={{ color: data.main.bodyColor }}>{(data.eventInfo.venueName ?? '').trim()}</p>
-                        )}
+                        {renderPreviewSection('main')}
                       </div>
-                    </div>
-                  </div>
+                    )}
+                    {layoutOrder.includes('hosts') && (
+                      <div className="w-full py-[50px] px-6 flex flex-col items-center text-center">
+                        <HostsIntroPreview data={data} />
+                      </div>
+                    )}
+                  </>
                 )}
                 {layoutOrder.filter((sectionId) => sectionId !== 'main').map((sectionId) => {
                   const previewRenderId = sectionId === 'hosts' ? 'contact' : sectionId;
@@ -6718,10 +7082,10 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 <div className="absolute inset-0 pointer-events-none outline outline-2 outline-offset-[-2px] outline-[color:var(--key)] rounded-lg" />
               ) : (
                 <>
-                  {/* 9:16 가이드 프레임 + 바깥 딤(정사각형 내부) */}
+                  {/* 3:4 가이드 프레임 + 바깥 딤(정사각형 내부) */}
                   <div className="absolute inset-0 grid grid-cols-[1fr_auto_1fr] pointer-events-none">
                     <div className="bg-black/50" />
-                    <div className="h-full aspect-[9/16] outline outline-2 outline-offset-[-2px] outline-[color:var(--key)]" />
+                    <div className="h-full aspect-[3/4] outline outline-2 outline-offset-[-2px] outline-[color:var(--key)]" />
                     <div className="bg-black/50" />
                   </div>
                 </>
@@ -6866,15 +7230,15 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         <DialogContent className="w-[680px] max-w-[calc(100vw-2rem)] rounded-2xl border border-border p-0 overflow-hidden">
           <div className="p-5 border-b border-border bg-white">
             <DialogTitle className="text-[16px] font-semibold text-on-surface-10">
-              기본 일러스트 썸네일 선택
+              웨딩 썸네일 선택
             </DialogTitle>
             <div className="text-[12px] text-on-surface-30 mt-1">
-              원하는 썸네일을 클릭하면 공유 썸네일로 적용됩니다.
+              초대장에 어울리는 이미지를 고르면 공유 썸네일로 적용됩니다.
             </div>
           </div>
           <div className="p-5 bg-[color:var(--surface-10)]">
-            <div className="grid grid-cols-4 gap-3">
-              {shareThumbnailPresets.map((t) => {
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {SHARE_THUMBNAIL_PRESETS.map((t) => {
                 const selected = data.share?.thumbnail === t.url;
                 return (
                   <button
@@ -6953,6 +7317,61 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               variant="outline"
               className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
               onClick={() => setGreetingThumbnailPickerOpen(false)}
+            >
+              닫기
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={mainPresetPickerOpen} onOpenChange={setMainPresetPickerOpen}>
+        <DialogContent className="w-[424px] max-w-[calc(100vw-2rem)] rounded-2xl border border-border p-0 overflow-hidden">
+          <div className="p-5 border-b border-border bg-white">
+            <DialogTitle className="text-[16px] font-semibold text-on-surface-10">
+              메인 기본 이미지 선택
+            </DialogTitle>
+            <div className="text-[12px] text-on-surface-30 mt-1">
+              원하는 이미지를 클릭하면 메인 영역 기본 이미지로 적용됩니다.
+            </div>
+          </div>
+          <div className="p-5 w-[424px] max-h-[360px] overflow-y-auto bg-[color:var(--surface-10)]">
+            <div className="grid w-full grid-cols-2 gap-4 justify-items-center">
+              {MAIN_IMAGE_PRESETS.map((t) => {
+                const current = String((data.main as any)?.presetImage ?? '').trim() || DEFAULT_MAIN_PRESET_URL;
+                const selected = current === t.url;
+                return (
+                  <button
+                    key={`main-preset-${t.id}`}
+                    type="button"
+                    className="flex w-full max-w-[168px] flex-col items-center gap-1.5"
+                    onClick={() => {
+                      updateData('main.presetImage', t.url);
+                      setMainPresetPickerOpen(false);
+                    }}
+                  >
+                    <div
+                      className={`aspect-square w-full overflow-hidden rounded-lg border bg-white ${
+                        selected ? 'border-[color:var(--key)]' : 'border-border'
+                      } hover:border-[color:var(--key)]/50`}
+                    >
+                      <img
+                        src={t.url}
+                        alt={`${t.label} 예시`}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <span className="text-[11px] font-medium text-on-surface-20">{t.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="p-4 w-[424px] border-t border-border bg-white flex justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
+              onClick={() => setMainPresetPickerOpen(false)}
             >
               닫기
             </Button>

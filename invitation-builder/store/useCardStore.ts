@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { DEFAULT_MAIN_PRESET_URL } from '../lib/main-image-presets';
 
 // --- 1. 상세 타입 정의 ---
 export interface StyleConfig {
@@ -69,7 +70,9 @@ export interface CardData {
     bodyColor: string;
     animation: string;
     introType?: 'A' | 'B' | 'C' | 'D' | 'E';
-    imageMode?: 'single' | 'multi';
+    imageMode?: 'single' | 'multi' | 'default';
+    /** 기본 이미지 모드에서 선택한 에셋 URL (public SVG 등) */
+    presetImage?: string;
     transitionEffect?: string;
     transitionIntervalSec?: number;
   };
@@ -277,7 +280,8 @@ export const useCardStore = create<CardStore>((set) => ({
       bodyColor: '#666666',
       animation: '없음',
       introType: 'A',
-      imageMode: 'single',
+      imageMode: 'default',
+      presetImage: DEFAULT_MAIN_PRESET_URL,
       transitionEffect: '없음',
       transitionIntervalSec: 3,
     },
