@@ -30,6 +30,30 @@ const KEY_COLOR_PRESETS: KeyColorPreset[] = [
   { id: "mono-1", label: "무채색", key: "#212121", keyDark: "#212121", primaryContainer: "#F5F5F5", onPrimaryContainer: "#212121", background: "#FFFFFF" },
 ];
 
+const PREVIEW_TYPOGRAPHY_GUIDE = {
+  subtitle: "text-[22px] font-medium text-on-surface-10",
+  body: "whitespace-pre-line leading-[26px]",
+  subtitle2: "text-[14px] font-normal text-on-surface-30 opacity-70 [font-stretch:120%]",
+} as const;
+
+function upperCaseFirst(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
+function getOptionalSubtitle2(sectionId: string) {
+  const subtitleBySection: Record<string, string> = {
+    account: "Account",
+    guestbook: "Guestbook",
+    youtube: "Video",
+    rsvp: "RSVP",
+    guestUpload: "Guest Upload",
+    share: "Share",
+  };
+  return upperCaseFirst(subtitleBySection[sectionId] ?? "Section");
+}
+
 function buildOsmEmbedUrl(lat: number, lon: number) {
   const delta = 0.01;
   const left = lon - delta;
@@ -1318,9 +1342,13 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const [guestbookPreviewPage, setGuestbookPreviewPage] = useState(1);
   const [guestbookMenuEntryId, setGuestbookMenuEntryId] = useState<string | null>(null);
   const [guestbookComposerOpen, setGuestbookComposerOpen] = useState(false);
+  const [guestbookEditingEntryId, setGuestbookEditingEntryId] = useState<string | null>(null);
   const [guestbookDraftName, setGuestbookDraftName] = useState("");
   const [guestbookDraftMessage, setGuestbookDraftMessage] = useState("");
   const [guestbookDraftPassword, setGuestbookDraftPassword] = useState("");
+  const [guestbookComposerPasswordError, setGuestbookComposerPasswordError] = useState("");
+  const [guestbookDeleteTargetEntryId, setGuestbookDeleteTargetEntryId] = useState<string | null>(null);
+  const [guestbookDeletePassword, setGuestbookDeletePassword] = useState("");
   const [accountPreviewExpandedMap, setAccountPreviewExpandedMap] = useState<Record<string, boolean>>({});
   const [contactPreviewExpanded, setContactPreviewExpanded] = useState(false);
   const [copyToastVisible, setCopyToastVisible] = useState(false);
@@ -2348,7 +2376,10 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       case 'main': {
         const mode = normalizeMainImageMode((data.main as any).imageMode);
         if (mode === 'default') {
-          const presetUrl = String((data.main as any).presetImage ?? '').trim() || DEFAULT_MAIN_PRESET_URL;
+          const presetUrl = String((data.main as any).presetImage ?? '').trim();
+          if (!presetUrl) {
+            return null;
+          }
           return (
             <div className="w-full flex flex-col items-stretch gap-0">
               <div className="w-full aspect-square max-w-full mx-auto rounded-none overflow-hidden relative bg-[color:var(--surface-20)]">
@@ -2414,7 +2445,10 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   {/* 새 이미지(아래) */}
                   <div
                     className="absolute inset-0 bg-center bg-cover"
-                    style={{ backgroundImage: currentUrl ? `url(${currentUrl})` : 'none' }}
+                    style={{
+                      backgroundImage: currentUrl ? `url(${currentUrl})` : 'none',
+                      backgroundColor: currentUrl ? undefined : '#eee',
+                    }}
                   />
                   {/* 이전 이미지(위) — 페이드 아웃 */}
                   {prevUrl && (
@@ -2436,7 +2470,10 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   ) : (
                     <div
                       className="absolute inset-0 bg-center bg-cover"
-                      style={{ backgroundImage: currentUrl ? `url(${currentUrl})` : 'none' }}
+                      style={{
+                        backgroundImage: currentUrl ? `url(${currentUrl})` : 'none',
+                        backgroundColor: currentUrl ? undefined : '#eee',
+                      }}
                     />
                   )}
                   {/* 현재 이미지(위) — 선택 효과 */}
@@ -2459,16 +2496,16 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         const greetingThumb = ((data.greeting as any)?.thumbnail ?? '').trim();
         const greetingThumbnailForPreview = greetingThumb || greetingDefaultThumbnail;
         return (
-          <div className="max-w-[320px] mx-auto">
+          <div className="max-w-[320px] mx-auto flex flex-col justify-start items-center">
             {greetingUseImage && (
-              <div className="w-[56px] h-[56px] mx-auto rounded-xl bg-white overflow-hidden mb-3 flex items-center justify-center">
+              <div className="w-[56px] h-[56px] rounded-xl bg-white overflow-hidden mb-4 flex items-center justify-center">
                 <img src={greetingThumbnailForPreview} alt="인사말 이미지" className="w-[56px] h-[56px] object-contain" />
               </div>
             )}
             <div className="space-y-5">
               {greetingEntries.map((entry, idx) => (
                 <div key={`greeting-entry-${idx}`}>
-                  <h3 className="text-[1em] font-semibold text-on-surface-10 mb-2">{entry.title}</h3>
+                  <h3 className="text-[1em] font-semibold text-on-surface-10 mb-8">{entry.title}</h3>
                   <p className="text-[14px] leading-[26px] text-on-surface-20 whitespace-pre-wrap">
                     {entry.content}
                   </p>
@@ -2641,7 +2678,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         return (
           <div className="mx-auto w-full space-y-5">
             {!!(data.share?.thumbnail ?? '').trim() && (
-              <div className="w-full aspect-video rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden">
+              <div className="w-full aspect-video rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden mb-[40px]">
                 <img
                   src={(data.share?.thumbnail ?? '').trim()}
                   alt="혼주 섹션 이미지"
@@ -2818,7 +2855,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
             }`}
           >
             {showCalendar && isValidEventDate && (
-              <div className="w-full rounded-none border-0 px-0 py-10 text-left shadow-none mt-0 mb-0 flex flex-col gap-10">
+              <div className="w-full rounded-none border-0 px-0 pt-[80px] pb-[60px] text-left shadow-none mt-0 mb-0 flex flex-col gap-10">
                 <div className="flex h-fit items-center justify-center mx-0">
                     <div className="text-center text-[16px] text-[color:var(--on-primary-container)]/80 mb-0">
                       <p>{formattedDateWithWeekday}</p>
@@ -2893,14 +2930,22 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               return next.replace(/\s{2,}/g, ' ').trim();
             };
 
-            if (!normalized.includes(',')) return stripVenueWords(normalized);
-
-            const parts = normalized
-              .split(',')
-              .map((part) => stripVenueWords(part.trim()))
+            const cleaned = stripVenueWords(normalized);
+            const parts = cleaned
+              .split(/[,\s]+/)
+              .map((part) => part.trim())
               .filter(Boolean)
               .filter((part) => !/^\d{5,6}$/.test(part))
               .filter((part) => part !== '대한민국');
+
+            const pickFirst = (matcher: (part: string) => boolean) => parts.find(matcher) || '';
+            const gu = pickFirst((part) => /구$/.test(part));
+            const dong = pickFirst((part) => /(동|읍|면|리)$/.test(part));
+            const road = pickFirst((part) => /(로|길)$/.test(part));
+            const bunji = pickFirst((part) => /^\d+(?:-\d+)?(?:번지)?$/.test(part));
+
+            const ordered = [gu, dong, road, bunji].filter(Boolean);
+            if (ordered.length > 0) return ordered.join(' ').trim();
 
             const locationLikeParts = parts.filter((part) => /[시군구읍면동리로길]/.test(part));
             const compactParts = (locationLikeParts.length > 0 ? locationLikeParts : parts).slice(-3);
@@ -2952,13 +2997,15 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           };
 
           return (
-            <div className="w-full px-0 space-y-3 text-[0.8125em] text-on-surface-20 text-center">
-              <p className="text-[16px] font-normal text-on-surface-10">{title}</p>
+            <div className="w-full px-0 text-[0.8125em] text-on-surface-20 text-center">
+              <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle} mb-1`}>{title}</p>
+              <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle2} mb-0`}>Directions</p>
 
               <>
-                <p className="text-[14px] font-semibold text-on-surface-10 mb-1">{venueDisplay}</p>
+                <div className="mx-auto mt-[10px] mb-[10px] h-10 w-px bg-border" aria-hidden="true" />
+                <p className="text-[14px] font-normal text-on-surface-10 mb-1">{venueDisplay}</p>
                 {simplifiedAddress && simplifiedAddress !== venueDisplay && (
-                  <p className="text-[14px] text-on-surface-30 mb-8">{simplifiedAddress}</p>
+                  <p className="text-[14px] font-normal text-on-surface-30 mb-6">{simplifiedAddress}</p>
                 )}
 
                 <div className="w-full rounded-xl overflow-hidden border border-border bg-[color:var(--surface-20)]">
@@ -3009,9 +3056,10 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       <a
                         href={appLinks.naver.scheme}
                         onClick={openAppOrWeb(appLinks.naver.scheme, appLinks.naver.web)}
-                        className="h-12 flex items-center justify-center gap-2 text-on-surface-10 min-w-0 px-2"
+                        className="h-12 flex items-center justify-center gap-1 text-[13px] text-on-surface-10 min-w-0 px-2"
+                        style={{ fontSize: "13px" }}
                       >
-                        <span className="w-6 h-6 rounded-md bg-white border border-black/10 flex items-center justify-center text-[12px] font-bold text-green-600">
+                        <span className="w-5 h-5 rounded-md bg-white border border-black/10 flex items-center justify-center text-[13px] font-bold text-green-600">
                           N
                         </span>
                         {appLinks.naver.label}
@@ -3019,9 +3067,10 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       <a
                         href={appLinks.kakao.scheme}
                         onClick={openAppOrWeb(appLinks.kakao.scheme, appLinks.kakao.web)}
-                        className="h-12 flex items-center justify-center gap-2 text-on-surface-10 min-w-0 px-2"
+                        className="h-12 flex items-center justify-center gap-1 text-[13px] text-on-surface-10 min-w-0 px-2"
+                        style={{ fontSize: "13px" }}
                       >
-                        <span className="w-6 h-6 rounded-md bg-[#FEE500] border border-black/10 flex items-center justify-center text-[12px] font-black text-black">
+                        <span className="w-5 h-5 rounded-md bg-[#FEE500] border border-black/10 flex items-center justify-center text-[13px] font-black text-black">
                           K
                         </span>
                         {appLinks.kakao.label}
@@ -3029,9 +3078,10 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       <a
                         href={appLinks.tmap.scheme}
                         onClick={openAppOrWeb(appLinks.tmap.scheme, appLinks.tmap.web)}
-                        className="h-12 flex items-center justify-center gap-2 text-on-surface-10 min-w-0 px-2"
+                        className="h-12 flex items-center justify-center gap-1 text-[13px] text-on-surface-10 min-w-0 px-2"
+                        style={{ fontSize: "13px" }}
                       >
-                        <span className="w-6 h-6 rounded-md bg-white border border-black/10 flex items-center justify-center text-[12px] font-black text-[#4B6BFF]">
+                        <span className="w-5 h-5 rounded-md bg-white border border-black/10 flex items-center justify-center text-[13px] font-black text-[#4B6BFF]">
                           T
                         </span>
                         {appLinks.tmap.label}
@@ -3041,11 +3091,15 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 </div>
 
                 {transportsClean.length > 0 && (
-                  <div className="pt-2 space-y-2">
+                  <div className="pt-5 pb-5 flex flex-col gap-1 justify-start items-center">
                     {transportsClean.map((t, idx) => (
                       <div key={`${t.mode}-${idx}`} className="mt-4 mb-8 text-[0.8125em] text-on-surface-20">
                         {t.mode && (
-                          <div className="text-[16px] mb-1 font-semibold text-on-surface-10">{t.mode}</div>
+                          <div className="mb-1 inline-flex w-fit items-center gap-2 text-[16px] font-semibold text-on-surface-10">
+                            <span className="w-10 border-t border-dashed border-on-surface-30" />
+                            {t.mode}
+                            <span className="w-10 border-t border-dashed border-on-surface-30" />
+                          </div>
                         )}
                         {t.detail && (
                           <div className="text-[14px] text-on-surface-30 whitespace-pre-line">{t.detail}</div>
@@ -3059,45 +3113,51 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           );
         }
       case 'notice': {
-        const hasTabs = noticeSections.length > 1;
         const activeTabIndex = Math.min(noticePreviewTabIndex, noticeSections.length - 1);
         const activeSection = noticeSections[activeTabIndex] ?? noticeSections[0];
         const rawContent = String(activeSection?.content ?? "");
         const content = rawContent.trim().length > 0 ? rawContent : "안내 내용을 입력해 주세요.";
+        const noticeTitle = (
+          <div className="space-y-1">
+            <div className={PREVIEW_TYPOGRAPHY_GUIDE.subtitle}>안내</div>
+            <div className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle2} pb-[30px]`}>
+              Information
+            </div>
+          </div>
+        );
         return (
-          <div className="max-w-full mx-auto w-full text-[13px] text-on-surface-20 space-y-0">
-            {hasTabs ? (
-              <>
-                <div className="flex items-end w-full">
-                  {noticeSections.map((section, idx) => {
-                    const active = idx === activeTabIndex;
-                    return (
-                      <button
-                        key={section.id}
-                        type="button"
-                        onClick={() => setNoticePreviewTabIndex(idx)}
-                        className={[
-                          'h-10 flex-1 min-w-0 px-2 text-[0.875em] border border-border border-b-0 -mr-px',
-                          active
-                            ? 'bg-white text-on-surface-10 relative z-[1]'
-                            : 'bg-[color:var(--surface-10)] text-[color:var(--on-surface-disabled)]',
-                        ].join(' ')}
-                      >
-                        <span className="block truncate">{section.title}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="border border-border bg-white px-5 py-6">
-                  <p className="whitespace-pre-line leading-[26px] text-[14px] text-center">{content}</p>
-                </div>
-              </>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-[0.875em] font-semibold text-on-surface-10">{activeSection?.title || "안내사항"}</p>
-                <p className="whitespace-pre-line leading-relaxed">{content}</p>
-              </div>
-            )}
+          <div className="max-w-full mx-auto w-full text-[13px] text-on-surface-20 space-y-2">
+            {noticeTitle}
+            <div className="mb-[10px] flex items-center justify-center w-full gap-0">
+              {noticeSections.map((section, idx) => {
+                const active = idx === activeTabIndex;
+                return (
+                  <button
+                    key={section.id}
+                    type="button"
+                    onClick={() => setNoticePreviewTabIndex(idx)}
+                    className={[
+                      'h-10 w-fit min-w-0 px-2 text-[16px]',
+                      active
+                        ? 'text-on-surface-10 font-semibold'
+                        : 'text-[color:var(--on-surface-disabled)]',
+                    ].join(' ')}
+                  >
+                    <span
+                      className={[
+                        'block w-fit truncate text-[16px]',
+                        active ? 'underline underline-offset-4 decoration-[1px]' : 'no-underline',
+                      ].join(' ')}
+                    >
+                      {section.title}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="px-5 py-0">
+              <p className="whitespace-pre-line leading-[26px] text-[14px] text-center">{content}</p>
+            </div>
           </div>
         );
       }
@@ -3111,9 +3171,11 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         const imageGapPx = imageGap === 'none' ? 0 : imageGap === 'small' ? 2 : imageGap === 'large' ? 8 : 4;
         const gridPreviewRadiusClass = imageGap === 'none' ? 'rounded-none' : 'rounded';
         const gridPreviewBorderClass = imageGap === 'none' ? 'border-0' : 'border-border';
-        const gridColumns = Number((data.gallery as any)?.gridColumns ?? 3);
+        const requestedGridColumns = Number((data.gallery as any)?.gridColumns ?? 3);
+        const gridColumns = requestedGridColumns === 2 ? 2 : 3;
         const useLoadMore = !!((data.gallery as any)?.useLoadMore);
-        const enableDetailView = !!((data.gallery as any)?.enableDetailView);
+        const enableDetailView = ((data.gallery as any)?.enableDetailView ?? true) === true;
+        const effectiveDetailViewEnabled = layoutType === "slide" ? false : enableDetailView;
         const ratioClass = imageRatio === "square" ? "aspect-square" : "aspect-[3/4]";
         if (!images.length) {
           return (
@@ -3122,6 +3184,14 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
             </div>
           );
         }
+        const galleryTitle = (
+          <div className="space-y-1">
+            <div className={PREVIEW_TYPOGRAPHY_GUIDE.subtitle}>갤러리</div>
+            <div className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle2} pb-5`}>
+              Gallery
+            </div>
+          </div>
+        );
         if (layoutType === "slide") {
           const currentIndex = Math.min(galleryPreviewIndex, Math.max(0, images.length - 1));
           const moveToPrev = () => {
@@ -3134,6 +3204,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           };
           return (
             <div className="max-w-full mx-auto w-full space-y-2">
+              {galleryTitle}
               <div className="relative">
                 <div
                   className={`w-full rounded overflow-hidden border border-border ${ratioClass}`}
@@ -3157,27 +3228,47 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   <img
                     src={images[currentIndex]}
                     alt={`갤러리 이미지 ${currentIndex + 1}`}
-                    className={`w-full h-full object-cover ${enableDetailView ? 'cursor-zoom-in' : ''}`}
+                    className={`w-full h-full object-cover ${effectiveDetailViewEnabled ? 'cursor-zoom-in' : ''}`}
                     onClick={() => {
-                      if (!enableDetailView) return;
+                      if (!effectiveDetailViewEnabled) return;
                       setGalleryDetailIndex(currentIndex);
                       setGalleryDetailOpen(true);
                     }}
                   />
                 </div>
+                {images.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/50 text-on-surface-10 hover:bg-white/70 flex items-center justify-center"
+                      aria-label="이전 이미지"
+                      onClick={moveToPrev}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/50 text-on-surface-10 hover:bg-white/70 flex items-center justify-center"
+                      aria-label="다음 이미지"
+                      onClick={moveToNext}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </>
+                )}
                 <div className="absolute right-2 bottom-2 px-2 py-1 bg-black/50 rounded-[999px] inline-flex justify-start items-center gap-0.5">
-                  <div className="justify-start text-white text-xs font-normal">{currentIndex + 1}</div>
-                  <div className="opacity-50 justify-start text-white text-xs font-normal">/</div>
-                  <div className="opacity-50 justify-start text-white text-xs font-normal">{images.length}</div>
+                  <div className="justify-start text-white font-normal" style={{ fontSize: "12px", lineHeight: "12px" }}>{currentIndex + 1}</div>
+                  <div className="opacity-50 justify-start text-white font-normal" style={{ fontSize: "12px", lineHeight: "12px" }}>/</div>
+                  <div className="opacity-50 justify-start text-white font-normal" style={{ fontSize: "12px", lineHeight: "12px" }}>{images.length}</div>
                 </div>
               </div>
-              <div className="inline-flex justify-start items-center gap-0">
+              <div className="inline-flex w-full max-w-[320px] justify-start items-center gap-0">
                 {images.map((_: string, idx: number) => (
                   <button
                     key={`gallery-dot-${idx}`}
                     type="button"
                     onClick={() => setGalleryPreviewIndex(idx)}
-                    className={`w-5 h-0.5 transition-colors ${idx === currentIndex ? 'bg-[color:var(--key)]' : 'bg-zinc-300'}`}
+                    className={`flex-1 h-0.5 transition-colors ${idx === currentIndex ? 'bg-[color:var(--key)]' : 'bg-zinc-300 opacity-50'}`}
                     aria-label={`갤러리 ${idx + 1}번 이미지`}
                   />
                 ))}
@@ -3191,8 +3282,9 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         const visibleCount = Math.min(images.length, visibleRows * gridColumns);
         return (
           <div className="max-w-full mx-auto w-full space-y-2">
+            {galleryTitle}
             <div
-              className={`w-full grid ${gridColumns === 2 ? "grid-cols-2" : gridColumns === 4 ? "grid-cols-4" : "grid-cols-3"}`}
+              className={`w-full grid mb-4 ${gridColumns === 2 ? "grid-cols-2" : "grid-cols-3"}`}
               style={{ gap: `${imageGapPx}px` }}
             >
               {images.slice(0, visibleCount).map((src: string, idx: number) => (
@@ -3200,9 +3292,9 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   <img
                     src={src}
                     alt={`갤러리 이미지 ${idx + 1}`}
-                    className={`w-full h-full object-cover ${enableDetailView ? 'cursor-zoom-in' : ''}`}
+                    className={`w-full h-full object-cover ${effectiveDetailViewEnabled ? 'cursor-zoom-in' : ''}`}
                     onClick={() => {
-                      if (!enableDetailView) return;
+                      if (!effectiveDetailViewEnabled) return;
                       setGalleryDetailIndex(idx);
                       setGalleryDetailOpen(true);
                     }}
@@ -3233,12 +3325,16 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       }
       case 'account': {
         const title = data.accounts?.title || "마음 전하실 곳";
+        const subtitle2 = getOptionalSubtitle2('account');
         const content = data.accounts?.content || "";
         const list = Array.isArray(data.accounts?.list) ? data.accounts.list : [];
         const displayMode = ((data.accounts as any)?.displayMode ?? 'accordion') as 'accordion' | 'expanded';
         return (
           <div className="max-w-full mx-auto w-full space-y-3 text-[0.8125em] text-on-surface-20">
-            <p className="text-[0.875em] font-semibold text-on-surface-10">{title}</p>
+            <div className="space-y-0">
+              <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle} mb-1`}>{title}</p>
+              <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle2} mb-0 pb-5`}>{subtitle2}</p>
+            </div>
             {content && <p className="whitespace-pre-line leading-relaxed">{content}</p>}
             <div className="space-y-2">
               {list.length === 0 && (
@@ -3297,8 +3393,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         );
       }
       case 'guestbook': {
-        const title = ((data.guestbook as any)?.title ?? "방명록") as string;
-        const description = ((data.guestbook as any)?.description ?? "축하 인사를 남겨주세요.") as string;
+        const rawTitle = ((data.guestbook as any)?.title ?? "축하해 주세요") as string;
+        const title = rawTitle.trim() === "방명록" ? "축하해 주세요" : rawTitle;
+        const descriptionRaw = ((data.guestbook as any)?.description ?? "guestbook") as string;
+        const description = descriptionRaw === "축하 인사를 남겨주세요." || descriptionRaw === "Guestbook"
+          ? "Guestbook"
+          : upperCaseFirst(descriptionRaw);
         const showCreatedAt = ((data.guestbook as any)?.showCreatedAt ?? true) as boolean;
         const hasPassword = Boolean(data.guestbook?.password?.trim());
         const entries = Array.isArray((data.guestbook as any)?.entries) ? (data.guestbook as any).entries : [];
@@ -3315,9 +3415,15 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         const draftMessageLength = guestbookDraftMessage.length;
         const closeGuestbookComposer = () => {
           setGuestbookComposerOpen(false);
+          setGuestbookEditingEntryId(null);
           setGuestbookDraftName("");
           setGuestbookDraftMessage("");
           setGuestbookDraftPassword("");
+          setGuestbookComposerPasswordError("");
+        };
+        const closeGuestbookDeleteDialog = () => {
+          setGuestbookDeleteTargetEntryId(null);
+          setGuestbookDeletePassword("");
         };
         const canManageGuestbookEntry = (entry: any, password: string) => {
           const pass = password.trim();
@@ -3343,15 +3449,39 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           return d.toLocaleDateString("ko-KR");
         };
         return (
-          <div className="max-w-full mx-auto w-full space-y-3 text-[0.8125em] text-on-surface-20 text-left">
-            <p className="text-[0.875em] font-semibold text-on-surface-10">{title}</p>
-            <p className="whitespace-pre-line leading-relaxed">{description}</p>
-            <div className="space-y-2">
-              {orderedEntries.length === 0 && (
-                <div className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-on-surface-30">
-                  아직 등록된 축하 메시지가 없습니다.
+          <div className="max-w-full mx-auto w-full text-[0.8125em] text-on-surface-20 text-left">
+            <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle} text-center mb-[4px]`}>{title}</p>
+            <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle2} whitespace-pre-line leading-relaxed text-center mb-[10px]`}>{description}</p>
+            {orderedEntries.length === 0 ? (
+              <>
+                <div className="mt-0 mb-0 pb-[30px] flex justify-center items-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-fit rounded-[999px] px-6 h-10 text-[13px] border-transparent bg-[color:var(--key)] text-white hover:bg-[color:var(--key-dark)] hover:text-white"
+                    onClick={() => setGuestbookComposerOpen(true)}
+                  >
+                    축하글 작성하기
+                  </Button>
                 </div>
-              )}
+                <div className="rounded-xl border border-border bg-white h-[160px] flex flex-col items-center justify-center gap-4 text-on-surface-30">
+                  <Pencil className="h-6 w-6" />
+                  <p className="text-[13px] leading-none">첫 번째 축하 글을 남겨주세요</p>
+                </div>
+              </>
+            ) : (
+              <div className="mt-0 mb-0 pb-[30px] flex justify-center items-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-fit rounded-lg px-4 h-10 text-[13px] border-transparent bg-[color:var(--key)] text-white hover:bg-[color:var(--key-dark)] hover:text-white"
+                  onClick={() => setGuestbookComposerOpen(true)}
+                >
+                  축하메시지 남기기
+                </Button>
+              </div>
+            )}
+            <div className="space-y-2">
               {pagedEntries.map((entry: any) => (
                 <div key={entry.id} className="rounded-lg border border-border bg-white px-4 pt-3 pb-3 flex flex-col gap-1 space-y-0 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
                   <div className="flex items-center justify-between -mr-2">
@@ -3384,21 +3514,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             type="button"
                             className="w-full h-8 px-3 text-left text-[12px] text-on-surface-20 hover:bg-slate-50"
                             onClick={() => {
-                              const input = window.prompt("수정 비밀번호를 입력해 주세요.");
-                              if (!input || !canManageGuestbookEntry(entry, input)) {
-                                window.alert("비밀번호가 올바르지 않습니다.");
-                                setGuestbookMenuEntryId(null);
-                                return;
-                              }
-                              const nextMessage = window.prompt("수정할 내용을 입력해 주세요.", entry.message ?? "");
-                              if (nextMessage === null) {
-                                setGuestbookMenuEntryId(null);
-                                return;
-                              }
-                              const nextEntries = orderedEntries.map((it: any) =>
-                                it.id === entry.id ? { ...it, message: nextMessage } : it,
-                              );
-                              updateData("guestbook.entries", nextEntries);
+                              setGuestbookEditingEntryId(String(entry.id));
+                              setGuestbookDraftName(String(entry.name ?? ""));
+                              setGuestbookDraftMessage(String(entry.message ?? ""));
+                              setGuestbookDraftPassword("");
+                              setGuestbookComposerPasswordError("");
+                              setGuestbookComposerOpen(true);
                               setGuestbookMenuEntryId(null);
                             }}
                           >
@@ -3408,14 +3529,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             type="button"
                             className="w-full h-8 px-3 text-left text-[12px] text-red-600 hover:bg-red-50"
                             onClick={() => {
-                              const input = window.prompt("삭제 비밀번호를 입력해 주세요.");
-                              if (!input || !canManageGuestbookEntry(entry, input)) {
-                                window.alert("비밀번호가 올바르지 않습니다.");
-                                setGuestbookMenuEntryId(null);
-                                return;
-                              }
-                              const nextEntries = orderedEntries.filter((it: any) => it.id !== entry.id);
-                              updateData("guestbook.entries", nextEntries);
+                              setGuestbookDeleteTargetEntryId(String(entry.id));
+                              setGuestbookDeletePassword("");
                               setGuestbookMenuEntryId(null);
                             }}
                           >
@@ -3434,7 +3549,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
             {orderedEntries.length > perPage && (
               <>
                 <Pagination className="m-0 w-full justify-start p-0">
-                  <PaginationContent className="w-full items-center">
+                  <PaginationContent className="w-full items-center pt-5">
                     <PaginationItem className="shrink-0">
                       <PaginationPrevious
                         onClick={() => setGuestbookPreviewPage((p) => Math.max(1, p - 1))}
@@ -3462,14 +3577,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                     </PaginationItem>
                   </PaginationContent>
                 </Pagination>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="mt-5 mb-0 w-full rounded-lg px-4 h-10 text-[13px] border-transparent bg-[color:var(--primary-container)] text-[color:var(--on-primary-container)] hover:bg-[color:var(--primary-container)]/80 hover:text-[color:var(--on-primary-container)]"
-                  onClick={() => setGuestbookComposerOpen(true)}
-                >
-                  축하메시지 남기기
-                </Button>
               </>
             )}
             {guestbookComposerOpen && previewFrameRef.current &&
@@ -3484,11 +3591,16 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 >
                   <div className="w-full max-w-[360px] rounded-2xl border border-border bg-white p-4 space-y-3 shadow-xl">
                     <div className="flex items-center justify-between">
-                      <p className="text-[15px] font-semibold text-on-surface-10">축하메시지 남기기</p>
+                      <p className="text-[15px] font-semibold text-on-surface-10">
+                        {guestbookEditingEntryId ? "축하메시지 수정" : "축하메시지 남기기"}
+                      </p>
                     </div>
                     <Input
                       value={guestbookDraftName}
-                      onChange={(e) => setGuestbookDraftName(e.target.value)}
+                      onChange={(e) => {
+                        setGuestbookDraftName(e.target.value);
+                        setGuestbookComposerPasswordError("");
+                      }}
                       placeholder="이름"
                       className="shadow-none"
                     />
@@ -3497,7 +3609,10 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                         rows={4}
                         maxLength={200}
                         value={guestbookDraftMessage}
-                        onChange={(e) => setGuestbookDraftMessage(e.target.value.slice(0, 200))}
+                        onChange={(e) => {
+                          setGuestbookDraftMessage(e.target.value.slice(0, 200));
+                          setGuestbookComposerPasswordError("");
+                        }}
                         placeholder="축하 메시지를 입력해 주세요."
                         className="min-h-[200px] max-h-[400px] resize-none shadow-none"
                       />
@@ -3507,13 +3622,22 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       <Input
                         type="password"
                         value={guestbookDraftPassword}
-                        onChange={(e) => setGuestbookDraftPassword(e.target.value)}
+                        onChange={(e) => {
+                          setGuestbookDraftPassword(e.target.value);
+                          if (guestbookComposerPasswordError) setGuestbookComposerPasswordError("");
+                        }}
                         placeholder="글 비밀번호"
                         className="shadow-none"
                       />
-                      <p className="text-[12px] text-on-surface-30 leading-relaxed text-right">
-                        수정/삭제 시 필요해요.
-                      </p>
+                      {guestbookComposerPasswordError ? (
+                        <p className="text-[12px] text-destructive leading-relaxed text-right">
+                          {guestbookComposerPasswordError}
+                        </p>
+                      ) : (
+                        <p className="text-[12px] text-on-surface-30 leading-relaxed text-right">
+                          수정/삭제 시 필요해요.
+                        </p>
+                      )}
                     </div>
                     <div className="pt-1 flex justify-end gap-2">
                       <Button
@@ -3532,6 +3656,25 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           const message = guestbookDraftMessage.trim();
                           const password = guestbookDraftPassword.trim();
                           if (!message || !password) return;
+                          if (guestbookEditingEntryId) {
+                            const targetEntry = orderedEntries.find((it: any) => String(it.id) === guestbookEditingEntryId);
+                            if (!targetEntry || !canManageGuestbookEntry(targetEntry, password)) {
+                              setGuestbookComposerPasswordError("비밀번호가 올바르지 않습니다.");
+                              return;
+                            }
+                            const nextEntries = orderedEntries.map((it: any) =>
+                              String(it.id) === guestbookEditingEntryId
+                                ? {
+                                    ...it,
+                                    name: guestbookDraftName.trim(),
+                                    message,
+                                  }
+                                : it,
+                            );
+                            updateData("guestbook.entries", nextEntries);
+                            closeGuestbookComposer();
+                            return;
+                          }
                           const nextEntry = {
                             id: `guestbook-${Date.now()}`,
                             name: guestbookDraftName.trim(),
@@ -3544,7 +3687,57 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           closeGuestbookComposer();
                         }}
                       >
-                        등록
+                        {guestbookEditingEntryId ? "수정" : "등록"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>,
+                previewFrameRef.current
+              )}
+            {guestbookDeleteTargetEntryId && previewFrameRef.current &&
+              createPortal(
+                <div
+                  className="absolute inset-0 z-40 bg-black/45 p-4 flex items-center justify-center"
+                  onMouseDown={(e) => {
+                    if (e.target === e.currentTarget) {
+                      closeGuestbookDeleteDialog();
+                    }
+                  }}
+                >
+                  <div className="w-full max-w-[320px] rounded-2xl border border-border bg-white p-4 space-y-3 shadow-xl">
+                    <p className="text-[15px] font-semibold text-on-surface-10">축하메시지 삭제</p>
+                    <Input
+                      type="password"
+                      value={guestbookDeletePassword}
+                      onChange={(e) => setGuestbookDeletePassword(e.target.value)}
+                      placeholder="비밀번호를 입력해 주세요."
+                      className="shadow-none"
+                    />
+                    <div className="pt-1 flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-9 px-4 text-[12px]"
+                        onClick={closeGuestbookDeleteDialog}
+                      >
+                        취소
+                      </Button>
+                      <Button
+                        type="button"
+                        className="h-9 px-4 text-[12px] bg-red-600 hover:bg-red-700"
+                        disabled={!guestbookDeletePassword.trim()}
+                        onClick={() => {
+                          const targetEntry = orderedEntries.find((it: any) => String(it.id) === guestbookDeleteTargetEntryId);
+                          if (!targetEntry || !canManageGuestbookEntry(targetEntry, guestbookDeletePassword)) {
+                            window.alert("비밀번호가 올바르지 않습니다.");
+                            return;
+                          }
+                          const nextEntries = orderedEntries.filter((it: any) => String(it.id) !== guestbookDeleteTargetEntryId);
+                          updateData("guestbook.entries", nextEntries);
+                          closeGuestbookDeleteDialog();
+                        }}
+                      >
+                        삭제
                       </Button>
                     </div>
                   </div>
@@ -3559,6 +3752,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       }
       case 'youtube': {
         const title = ((data.youtube as any)?.title ?? "영상으로 전하는 마음") as string;
+        const subtitle2 = getOptionalSubtitle2('youtube');
         const sourceType = ((data.youtube as any)?.sourceType ?? 'url') as 'file' | 'url';
         const fileUrl = ((data.youtube as any)?.fileUrl ?? '').trim();
         const videoId = getYoutubeVideoId(data.youtube?.url ?? "");
@@ -3568,7 +3762,10 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           : null;
         return (
           <div className="max-w-full mx-auto w-full space-y-3 text-[0.8125em] text-on-surface-20">
-            <p className="text-[0.875em] font-semibold text-on-surface-10">{title}</p>
+            <div className="space-y-0 text-center">
+              <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle} mb-1`}>{title}</p>
+              <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle2} mb-0 pb-5`}>{subtitle2}</p>
+            </div>
             {sourceType === 'file' ? (
               fileUrl ? (
                 <div className="w-full aspect-video rounded-xl overflow-hidden border border-border bg-black">
@@ -3607,11 +3804,15 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       case 'rsvp': {
         const r = (data as any).rsvp ?? {};
         const title = (r.title ?? "참석 여부") as string;
+        const subtitle2 = getOptionalSubtitle2('rsvp');
         const description = (r.description ?? "") as string;
         const deadline = String(r.deadline ?? "").trim();
         return (
           <div className="max-w-full mx-auto w-full space-y-3 text-[0.8125em] text-on-surface-20 text-left">
-            <p className="text-[0.875em] font-semibold text-on-surface-10 text-center">{title}</p>
+            <div className="space-y-0">
+              <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle} text-center mb-[4px]`}>{title}</p>
+              <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle2} text-center mb-[20px]`}>{subtitle2}</p>
+            </div>
             {description ? <p className="whitespace-pre-line leading-relaxed text-center">{description}</p> : null}
             {deadline ? (
               <p className="text-[12px] text-on-surface-30 text-center">응답 마감: {deadline}</p>
@@ -3623,7 +3824,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               <button
                 type="button"
                 onClick={() => setRsvpPreviewModalOpen(true)}
-                className="h-10 w-full rounded-lg bg-[color:var(--key)] text-white text-[13px] font-semibold inline-flex items-center justify-center hover:brightness-95 transition"
+                className="h-10 w-full rounded-lg bg-[color:var(--primary-container)] text-[color:var(--on-primary-container)] text-[13px] font-semibold inline-flex items-center justify-center hover:bg-[color:var(--primary-container)]/80 hover:text-[color:var(--on-primary-container)] transition"
               >
                 참석여부 전달하기
               </button>
@@ -3633,10 +3834,14 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       }
       case 'guestUpload': {
         const title = ((data.guestUpload as any)?.title ?? "하객사진 받기") as string;
+        const subtitle2 = getOptionalSubtitle2('guestUpload');
         const description = ((data.guestUpload as any)?.description ?? "예식 후 촬영하신 사진/영상을 업로드해 주세요.") as string;
         return (
           <div className="max-w-full mx-auto w-full space-y-3 text-[0.8125em] text-on-surface-20 text-left">
-            <p className="text-[0.875em] font-semibold text-on-surface-10">{title}</p>
+            <div className="space-y-0 text-center">
+              <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle} mb-1`}>{title}</p>
+              <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle2} mb-0 pb-5`}>{subtitle2}</p>
+            </div>
             {description && <p className="whitespace-pre-line leading-relaxed">{description}</p>}
             <GuestPhotoUploadForm maxTotalMB={50} />
           </div>
@@ -3970,7 +4175,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   </div>
 
                   {isInitiallyExpanded && (!item.hasSwitch || isSectionEnabled(item.id)) && (
-                    <div className="p-6 bg-white flex flex-col gap-3 border-t border-border">
+                    <div className="p-6 bg-white flex flex-col gap-4 border-t border-border">
                       {/* 테마 섹션 */}
                       {item.id === 'theme' && (
                         <>
@@ -4127,9 +4332,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 active={normalizeMainImageMode((data.main as any).imageMode) === 'default'}
                                 onClick={() => {
                                   updateData('main.imageMode', 'default');
-                                  if (!String((data.main as any).presetImage ?? '').trim()) {
-                                    updateData('main.presetImage', DEFAULT_MAIN_PRESET_URL);
-                                  }
                                 }}
                               />
                             </div>
@@ -4140,11 +4342,15 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               {normalizeMainImageMode((data.main as any).imageMode) === 'default' ? (
                                 <div className="w-full min-h-[120px] flex items-start gap-3">
                                   <div className="w-[120px] h-[120px] rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden flex items-center justify-center shrink-0">
-                                    <img
-                                      src={String((data.main as any).presetImage ?? '').trim() || DEFAULT_MAIN_PRESET_URL}
-                                      alt="메인 기본 이미지 미리보기"
-                                      className="w-full h-full object-cover"
-                                    />
+                                    {String((data.main as any).presetImage ?? '').trim() ? (
+                                      <img
+                                        src={String((data.main as any).presetImage ?? '').trim()}
+                                        alt="메인 기본 이미지 미리보기"
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <span className="text-[12px] text-on-surface-40 text-center px-2">기본 이미지 없음</span>
+                                    )}
                                   </div>
                                   <div className="h-full flex flex-col justify-start gap-2 min-w-0">
                                     <button
@@ -4158,26 +4364,15 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 </div>
                               ) : normalizeMainImageMode((data.main as any).imageMode) === 'single' ? (
                                 <div className="w-full">
-                                  <div className="relative w-[120px] aspect-[3/4] group">
-                                    <button
-                                      type="button"
-                                      className={[
-                                        "w-full h-full rounded-lg border bg-white flex items-center justify-center text-3xl text-on-surface-30 bg-center bg-cover bg-clip-border bg-origin-border",
-                                        data.main.image
-                                          ? "border-transparent"
-                                          : "border-dashed border-border hover:bg-slate-50",
-                                      ].join(" ")}
-                                      style={
-                                        data.main.image
-                                          ? { backgroundImage: `url(${data.main.image})` }
-                                          : undefined
-                                      }
-                                      onClick={() => mainImageInputRef.current?.click()}
-                                      aria-label="이미지 추가"
-                                    >
-                                      {data.main.image ? '' : '+'}
-                                    </button>
-                                    {!!data.main.image && (
+                                  {!!data.main.image ? (
+                                    <div className="relative w-[120px] aspect-[3/4] group">
+                                      <button
+                                        type="button"
+                                        className="w-full h-full rounded-lg border border-transparent bg-white flex items-center justify-center text-3xl text-on-surface-30 bg-center bg-cover bg-clip-border bg-origin-border"
+                                        style={{ backgroundImage: `url(${data.main.image})` }}
+                                        onClick={() => mainImageInputRef.current?.click()}
+                                        aria-label="이미지 추가"
+                                      />
                                       <div className="absolute right-2 top-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button
                                           type="button"
@@ -4206,8 +4401,17 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                           <Trash2 className="w-4 h-4" />
                                         </button>
                                       </div>
-                                    )}
-                                  </div>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      className="w-[100px] aspect-[3/4] rounded-lg border bg-white flex items-center justify-center text-3xl text-on-surface-30 bg-center bg-cover bg-clip-border bg-origin-border border-dashed border-border hover:bg-slate-50"
+                                      onClick={() => mainImageInputRef.current?.click()}
+                                      aria-label="이미지 추가"
+                                    >
+                                      +
+                                    </button>
+                                  )}
                                   <input
                                     ref={mainImageInputRef}
                                     type="file"
@@ -5662,11 +5866,11 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             <>
                               <FormItem label="배치 방법">
                                 <div className="flex flex-wrap gap-2">
-                                  {([2, 3, 4] as const).map((col) => (
+                                  {([2, 3] as const).map((col) => (
                                     <OptionChip
                                       key={col}
                                       label={`${col}단 그리드`}
-                                      active={Number(((data.gallery as any).gridColumns ?? 4)) === col}
+                                      active={(Number((data.gallery as any).gridColumns ?? 3) === 2 ? 2 : 3) === col}
                                       onClick={() => updateData('gallery.gridColumns', col)}
                                     />
                                   ))}
@@ -5712,15 +5916,15 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                     role="button"
                                     tabIndex={0}
                                     className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
-                                    onClick={() => updateData('gallery.enableDetailView', !((data.gallery as any)?.enableDetailView))}
+                                    onClick={() => updateData('gallery.enableDetailView', !(((data.gallery as any)?.enableDetailView ?? true)))}
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter' || e.key === ' ') {
-                                        updateData('gallery.enableDetailView', !((data.gallery as any)?.enableDetailView));
+                                        updateData('gallery.enableDetailView', !(((data.gallery as any)?.enableDetailView ?? true)));
                                       }
                                     }}
                                   >
                                     <CircleCheckbox
-                                      checked={!!(data.gallery as any)?.enableDetailView}
+                                      checked={((data.gallery as any)?.enableDetailView ?? true)}
                                       onChange={(e) => updateData('gallery.enableDetailView', e.target.checked)}
                                     />
                                     상세보기 허용
@@ -5989,7 +6193,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             <Input
                               value={(data.guestbook as any)?.title ?? ""}
                               onChange={(e) => updateData('guestbook.title', e.target.value)}
-                              placeholder="방명록"
+                              placeholder="축하해 주세요"
                               className="shadow-none flex-1"
                             />
                           </FormItem>
@@ -5998,7 +6202,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               rows={3}
                               value={(data.guestbook as any)?.description ?? ""}
                               onChange={(e) => updateData('guestbook.description', e.target.value)}
-                              placeholder="축하 인사를 남겨주세요."
+                              placeholder="guestbook"
                               className="resize-none shadow-none flex-1"
                             />
                           </FormItem>
@@ -6624,7 +6828,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           ? "w-full flex flex-col items-stretch text-center"
                           : sectionId === 'eventInfo' && (data.eventInfo as any)?.useCalendar
                             ? "w-full p-0 flex flex-col items-center text-center"
-                          : "w-full py-[50px] px-6 flex flex-col items-center text-center"
+                          : "w-full pt-[80px] pb-[80px] px-6 flex flex-col items-center text-center"
                           } ${data.theme.scrollEffect
                             ? (previewVisibleSections[sectionId]
                               ? 'opacity-100 translate-y-0 duration-[750ms] ease-out'

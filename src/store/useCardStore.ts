@@ -59,8 +59,8 @@ export const useCardStore = create<CardStore>((set) => ({
       content: '서로가 마주보며 다져온 사랑을\n이제 함께 한 곳을 바라보며\n걸어가고자 합니다.',
     },
     hosts: {
-      groom: { name: '김민준', phone: '010-0000-0000', relation: '장남' },
-      bride: { name: '박서연', phone: '010-1111-1111', relation: '장녀' },
+      groom: { name: '신동주', phone: '010-0000-0000', relation: '장남' },
+      bride: { name: '김민선', phone: '010-1111-1111', relation: '장녀' },
     },
     location: {
       address: '서울 중구 동호로 249',

@@ -88,7 +88,7 @@ function HostsIntroPreviewHeroA({ base, hero }: { base: HostsIntroPreviewBase; h
         <p className="flex justify-center items-center text-[22px] font-medium tracking-[0.02em] leading-none" style={{ color: titleColor }}>
           {firstName}
           <span className="mx-2 inline-flex items-center align-middle leading-none" style={{ color: titleColor }}>
-            ·
+            ♥
           </span>
           {secondName}
         </p>
@@ -229,20 +229,22 @@ function HostsIntroPreviewHeroC({ base, hero }: { base: HostsIntroPreviewBase; h
     <div className="w-full flex flex-col justify-start items-center pt-0">
       <div className="px-6 py-0 w-full max-w-[340px] flex flex-col items-center mt-[60px] mb-5">
         <div className="flex flex-row items-center justify-center gap-10 w-full font-serif">
-          <span className={dateSideClassName} style={dateSideStyle}>
-            {mm}
+          <span className={`${dateSideClassName} inline-flex items-baseline gap-1`} style={dateSideStyle}>
+            <span>{mm}</span>
+            <span className="text-[0.6em]">月</span>
           </span>
-          <div className="flex flex-col items-center text-center gap-2 w-fit max-w-full min-w-0">
-            <p className="text-[1.15em] font-medium tracking-[0.02em]" style={{ color: titleColor }}>
+          <div className="flex flex-col items-center text-center gap-1 w-fit max-w-full min-w-0">
+            <p className="text-[16px] pt-[2px] font-medium tracking-[0.02em]" style={{ color: titleColor }}>
               {firstName}
             </p>
             <div className="w-12 h-px opacity-35 shrink-0" style={{ backgroundColor: titleColor }} aria-hidden />
-            <p className="text-[1.15em] font-medium tracking-[0.02em]" style={{ color: titleColor }}>
+            <p className="text-[16px] pt-[2px] font-medium tracking-[0.02em]" style={{ color: titleColor }}>
               {secondName}
             </p>
           </div>
-          <span className={dateSideClassName} style={dateSideStyle}>
-            {dd}
+          <span className={`${dateSideClassName} inline-flex items-baseline gap-1`} style={dateSideStyle}>
+            <span>{dd}</span>
+            <span className="text-[0.6em]">日</span>
           </span>
         </div>
       </div>

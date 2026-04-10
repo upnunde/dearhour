@@ -164,94 +164,6 @@ export interface CardData {
   sectionEnabled: Record<string, boolean>;
 }
 
-const DEFAULT_GUESTBOOK_ENTRIES: CardData['guestbook']['entries'] = [
-  {
-    id: 'gb-1',
-    name: '이하늘',
-    message: '두 분의 결혼을 진심으로 축하드립니다. 오래오래 행복하세요!',
-    createdAt: '2026.03.15 10:20',
-    password: '1111',
-    isSecret: false,
-  },
-  {
-    id: 'gb-2',
-    name: '김서윤',
-    message: '예쁜 날, 예쁜 마음으로 축하드려요. 직접 가서 축하할게요!',
-    createdAt: '2026.03.15 14:02',
-    password: '1111',
-    isSecret: false,
-  },
-  {
-    id: 'gb-3',
-    name: '박지훈',
-    message: '두 분의 시작을 축복합니다. 늘 건강하고 행복하세요!',
-    createdAt: '2026.03.16 09:41',
-    password: '1111',
-    isSecret: false,
-  },
-  {
-    id: 'gb-4',
-    name: '최유진',
-    message: '결혼 진심으로 축하드려요. 예쁜 추억 많이 만드세요!',
-    createdAt: '2026.03.16 11:08',
-    password: '1111',
-    isSecret: false,
-  },
-  {
-    id: 'gb-5',
-    name: '정다은',
-    message: '서로 아끼며 오래오래 행복한 가정 이루시길 바랍니다.',
-    createdAt: '2026.03.16 13:55',
-    password: '1111',
-    isSecret: false,
-  },
-  {
-    id: 'gb-6',
-    name: '오민석',
-    message: '인생의 가장 빛나는 날, 함께 축하할 수 있어 기쁩니다!',
-    createdAt: '2026.03.16 16:22',
-    password: '1111',
-    isSecret: false,
-  },
-  {
-    id: 'gb-7',
-    name: '한지민',
-    message: '두 분의 앞날에 사랑과 웃음이 가득하길 기원합니다.',
-    createdAt: '2026.03.17 10:03',
-    password: '1111',
-    isSecret: false,
-  },
-  {
-    id: 'gb-8',
-    name: '강서준',
-    message: '행복한 결혼생활 되세요. 좋은 일만 가득하길 바랍니다!',
-    createdAt: '2026.03.17 12:47',
-    password: '1111',
-    isSecret: false,
-  },
-];
-
-const TOTAL_GUESTBOOK_ENTRY_COUNT = 50;
-const generatedGuestbookEntries: CardData['guestbook']['entries'] = Array.from(
-  { length: Math.max(0, TOTAL_GUESTBOOK_ENTRY_COUNT - DEFAULT_GUESTBOOK_ENTRIES.length) },
-  (_, index) => {
-    const idNum = DEFAULT_GUESTBOOK_ENTRIES.length + index + 1;
-    return {
-      id: `gb-${idNum}`,
-      name: `하객${idNum}`,
-      message: '결혼 진심으로 축하드립니다. 두 분의 앞날에 행복이 가득하길 바랍니다!',
-      createdAt: '2026.03.18 09:00',
-      password: '1111',
-      isSecret: false,
-    };
-  }
-);
-
-const INITIAL_GUESTBOOK_ENTRIES: CardData['guestbook']['entries'] = [
-  ...DEFAULT_GUESTBOOK_ENTRIES,
-  ...generatedGuestbookEntries,
-];
-
 // --- 3. 스토어 인터페이스 ---
 interface CardStore {
   data: CardData;
@@ -273,14 +185,14 @@ export const useCardStore = create<CardStore>((set) => ({
     music: { selectedId: 'classic-1', uploadedFile: null, isLoop: true },
     theme: { fontFamily: 'Pretendard', fontScale: 'md', colorPreset: 'pastel-1', bgm: 'none', bgmAutoplay: false, scrollEffect: true, particleEffect: 'none' },
     main: {
-      image: 'https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=800&auto=format&fit=crop',
+      image: '',
       images: [],
       title: '신동주 ♥ 김민선 결혼식',
       titleColor: '#333333',
       bodyColor: '#666666',
       animation: '없음',
       introType: 'A',
-      imageMode: 'default',
+      imageMode: 'single',
       presetImage: DEFAULT_MAIN_PRESET_URL,
       transitionEffect: '없음',
       transitionIntervalSec: 3,
@@ -342,12 +254,12 @@ export const useCardStore = create<CardStore>((set) => ({
     gallery: { isOn: true, type: 'swipe', images: [], imageGap: 'middle' },
     guestbook: {
       isOn: false,
-      title: '방명록',
+      title: '축하해 주세요',
       description: '축하 인사를 남겨주세요.',
       password: '',
       allowAnonymous: true,
       requireApproval: false,
-      entries: INITIAL_GUESTBOOK_ENTRIES,
+      entries: [],
     },
     youtube: { isOn: false, title: '영상으로 전하는 마음', url: '', isLoop: false, sourceType: 'url', fileUrl: '' },
     guestUpload: {
@@ -360,7 +272,7 @@ export const useCardStore = create<CardStore>((set) => ({
     share: {
       useThumbnail: true,
       thumbnail: '',
-      title: '신동주 ♥ 김민선 결혼식',
+      title: '김민준 ♥ 박서연 결혼식',
       description: '서로가 마주보며 다져온 사랑을 이제 함께 한 곳을 바라보며 걸어가고자 합니다.',
       link: '',
       enableCopy: true,

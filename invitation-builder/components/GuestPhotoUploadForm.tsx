@@ -124,6 +124,7 @@ export default function GuestPhotoUploadForm({
 
       <Button
         type="button"
+        variant="secondary"
         onClick={() => {
           // UX: 파일이 없으면 파일 선택창부터 열고, 선택이 있으면 제출로 동작
           if (senderName.trim().length === 0) return;
@@ -134,7 +135,7 @@ export default function GuestPhotoUploadForm({
           void handleUploadSubmit();
         }}
         disabled={isSubmitting}
-        className="h-9 px-3 rounded-lg bg-[color:var(--key)] text-white text-[13px] font-medium hover:brightness-110 disabled:opacity-60 shadow-none"
+        className="h-9 px-3 rounded-lg text-[13px] font-medium shadow-none"
       >
         {isSubmitting ? "업로드 중..." : "업로드"}
       </Button>
