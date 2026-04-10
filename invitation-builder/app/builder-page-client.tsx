@@ -2236,6 +2236,16 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       ),
   ];
   const orderedItems = [...requiredItems, ...orderedContentOptionalItems, ...otherOptionItems];
+  const isRsvpPreviewExpired = (() => {
+    const deadline = String((data as any)?.rsvp?.deadline ?? "").trim();
+    if (!deadline) return false;
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    const todayYmd = `${y}-${m}-${d}`;
+    return todayYmd > deadline;
+  })();
 
   const sidebarSortable = useSortable({
     items: orderedContentOptionalItems.map((it) => ({ ...it, id: it.id })),
@@ -3806,21 +3816,14 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         const title = (r.title ?? "참석 여부") as string;
         const subtitle2 = getOptionalSubtitle2('rsvp');
         const description = (r.description ?? "") as string;
-        const deadline = String(r.deadline ?? "").trim();
         return (
           <div className="max-w-full mx-auto w-full space-y-3 text-[0.8125em] text-on-surface-20 text-left">
             <div className="space-y-0">
               <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle} text-center mb-[4px]`}>{title}</p>
               <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle2} text-center mb-[20px]`}>{subtitle2}</p>
             </div>
-            {description ? <p className="whitespace-pre-line leading-relaxed text-center">{description}</p> : null}
-            {deadline ? (
-              <p className="text-[12px] text-on-surface-30 text-center">응답 마감: {deadline}</p>
-            ) : null}
             <div className="rounded-xl border border-border bg-white p-4 space-y-3">
-              <p className="text-[12px] text-on-surface-30 text-center leading-relaxed">
-                안내 메시지를 확인한 뒤, 아래 버튼으로 참석 여부를 전달해 주세요.
-              </p>
+              {description ? <p className="whitespace-pre-line leading-relaxed text-center">{description}</p> : null}
               <button
                 type="button"
                 onClick={() => setRsvpPreviewModalOpen(true)}
@@ -6828,7 +6831,13 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                     />
                   </div>
                 )}
-                {layoutOrder.filter((sectionId) => sectionId !== 'main' && sectionId !== 'hosts').map((sectionId) => {
+                {layoutOrder
+                  .filter((sectionId) => {
+                    if (sectionId === "main" || sectionId === "hosts") return false;
+                    if (sectionId === "rsvp" && isRsvpPreviewExpired) return false;
+                    return true;
+                  })
+                  .map((sectionId) => {
                   return (
                     <React.Fragment key={sectionId}>
                       <div
@@ -6849,7 +6858,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       </div>
                     </React.Fragment>
                   );
-                })}
+                  })}
               </div>
               {isBgmEnabled && (
                 <button
@@ -7382,7 +7391,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
             <Button
               type="button"
               variant="outline"
-              className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10"
+              className="h-9 px-3 rounded-lg border-[color:var(--key)] bg-white text-[13px] text-[color:var(--key)] hover:bg-slate-50"
               onClick={() => setRsvpPreviewModalOpen(false)}
             >
               취소
