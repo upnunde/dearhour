@@ -29,8 +29,12 @@ export interface EventInfo {
   time: string;
   venueName: string;
   venueDetail: string;
-  useCalendar: boolean;
+  /** D-Day 문구 표시 여부 (달력 아래 구분선은 이 옵션과 무관하게 항상 노출) */
   showDday: boolean;
+  /** Calendar block preview layout: A serif numerals + ring day, B legacy grid + filled circle day, C split header + underline day */
+  calendarDisplayType?: 'A' | 'B' | 'C';
+  /** true: theme key/on-primary on calendar; false/omit: neutral grayscale */
+  calendarUseThemeColor?: boolean;
 }
 
 export interface AccountItem {
@@ -55,7 +59,7 @@ export interface CardData {
   music: MusicConfig;
   theme: {
     fontFamily: string;
-    fontScale: 'sm' | 'md' | 'lg';
+    fontScale: 'md' | 'lg';
     colorPreset: string;
     bgm: string;
     bgmAutoplay: boolean;
@@ -69,12 +73,16 @@ export interface CardData {
     titleColor: string;
     bodyColor: string;
     animation: string;
-    introType?: 'A' | 'B' | 'C' | 'D' | 'E';
+    introType?: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I';
     imageMode?: 'single' | 'multi' | 'default';
     /** 기본 이미지 모드에서 선택한 에셋 URL (public SVG 등) */
     presetImage?: string;
     transitionEffect?: string;
     transitionIntervalSec?: number;
+    /** 메인 히어로 이미지 프레임 */
+    imageFrame?: 'full' | 'border' | 'oval' | 'ellipse' | 'arch';
+    /** 메인 등록 이미지 흑백 전환 */
+    blackAndWhite?: boolean;
   };
   hosts: { groom: Profile; bride: Profile; showContacts: boolean };
   eventInfo: EventInfo;
@@ -197,6 +205,8 @@ export const useCardStore = create<CardStore>((set) => ({
       presetImage: DEFAULT_MAIN_PRESET_URL,
       transitionEffect: '없음',
       transitionIntervalSec: 3,
+      imageFrame: 'full',
+      blackAndWhite: false,
     },
     hosts: {
       groom: { 
@@ -211,7 +221,15 @@ export const useCardStore = create<CardStore>((set) => ({
       },
       showContacts: false,
     },
-    eventInfo: { date: '2026-10-29', time: '오후 2:00', venueName: '더 신라 서울', venueDetail: '다이너스티 홀 3F', useCalendar: true, showDday: true },
+    eventInfo: {
+      date: '2026-11-21',
+      time: '오후 2:30',
+      venueName: '라움아트센터',
+      venueDetail: '5층 라움홀',
+      showDday: true,
+      calendarDisplayType: 'A',
+      calendarUseThemeColor: false,
+    },
     greeting: { title: '초대합니다', content: '서로가 마주보며 다져온 사랑을\n이제 함께 한 곳을 바라보며\n걸어가고자 합니다.' },
     notice: {
       title: '안내사항',

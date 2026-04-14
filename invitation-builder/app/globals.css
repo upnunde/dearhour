@@ -1,5 +1,5 @@
 @import "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@latest/dist/web/static/pretendard.css";
-@import url("https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=Great+Vibes&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;500;700&family=Playfair+Display:wght@400;500;600&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -13,6 +13,10 @@
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none; /* Chrome/Safari */
+}
+
+.font-invite-display {
+  font-family: var(--font-invite-display);
 }
 
 @theme inline {
@@ -108,6 +112,8 @@
   /* Key color (UI accent) */
   --key: var(--primary-custom);
   --key-dark: #6222C7;
+  /* Invitation preview: large month numerals */
+  --font-invite-display: "Playfair Display", "Noto Serif KR", serif;
 
   /* Surface */
   --surface-10: #FFFFFF;
@@ -350,6 +356,13 @@
   height: 6px;
   border-radius: 3px;
   background: transparent;
+}
+
+/* F 타입 인트로 영문 "and" — 미리보기 테마 글꼴과 무관한 캘리그라피 고정 */
+.hosts-intro-f-and-calligraphy {
+  font-family: "Great Vibes", cursive;
+  font-style: normal;
+  font-synthesis: none;
 }
 
 /* 연락처 미리보기 부모정보 줄은 글꼴 크기 옵션 스케일을 강제로 상속 */

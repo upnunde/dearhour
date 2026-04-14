@@ -3,13 +3,26 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { Palette, Music, Image as ImageIcon, Users, MessageSquare, MessageCircle, Phone, CalendarHeart, MapPin, Bell, Images, Wallet, BookOpen, Youtube, Share2, Shield, CheckCircle2, GripVertical, Play, Pause, VolumeX, Volume2, X, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, RotateCw, RefreshCcw, Move, ArrowUpDown, ClipboardCheck, Calendar, Settings } from 'lucide-react';
+import { Palette, Music, Image as ImageIcon, Users, MessageSquare, MessageCircle, Phone, CalendarHeart, MapPin, Bell, Images, Wallet, BookOpen, Youtube, Share2, Shield, CheckCircle2, GripVertical, Play, Pause, VolumeX, Volume2, X, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, RotateCw, RefreshCcw, Move, ArrowUpDown, ClipboardCheck, Calendar, Settings, Bus, Train, Car, ParkingCircle, Route } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
-import type { CardData } from "../store/useCardStore";
+import type { CardData, EventInfo } from "../store/useCardStore";
 import { DEFAULT_MAIN_PRESET_URL, MAIN_IMAGE_PRESETS } from "@/lib/main-image-presets";
+import { searchWeddingVenues, type WeddingVenue } from "@/lib/wedding-venues";
+import { getDefaultTransitGuides } from "@/lib/default-transit-guides";
 import { HostsIntroPreview } from "./hosts-intro-preview";
+import { cn } from "@/lib/utils";
+import {
+  buildDesignerCalendarCells,
+  parseEventDateLocal,
+  type DesignerCalendarCell,
+} from "@/lib/designer-calendar";
 
 const DEFAULT_LOCATION_PREVIEW_COORDS = { lat: 37.579617, lon: 126.977041 }; // 경복궁
+
+type VenueSuggestion = WeddingVenue & {
+  phone?: string;
+  mapImages?: string[];
+};
 
 type KeyColorPreset = {
   id: string;
@@ -22,12 +35,11 @@ type KeyColorPreset = {
 };
 
 const KEY_COLOR_PRESETS: KeyColorPreset[] = [
-  { id: "pastel-1", label: "더미 1", key: "#A785E8", keyDark: "#8B68D4", primaryContainer: "#F3ECFF", onPrimaryContainer: "#6F4CB8", background: "#FFFCFF" },
-  { id: "pastel-2", label: "더미 2", key: "#E7A3C5", keyDark: "#D489B0", primaryContainer: "#FDEFF6", onPrimaryContainer: "#B45D8B", background: "#FFFDFE" },
-  { id: "pastel-3", label: "더미 3", key: "#8ECFC5", keyDark: "#74B8AE", primaryContainer: "#EAF8F5", onPrimaryContainer: "#4F988D", background: "#FAFEFD" },
-  { id: "pastel-4", label: "더미 4", key: "#9FB6F4", keyDark: "#839CE0", primaryContainer: "#EEF3FF", onPrimaryContainer: "#5D76C9", background: "#FCFDFF" },
-  { id: "pastel-5", label: "더미 5", key: "#EBC39A", keyDark: "#D4A978", primaryContainer: "#FCF2E7", onPrimaryContainer: "#B67D43", background: "#FFFEFC" },
-  { id: "mono-1", label: "무채색", key: "#212121", keyDark: "#212121", primaryContainer: "#F5F5F5", onPrimaryContainer: "#212121", background: "#FFFFFF" },
+  { id: "spring-blossom", label: "스프링 블라썸", key: "#E8AFAB", keyDark: "#D3948F", primaryContainer: "#FCF9F8", onPrimaryContainer: "#5C4A48", background: "#FCF9F8" },
+  { id: "greenery-garden", label: "그리너리 가든", key: "#A9C2B6", keyDark: "#8EA79B", primaryContainer: "#F8FAF9", onPrimaryContainer: "#45524B", background: "#F8FAF9" },
+  { id: "twilight-mood", label: "트와일라잇 무드", key: "#BCAED1", keyDark: "#A291BB", primaryContainer: "#F9F9FB", onPrimaryContainer: "#4E4856", background: "#F9F9FB" },
+  { id: "golden-hour", label: "골든 아워", key: "#D4C4AE", keyDark: "#B9A98E", primaryContainer: "#FCFBF9", onPrimaryContainer: "#544E47", background: "#FCFBF9" },
+  { id: "urban-gallery", label: "어반 갤러리", key: "#1A1A1A", keyDark: "#000000", primaryContainer: "#FAFAFA", onPrimaryContainer: "#333333", background: "#FAFAFA" },
 ];
 
 const PREVIEW_TYPOGRAPHY_GUIDE = {
@@ -35,6 +47,65 @@ const PREVIEW_TYPOGRAPHY_GUIDE = {
   body: "whitespace-pre-line leading-[26px]",
   subtitle2: "text-[14px] font-normal text-on-surface-30 opacity-70 [font-stretch:120%]",
 } as const;
+
+/** 방명록 섹션 제목 — 에디터에서 프리셋만 선택 */
+const GUESTBOOK_TITLE_OPTIONS = [
+  "축하해 주세요",
+  "방명록",
+  "축하 메시지",
+  "축하 인사 남기기",
+] as const;
+
+/** 참석 여부(RSVP) 섹션 제목 — 에디터에서 프리셋만 선택 */
+const RSVP_TITLE_OPTIONS = [
+  "참석 여부",
+  "함께해 주실 마음을 알려주세요",
+  "소중한 날 함께해 주세요",
+  "마음을 전해 주세요",
+] as const;
+
+/** 오시는 길 섹션 제목 — 에디터에서 프리셋만 선택 */
+const LOCATION_TITLE_OPTIONS = [
+  "오시는 길",
+  "위치 안내",
+  "찾아오시는 길",
+  "교통 안내",
+] as const;
+
+const TRANSPORT_MODE_OPTIONS = [
+  "버스",
+  "지하철",
+  "주차장",
+  "대중교통",
+  "셔틀버스",
+  "대절버스",
+  "기차(KTX,SRT)",
+  "자가용",
+] as const;
+
+/** 유튜브 섹션 제목 — 에디터에서 프리셋만 선택 */
+const YOUTUBE_TITLE_OPTIONS = [
+  "영상으로 전하는 마음",
+  "우리의 이야기",
+  "식전 영상",
+  "추억을 담아",
+] as const;
+
+/** 계좌정보 섹션 제목 — 에디터에서 프리셋만 선택 */
+const ACCOUNT_TITLE_OPTIONS = [
+  "마음 전하실 곳",
+  "축의금 안내",
+  "계좌 안내",
+  "신랑·신부에게",
+] as const;
+
+/** 하객 사진 업로드 섹션 제목 — 에디터에서 프리셋만 선택 */
+const GUEST_UPLOAD_TITLE_OPTIONS = [
+  "추억을 공유해 주세요",
+  "하객 사진 올리기",
+  "예식 사진 나눔",
+  "소중한 순간을 남겨 주세요",
+] as const;
 
 function upperCaseFirst(value: string) {
   const trimmed = value.trim();
@@ -54,6 +125,35 @@ function getOptionalSubtitle2(sectionId: string) {
   return upperCaseFirst(subtitleBySection[sectionId] ?? "Section");
 }
 
+function getTransportModeIcon(modeRaw: string): React.ReactNode {
+  const mode = modeRaw.trim().toLowerCase();
+  const cls = "h-4 w-4";
+  const withBadge = (icon: React.ReactNode, badge: string) => (
+    <span className="relative inline-flex h-4 w-4 items-center justify-center">
+      {icon}
+      <span className="absolute -right-1 -top-1 rounded-full bg-[color:var(--key)] px-0.5 text-[8px] leading-none text-white">
+        {badge}
+      </span>
+    </span>
+  );
+  if (!mode) return <Route className={cls} strokeWidth={1.8} />;
+  if (mode.includes("버스")) return <Bus className={cls} strokeWidth={1.8} />;
+  if (mode.includes("지하철")) {
+    return (
+      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-current text-[10px] font-semibold leading-none">
+        M
+      </span>
+    );
+  }
+  if (mode.includes("주차")) return <ParkingCircle className={cls} strokeWidth={1.8} />;
+  if (mode.includes("대중교통")) return <Route className={cls} strokeWidth={1.8} />;
+  if (mode.includes("셔틀")) return withBadge(<Bus className={cls} strokeWidth={1.8} />, "S");
+  if (mode.includes("대절")) return withBadge(<Bus className={cls} strokeWidth={1.8} />, "C");
+  if (mode.includes("기차") || mode.includes("ktx") || mode.includes("srt")) return <Train className={cls} strokeWidth={1.8} />;
+  if (mode.includes("자가용") || mode.includes("자동차") || mode.includes("car")) return <Car className={cls} strokeWidth={1.8} />;
+  return <MapPin className={cls} strokeWidth={1.8} />;
+}
+
 function buildOsmEmbedUrl(lat: number, lon: number) {
   const delta = 0.01;
   const left = lon - delta;
@@ -67,6 +167,147 @@ function normalizeMainImageMode(m: unknown): 'single' | 'multi' | 'default' {
   if (m === 'single' || m === 'multi' || m === 'default') return m;
   if (m === 'none') return 'default';
   return 'default';
+}
+
+type MainImageFrameId = 'full' | 'border' | 'oval' | 'ellipse' | 'arch';
+
+const MAIN_IMAGE_FRAME_OPTIONS: { id: MainImageFrameId; label: string }[] = [
+  { id: 'full', label: '기본' },
+  { id: 'border', label: '테두리' },
+  { id: 'oval', label: '타원형' },
+  { id: 'ellipse', label: '세로 타원' },
+  { id: 'arch', label: '아치형' },
+];
+
+function normalizeMainImageFrame(raw: unknown): MainImageFrameId {
+  const v = String(raw ?? 'full');
+  /** 예전 '여백(inset)' 옵션 제거 — 기존 저장값은 기본 프레임으로 표시 */
+  if (v === 'inset') return 'full';
+  if (v === 'full' || v === 'border' || v === 'oval' || v === 'ellipse' || v === 'arch') return v;
+  return 'full';
+}
+
+/** 에디터 프레임 미리보기 스와치 (회색=이미지 영역) */
+function MainFrameSwatch({ variant }: { variant: MainImageFrameId }) {
+  const g = 'bg-[#c5c5c5]';
+  return (
+    <span
+      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-border bg-white p-[3px]"
+      aria-hidden
+    >
+      {variant === 'full' && <span className={cn('h-full w-full', g)} />}
+      {variant === 'border' && (
+        <span className="flex h-full w-full items-center justify-center">
+          <span className="box-border flex h-[72%] w-[80%] items-center justify-center rounded-none border border-[#b8b8b8]">
+            <span className={cn('block h-full w-full', g)} />
+          </span>
+        </span>
+      )}
+      {variant === 'oval' && <span className={cn('h-[78%] w-[52%] rounded-[9999px]', g)} />}
+      {variant === 'ellipse' && (
+        <span className={cn('h-[80%] w-[46%]', g)} style={{ borderRadius: '50%' }} />
+      )}
+      {variant === 'arch' && (
+        <span className={cn('h-[76%] w-[68%] rounded-t-[999px]', g)} />
+      )}
+    </span>
+  );
+}
+
+/** 미리보기 메인 히어로 이미지 영역에 프레임 적용 */
+function MainHeroFrameShell({
+  frame,
+  aspectClass,
+  children,
+}: {
+  frame: MainImageFrameId;
+  aspectClass: string;
+  children: React.ReactNode;
+}) {
+  const baseOuter = cn('w-full', aspectClass);
+  if (frame === 'full') {
+    return (
+      <div className={cn(baseOuter, 'relative overflow-hidden rounded-none')}>
+        {children}
+      </div>
+    );
+  }
+
+  if (frame === 'border') {
+    return (
+      <div className="w-full px-10">
+        <div className={cn(baseOuter, 'relative overflow-hidden rounded-none bg-[color:var(--surface-20)]')}>
+          <div className="relative h-full w-full">{children}</div>
+        </div>
+      </div>
+    );
+  }
+
+  /** 바깥은 aspect 고정 없이 내부 프레임 높이에 맞춤(hug) */
+  if (frame === 'oval') {
+    return (
+      <div
+        className={cn(
+          'relative flex w-full max-w-full items-center justify-center px-6 py-0',
+          aspectClass.includes('mx-auto') && 'mx-auto',
+        )}
+      >
+        <div
+          className="relative w-[min(72%,280px)] overflow-hidden rounded-[9999px] bg-[color:var(--surface-20)] shadow-sm"
+          style={{ aspectRatio: '3 / 4' }}
+        >
+          <div className="relative flex h-full w-full flex-col">
+            <div className="relative min-h-0 flex-1 w-full overflow-hidden rounded-[inherit]">
+              {children}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /** 세로로 긴 진짜 타원(타원 마스크, border-radius 50%) — 타원형(pill)과 구분 */
+  if (frame === 'ellipse') {
+    return (
+      <div
+        className={cn(
+          'relative flex w-full max-w-full items-center justify-center px-5 py-0',
+          aspectClass.includes('mx-auto') && 'mx-auto',
+        )}
+      >
+        <div
+          className="relative overflow-hidden bg-[color:var(--surface-20)] shadow-sm"
+          style={{
+            width: 'min(62%, 220px)',
+            aspectRatio: '3 / 5',
+            borderRadius: '50%',
+          }}
+        >
+          <div className="relative flex h-full w-full flex-col">
+            <div className="relative min-h-0 flex-1 w-full overflow-hidden rounded-[inherit]">
+              {children}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (frame === 'arch') {
+    return (
+      <div className={cn(baseOuter, 'relative')}>
+        <div className="absolute inset-x-[40px] inset-y-0 overflow-hidden rounded-t-[999px] bg-[color:var(--surface-20)]">
+          <div className="relative h-full w-full">{children}</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn(baseOuter, 'relative overflow-hidden rounded-none bg-[color:var(--surface-20)]')}>
+      {children}
+    </div>
+  );
 }
 
 function AppLabel({
@@ -190,10 +431,43 @@ function OptionChip({
   );
 }
 
+function ThemeColorChip({
+  label,
+  color,
+  active,
+  onClick,
+}: {
+  label: string;
+  color: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`h-8 px-3 rounded-lg inline-flex items-center gap-2 text-[13px] font-medium border transition-colors ${
+        active
+          ? "bg-transparent text-on-surface-10 border-[color:var(--on-surface-10)] hover:bg-slate-50"
+          : "bg-[color:var(--surface-disabled)] text-[color:var(--on-surface-30)] opacity-70 border-transparent hover:bg-slate-50"
+      }`}
+      aria-label={label}
+      title={label}
+    >
+      <span
+        className="w-3 h-3 rounded-full border border-black/10 shrink-0"
+        style={{ backgroundColor: color }}
+        aria-hidden
+      />
+      <span>{label}</span>
+    </button>
+  );
+}
+
 function fontScaleToPercent(scale: unknown) {
+  // 예전 '작게(sm)' 제거: 저장 데이터가 남아 있으면 중간(md)과 동일(100%)
+  if (scale === 'sm') return 100;
   switch (scale) {
-    case 'sm':
-      return 80;
     case 'lg':
       return 120;
     case 'md':
@@ -475,29 +749,38 @@ function Input(props: React.ComponentProps<typeof RawInput>) {
 /** 하단 '옵션' 그룹(콘텐츠 순서/미리보기 본문에 포함하지 않음) */
 const OTHER_OPTION_IDS = ['share', 'protect', 'publish', 'i18n'] as const;
 
-// 기획안 기반 카테고리 (필수/선택 분리)
+type SidebarNavGroup = 1 | 2 | 3 | 4 | 5;
+const SIDEBAR_NAV_SECTIONS: { navGroup: SidebarNavGroup; title: string }[] = [
+  { navGroup: 1, title: '기본정보' },
+  { navGroup: 2, title: '디자인' },
+  { navGroup: 3, title: '필수 콘텐츠' },
+  { navGroup: 4, title: '선택 콘텐츠' },
+  { navGroup: 5, title: '기타옵션' },
+];
+
+
+// Sidebar: navGroup 1-5; optionalOrder applies to reorderable optional sections only.
 const sidebarItems = [
-  // 필수 사항
-  { id: 'theme', icon: Palette, label: '테마', category: '필수' },
-  { id: 'bgm', icon: Music, label: '배경음악', category: '필수', hasSwitch: true },
-  { id: 'main', icon: ImageIcon, label: '메인', category: '필수' },
-  { id: 'hosts', icon: Users, label: '신랑신부', category: '필수' },
-  { id: 'greeting', icon: MessageSquare, label: '인사말', category: '필수' },
-  { id: 'contact', icon: Phone, label: '연락처', category: '필수', hasSwitch: true },
-  { id: 'eventInfo', icon: CalendarHeart, label: '예식정보', category: '필수' },
-  { id: 'location', icon: MapPin, label: '오시는 길', category: '필수' },
-  // 선택 사항
-  { id: 'notice', icon: Bell, label: '안내사항', category: '선택', hasSwitch: true },
-  { id: 'gallery', icon: Images, label: '갤러리', category: '선택', hasSwitch: true },
-  { id: 'account', icon: Wallet, label: '계좌정보', category: '선택', hasSwitch: true },
-  { id: 'guestbook', icon: BookOpen, label: '방명록', category: '선택', hasSwitch: true },
-  { id: 'rsvp', icon: ClipboardCheck, label: '참석여부', category: '선택', hasSwitch: true },
-  { id: 'youtube', icon: Youtube, label: '영상', category: '선택', hasSwitch: true },
-  { id: 'guestUpload', icon: Images, label: '하객사진 받기', category: '선택', hasSwitch: true },
-  { id: 'share', icon: Share2, label: '공유', category: '선택' },
-  { id: 'protect', icon: Shield, label: '보호', category: '선택' },
-  { id: 'publish', icon: Calendar, label: '공개일 설정', category: '선택', hasSwitch: true },
-  { id: 'i18n', icon: Settings, label: '설정', category: '선택' },
+  { id: 'hosts', icon: Users, label: '기본정보', category: '필수', navGroup: 1 as SidebarNavGroup },
+  { id: 'eventInfo', icon: CalendarHeart, label: '예식정보', category: '필수', navGroup: 1 as SidebarNavGroup },
+  { id: 'theme', icon: Palette, label: '테마', category: '필수', navGroup: 2 as SidebarNavGroup },
+  { id: 'main', icon: ImageIcon, label: '메인', category: '필수', navGroup: 2 as SidebarNavGroup },
+  { id: 'bgm', icon: Music, label: '배경음악', category: '필수', navGroup: 2 as SidebarNavGroup, hasSwitch: true },
+  { id: 'greeting', icon: MessageSquare, label: '인사말', category: '필수', navGroup: 3 as SidebarNavGroup },
+  { id: 'contact', icon: Phone, label: '연락처', category: '필수', navGroup: 3 as SidebarNavGroup, hasSwitch: true },
+  { id: 'eventDate', icon: Calendar, label: 'D-Day', category: '필수', navGroup: 3 as SidebarNavGroup },
+  { id: 'location', icon: MapPin, label: '오시는 길', category: '필수', navGroup: 3 as SidebarNavGroup },
+  { id: 'notice', icon: Bell, label: '안내사항', category: '선택', navGroup: 4 as SidebarNavGroup, hasSwitch: true },
+  { id: 'gallery', icon: Images, label: '갤러리', category: '선택', navGroup: 4 as SidebarNavGroup, hasSwitch: true },
+  { id: 'account', icon: Wallet, label: '계좌정보', category: '선택', navGroup: 4 as SidebarNavGroup, hasSwitch: true },
+  { id: 'guestbook', icon: BookOpen, label: '방명록', category: '선택', navGroup: 4 as SidebarNavGroup, hasSwitch: true },
+  { id: 'rsvp', icon: ClipboardCheck, label: '참석여부', category: '선택', navGroup: 4 as SidebarNavGroup, hasSwitch: true },
+  { id: 'youtube', icon: Youtube, label: '영상', category: '선택', navGroup: 4 as SidebarNavGroup, hasSwitch: true },
+  { id: 'guestUpload', icon: Images, label: '하객사진 받기', category: '선택', navGroup: 4 as SidebarNavGroup, hasSwitch: true },
+  { id: 'share', icon: Share2, label: '공유', category: '선택', navGroup: 5 as SidebarNavGroup },
+  { id: 'protect', icon: Shield, label: '보호', category: '선택', navGroup: 5 as SidebarNavGroup },
+  { id: 'publish', icon: Calendar, label: '공개일 설정', category: '선택', navGroup: 5 as SidebarNavGroup, hasSwitch: true },
+  { id: 'i18n', icon: Settings, label: '설정', category: '선택', navGroup: 5 as SidebarNavGroup },
 ];
 
 const builtInTracks = [
@@ -578,7 +861,7 @@ function BankLogo({ name }: { name: (typeof BANK_OPTIONS)[number] }) {
 
 function FormItem({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-3">
+    <div className="flex min-w-0 items-start gap-3">
       <AppLabel
         className={`w-[90px] flex-shrink-0 text-[13px] font-medium text-on-surface-30 leading-tight ${
           label ? 'pt-1' : ''
@@ -586,11 +869,21 @@ function FormItem({ label, children }: { label: string; children: React.ReactNod
       >
         {label}
       </AppLabel>
-      <div className="flex-1 flex gap-2 items-center">
+      <div className="flex min-w-0 flex-1 gap-2 items-center">
         {children}
       </div>
     </div>
   );
+}
+
+/** Location editor: single-line venue from event info (detail omitted if already in name). */
+function eventVenueReadonlyDisplay(eventInfo: EventInfo): string {
+  const venueName = String(eventInfo.venueName ?? "").trim();
+  const venueDetail = String(eventInfo.venueDetail ?? "").trim();
+  if (venueName && venueDetail && !venueName.includes(venueDetail)) {
+    return `${venueName} ${venueDetail}`;
+  }
+  return venueName || venueDetail;
 }
 
 const BRIDE_RELATION_OPTIONS = ['딸', '장녀', '차녀', '삼녀', '사녀', '오녀', '육녀', '독녀', '막내', '조카', '손녀', '동생', '외동'] as const;
@@ -741,6 +1034,196 @@ function parseKoreanTime(value: string | undefined | null) {
   const hour = Number.isFinite(hourNum) && hourNum >= 1 && hourNum <= 12 ? hourNum : fallback.hour;
   const minute = m[3];
   return { period, hour, minute };
+}
+
+/** e.g. 오후 1:30 → 오후 1시 30분 */
+function formatKoreanTimeSpaced(value: string | undefined | null): string {
+  const v = (value ?? "").trim();
+  if (!v) return "";
+  const { period, hour, minute } = parseKoreanTime(v);
+  const mm = Number(minute);
+  if (Number.isFinite(mm) && mm > 0) return `${period} ${hour}시 ${minute}분`;
+  return `${period} ${hour}시`;
+}
+
+function formatTimeEnglish12h(value: string | undefined | null): string {
+  const { period, hour, minute } = parseKoreanTime(value);
+  let h24 = period === "오전" ? (hour === 12 ? 0 : hour) : hour === 12 ? 12 : hour + 12;
+  const ampm = h24 >= 12 ? "PM" : "AM";
+  let h12 = h24 % 12;
+  if (h12 === 0) h12 = 12;
+  return `${String(h12).padStart(2, "0")}:${minute} ${ampm}`;
+}
+
+function formatMonthEnglishUpper(d: Date): string {
+  return new Intl.DateTimeFormat("en-US", { month: "long" }).format(d).toUpperCase();
+}
+
+const WEEKDAY_EN_SHORT = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"] as const;
+const WEEKDAY_LETTERS_EN = ["S", "M", "T", "W", "T", "F", "S"] as const;
+const WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"] as const;
+
+function normalizeCalendarDisplayType(raw: unknown): 'A' | 'B' | 'C' {
+  return raw === 'B' || raw === 'C' ? raw : 'A';
+}
+
+/** Calendar layouts A/B/C: presentation only. Month grid uses `cells`; header uses `eventDate`. */
+function DesignerCalendarPreview({
+  layout,
+  cells,
+  eventDate,
+  timeRaw,
+  useThemeColor = false,
+}: {
+  layout: 'A' | 'B' | 'C';
+  cells: DesignerCalendarCell[];
+  eventDate: Date;
+  timeRaw: string;
+  useThemeColor?: boolean;
+}) {
+  const y = eventDate.getFullYear();
+  const mo = eventDate.getMonth() + 1;
+  const d = eventDate.getDate();
+  const dow = eventDate.getDay();
+  const dotYmd = `${y}.${mo}.${d}`;
+  const yyMmDd = `${String(y).slice(-2)}.${String(mo).padStart(2, "0")}.${String(d).padStart(2, "0")}`;
+  const weekdayLongKo = `${WEEKDAY_KO[dow]}요일`;
+  const timeKo = formatKoreanTimeSpaced(timeRaw);
+  const sublineA =
+    timeKo.length > 0 ? `${weekdayLongKo} ${timeKo}` : weekdayLongKo;
+  const timeEn = formatTimeEnglish12h(timeRaw);
+  const monthEn = formatMonthEnglishUpper(eventDate);
+  const weekLabels = layout === "A" ? WEEKDAY_LETTERS_EN : WEEKDAY_KO;
+
+  const eventDay = cells.find((c) => c.isEvent)?.day ?? d;
+
+  const cellText = useThemeColor ? "text-[#413830]" : "text-neutral-700";
+  const prevRing = useThemeColor ? "ring-[#413830]/20" : "ring-black/15";
+  const eventDayBg = useThemeColor ? "bg-[color:var(--key)]" : "bg-neutral-600";
+
+  const cellShell = (cell: DesignerCalendarCell) => {
+    const base =
+      "w-10 h-10 shrink-0 rounded-[999px] p-2.5 inline-flex flex-col items-center justify-center text-center text-sm font-normal font-sans";
+    if (!cell.day) {
+      return <div key={cell.key} className={`${base}`} aria-hidden />;
+    }
+    const isPrev = cell.day === eventDay - 1 && eventDay > 1;
+    const isEvent = cell.isEvent;
+    if (isEvent) {
+      return (
+        <div key={cell.key} className={`${base} ${eventDayBg} text-white`}>
+          <span>{cell.day}</span>
+        </div>
+      );
+    }
+    if (isPrev) {
+      return (
+        <div
+          key={cell.key}
+          className={`${base} ${cellText} ring-1 ${prevRing} bg-transparent`}
+        >
+          <span>{cell.day}</span>
+        </div>
+      );
+    }
+    return (
+      <div key={cell.key} className={`${base} ${cellText}`}>
+        <span>{cell.day}</span>
+      </div>
+    );
+  };
+
+  const weekRow = weekLabels.map((label, i) => (
+    <div
+      key={`w-${i}-${label}`}
+      className={`w-10 h-10 shrink-0 rounded-[999px] p-2.5 inline-flex flex-col items-center justify-center text-center text-sm font-normal font-sans ${cellText}`}
+    >
+      <span>{label}</span>
+    </div>
+  ));
+
+  const grid = (
+    <div className="grid w-full grid-cols-7 gap-1 justify-items-center">
+      {weekRow}
+      {cells.map((c) => cellShell(c))}
+    </div>
+  );
+
+  const topGap = layout === "B" ? "gap-10" : layout === "A" ? "gap-5" : "gap-3";
+  const subMuted = useThemeColor ? "text-[#413830]/60" : "text-neutral-500";
+  const headStrong = useThemeColor ? "text-[#413830]" : "text-neutral-900";
+  const dividerClass = useThemeColor ? "bg-[#413830]/10" : "bg-black/10";
+  const pipeClass = useThemeColor ? "bg-[#413830]/25" : "bg-zinc-300";
+
+  let header: React.ReactNode = null;
+  if (layout === "A") {
+    header = (
+      <div className="flex w-44 max-w-[11rem] flex-col items-center gap-1">
+        <div className={`w-full text-center text-2xl font-bold ${headStrong}`}>{dotYmd}</div>
+        <div className={`w-full text-center text-base font-light ${subMuted}`}>{sublineA}</div>
+      </div>
+    );
+  } else if (layout === "B") {
+    header = (
+      <div className="flex flex-col items-center gap-3">
+        <div className={`text-center text-3xl font-bold ${headStrong}`}>{monthEn}</div>
+        <div className={`inline-flex items-center justify-center gap-2 text-base font-light ${subMuted}`}>
+          <span>{yyMmDd}</span>
+          <span className={`h-4 w-px ${pipeClass}`} aria-hidden />
+          <span>{WEEKDAY_EN_SHORT[dow]}</span>
+          {timeRaw.trim() ? (
+            <>
+              <span className={`h-4 w-px ${pipeClass}`} aria-hidden />
+              <span>{timeEn}</span>
+            </>
+          ) : null}
+        </div>
+      </div>
+    );
+  } else {
+    header = (
+      <div className="flex flex-col items-center gap-3">
+        <div className={`inline-flex items-center justify-center gap-4 text-3xl font-bold ${headStrong}`}>
+          <span>{String(y).slice(-2)}</span>
+          <span className={`h-6 w-px ${pipeClass}`} aria-hidden />
+          <span>{String(mo).padStart(2, "0")}</span>
+          <span className={`h-6 w-px ${pipeClass}`} aria-hidden />
+          <span>{String(d).padStart(2, "0")}</span>
+        </div>
+        <div className={`w-full text-center text-base font-light ${subMuted}`}>
+          {timeKo ? `${weekdayLongKo} ${timeKo}` : weekdayLongKo}
+        </div>
+      </div>
+    );
+  }
+
+  const placeHeaderOutsideBody = layout === "C";
+  const body = (
+    <div className={`mx-auto flex w-full flex-col items-center py-0 px-0 ${topGap}`}>
+      {layout !== "A" && !placeHeaderOutsideBody ? header : null}
+      <div className={`h-px w-full ${dividerClass}`} aria-hidden />
+      {grid}
+      <div className={`h-px w-full ${dividerClass}`} aria-hidden />
+    </div>
+  );
+  const previewWrapperClass =
+    "relative mx-auto flex h-fit w-full max-w-[384px] flex-col items-center justify-start gap-10";
+
+  if (layout === "A") {
+    return (
+      <>
+        {header}
+        <div className={previewWrapperClass}>{body}</div>
+      </>
+    );
+  }
+
+  return (
+    <div className={previewWrapperClass}>
+      {placeHeaderOutsideBody ? header : null}
+      {body}
+    </div>
+  );
 }
 
 function MultiImageGrid({
@@ -972,7 +1455,7 @@ function GalleryImageGrid({
 export default function BuilderPageClient({ initialParams, initialSearchParams }: any) {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState(sidebarItems[0].id);
-  const { data, updateData, setData } = useCardStore();
+  const { data, updateData, setData, updateLocation } = useCardStore();
   const cloneCardData = (source: CardData): CardData => {
     try {
       return structuredClone(source);
@@ -986,7 +1469,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const [editingInvitationTabName, setEditingInvitationTabName] = useState("");
   const isSwitchingInvitationRef = useRef(false);
   const onboardingAppliedRef = useRef(false);
-  const baseLayoutOrder = ['main', 'greeting', 'hosts', 'contact', 'eventInfo', 'location'];
+  /** Preview order: calendar / D-Day (`eventInfo`) sits directly above location. */
+  const baseLayoutOrder = ['hosts', 'main', 'greeting', 'contact', 'eventInfo', 'location'];
   const sectionEnabled = data.sectionEnabled ?? {};
   const isSectionEnabled = (id: string) => sectionEnabled[id] ?? (id === 'bgm');
   const isBgmEnabled = isSectionEnabled('bgm');
@@ -1033,15 +1517,145 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   // 사용자가 검색어(키워드)를 입력하는 로컬 상태
   // 최종 주소 확정은 모달에서 '적용'을 눌렀을 때만 updateData('location.address', ...)로 반영
   const [locationAddressKeyword, setLocationAddressKeyword] = useState('');
+  const [selectedTransportMode, setSelectedTransportMode] = useState('');
   const [locationPreviewCoords, setLocationPreviewCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [locationPreviewLoading, setLocationPreviewLoading] = useState(false);
   const [naverPreviewFailed, setNaverPreviewFailed] = useState(false);
+  const [venueSuggestOpen, setVenueSuggestOpen] = useState(false);
+  const [venueDropdownStyle, setVenueDropdownStyle] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
   const [previewVisibleSections, setPreviewVisibleSections] = useState<Record<string, boolean>>({});
+  const venueInputWrapRef = useRef<HTMLDivElement | null>(null);
+  const venueDropdownRef = useRef<HTMLDivElement | null>(null);
+  const autoAppliedVenueRef = useRef<string>("");
+  const venueInputValue = String((data.eventInfo as any)?.venueName ?? "");
+  const hasVenueQuery = venueInputValue.trim().length > 0;
+  const [remoteVenueSuggestions, setRemoteVenueSuggestions] = useState<VenueSuggestion[]>([]);
+  const localVenueSuggestions = useMemo(() => searchWeddingVenues(venueInputValue, 8), [venueInputValue]);
+  const venueSuggestions = useMemo(() => {
+    const map = new Map<string, VenueSuggestion>();
+    for (const venue of [...remoteVenueSuggestions, ...localVenueSuggestions]) {
+      const key = venue.name.replace(/\s+/g, "").toLowerCase();
+      if (!key) continue;
+      if (!map.has(key)) map.set(key, venue);
+    }
+    return Array.from(map.values()).slice(0, 8);
+  }, [localVenueSuggestions, remoteVenueSuggestions]);
+
+  useEffect(() => {
+    const q = venueInputValue.trim();
+    if (q.length < 2) {
+      setRemoteVenueSuggestions([]);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/weddinghall-search?q=${encodeURIComponent(q)}&limit=8`);
+        if (!res.ok) return;
+        const json = (await res.json()) as { results?: VenueSuggestion[] };
+        if (cancelled) return;
+        setRemoteVenueSuggestions(Array.isArray(json.results) ? json.results : []);
+      } catch {
+        if (!cancelled) setRemoteVenueSuggestions([]);
+      }
+    }, 220);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [venueInputValue]);
+
+  const applyVenueSuggestion = async (venue: VenueSuggestion) => {
+    setVenueSuggestOpen(false);
+    autoAppliedVenueRef.current = venue.name.replace(/\s+/g, "").toLowerCase();
+    updateData('eventInfo.venueName', venue.name);
+    updateData('location.address', venue.address);
+    setLocationAddressKeyword(venue.address);
+    let guides = Array.isArray(venue.transportGuides) ? venue.transportGuides.slice(0, 3) : [];
+    if (guides.length === 0) {
+      try {
+        const transitRes = await fetch(`/api/weddinghall-transit?address=${encodeURIComponent(venue.address)}`);
+        if (transitRes.ok) {
+          const transitJson = (await transitRes.json()) as { guides?: Array<{ mode: string; detail: string }> };
+          guides = Array.isArray(transitJson.guides) ? transitJson.guides.slice(0, 3) : [];
+        }
+      } catch {
+        // 네트워크 실패 시 기존 값 유지
+      }
+    }
+
+    if (guides.length === 0) {
+      guides = getDefaultTransitGuides();
+    }
+
+    if (guides.length > 0) {
+      const nextTransports = guides.map((item) => ({
+        mode: item.mode,
+        detail: item.detail,
+      }));
+      const pickDetail = (matcher: RegExp) =>
+        nextTransports.find((item) => matcher.test(item.mode))?.detail ?? '';
+      updateLocation({
+        transports: nextTransports,
+        subway: pickDetail(/지하철/),
+        bus: pickDetail(/버스/),
+        car: pickDetail(/주차|자동차|자차/),
+      });
+    }
+  };
+
+  useEffect(() => {
+    const normalized = venueInputValue.replace(/\s+/g, "").toLowerCase();
+    if (!normalized || normalized === autoAppliedVenueRef.current) return;
+    const exact = venueSuggestions.find(
+      (venue) => venue.name.replace(/\s+/g, "").toLowerCase() === normalized
+    );
+    if (!exact) return;
+    void applyVenueSuggestion(exact);
+  }, [venueInputValue, venueSuggestions]);
 
   useEffect(() => {
     if (locationSearchOpen) return;
     setLocationAddressKeyword((data.location as any)?.address ?? '');
   }, [data.location, locationSearchOpen]);
+
+  useEffect(() => {
+    setPortalRoot(document.body);
+  }, []);
+
+  useEffect(() => {
+    if (!venueSuggestOpen) return;
+    const handleDocumentMouseDown = (event: MouseEvent) => {
+      const targetNode = event.target as Node;
+      if (venueInputWrapRef.current?.contains(targetNode)) return;
+      if (venueDropdownRef.current?.contains(targetNode)) return;
+      setVenueSuggestOpen(false);
+    };
+    document.addEventListener('mousedown', handleDocumentMouseDown);
+    return () => document.removeEventListener('mousedown', handleDocumentMouseDown);
+  }, [venueSuggestOpen]);
+
+  useEffect(() => {
+    if (!venueSuggestOpen || !hasVenueQuery) return;
+    const updateDropdownPosition = () => {
+      const rect = venueInputWrapRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setVenueDropdownStyle({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+      });
+    };
+    updateDropdownPosition();
+    window.addEventListener('resize', updateDropdownPosition);
+    document.addEventListener('scroll', updateDropdownPosition, true);
+    return () => {
+      window.removeEventListener('resize', updateDropdownPosition);
+      document.removeEventListener('scroll', updateDropdownPosition, true);
+    };
+  }, [venueSuggestOpen, hasVenueQuery]);
+
   const [sharePreviewOpen, setSharePreviewOpen] = useState(false);
   const [shareThumbnailPickerOpen, setShareThumbnailPickerOpen] = useState(false);
   const [greetingThumbnailPickerOpen, setGreetingThumbnailPickerOpen] = useState(false);
@@ -1158,6 +1772,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     const mergedVenueName = [venueName, venueDetail].filter(Boolean).join(' ');
     const venueAddress = pickSearchParam('venueAddress').trim();
     const themeType = pickSearchParam('themeType').trim().toUpperCase();
+    const brideFirstInfo = !!((data as any).i18n?.brideFirstInfo ?? false);
 
     if (groomName) updateData('hosts.groom.name', groomName);
     if (brideName) updateData('hosts.bride.name', brideName);
@@ -1166,11 +1781,13 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     if (mergedVenueName) updateData('eventInfo.venueName', mergedVenueName);
     if (venueDetail) updateData('eventInfo.venueDetail', venueDetail);
     if (venueAddress) updateData('location.address', venueAddress);
-    if (['A', 'B', 'C', 'D', 'E'].includes(themeType)) {
+    if (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'].includes(themeType)) {
       updateData('main.introType', themeType);
     }
     if (groomName || brideName) {
-      const composedTitle = `${groomName || '신랑'} ♥ ${brideName || '신부'} 결혼식`;
+      const firstDisplayName = brideFirstInfo ? (brideName || '신부') : (groomName || '신랑');
+      const secondDisplayName = brideFirstInfo ? (groomName || '신랑') : (brideName || '신부');
+      const composedTitle = `${firstDisplayName} ♥ ${secondDisplayName} 결혼식`;
       updateData('main.title', composedTitle);
       updateData('share.title', composedTitle);
     }
@@ -1309,7 +1926,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const scrollPreviewToSection = (sectionId: string) => {
     const root = previewScrollRef.current;
     if (!root) return;
-    const target = root.querySelector<HTMLElement>(`[data-preview-section-id="${sectionId}"]`);
+    const previewSectionId = sectionId === "eventDate" ? "eventInfo" : sectionId;
+    const target = root.querySelector<HTMLElement>(`[data-preview-section-id="${previewSectionId}"]`);
     if (!target) return;
 
     // 현재 편집 중인 섹션이 미리보기 중앙 부근에 오도록 자동 정렬
@@ -1349,6 +1967,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const [guestbookComposerPasswordError, setGuestbookComposerPasswordError] = useState("");
   const [guestbookDeleteTargetEntryId, setGuestbookDeleteTargetEntryId] = useState<string | null>(null);
   const [guestbookDeletePassword, setGuestbookDeletePassword] = useState("");
+  const [guestbookDeletePasswordError, setGuestbookDeletePasswordError] = useState("");
   const [accountPreviewExpandedMap, setAccountPreviewExpandedMap] = useState<Record<string, boolean>>({});
   const [contactPreviewExpanded, setContactPreviewExpanded] = useState(false);
   const [copyToastVisible, setCopyToastVisible] = useState(false);
@@ -1513,6 +2132,10 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     updateData('location.subway', next[0]?.mode ?? '');
     updateData('location.bus', next[0]?.detail ?? '');
   };
+  const availableTransportModeOptions = useMemo(() => {
+    const used = new Set(transportItems.map((item) => String(item.mode ?? "").trim()).filter(Boolean));
+    return TRANSPORT_MODE_OPTIONS.filter((option) => !used.has(option));
+  }, [transportItems]);
 
   const galleryDetailImages = useMemo(
     () =>
@@ -2215,7 +2838,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     };
   }, []);
 
-  const requiredItems = sidebarItems.filter((i) => i.category === '필수');
   const orderedContentOptionalItems = optionalOrder
     .map((id) => sidebarItems.find((i) => i.id === id))
     .filter(Boolean) as typeof sidebarItems;
@@ -2235,7 +2857,17 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           id !== "i18n",
       ),
   ];
-  const orderedItems = [...requiredItems, ...orderedContentOptionalItems, ...otherOptionItems];
+  const itemById = Object.fromEntries(sidebarItems.map((i) => [i.id, i])) as Record<
+    string,
+    (typeof sidebarItems)[number]
+  >;
+  const orderedItems = [
+    ...(["hosts", "eventInfo"] as const).map((id) => itemById[id]),
+    ...(["theme", "main", "bgm"] as const).map((id) => itemById[id]),
+    ...(["greeting", "contact", "eventDate", "location"] as const).map((id) => itemById[id]),
+    ...orderedContentOptionalItems,
+    ...otherOptionItems,
+  ];
   const isRsvpPreviewExpired = (() => {
     const deadline = String((data as any)?.rsvp?.deadline ?? "").trim();
     if (!deadline) return false;
@@ -2384,21 +3016,22 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const renderPreviewSection = (sectionId: string) => {
     switch (sectionId) {
       case 'main': {
+        const frame = normalizeMainImageFrame((data.main as any).imageFrame);
         const mode = normalizeMainImageMode((data.main as any).imageMode);
+        const mainBlackAndWhiteEnabled = !!((data.main as any).blackAndWhite ?? false);
+        const mainImageFilterStyle = mainBlackAndWhiteEnabled ? { filter: "grayscale(100%)" } : undefined;
         if (mode === 'default') {
           const presetUrl = String((data.main as any).presetImage ?? '').trim();
           if (!presetUrl) {
             return null;
           }
           return (
-            <div className="w-full flex flex-col items-stretch gap-0">
-              <div className="w-full aspect-square max-w-full mx-auto rounded-none overflow-hidden relative bg-[color:var(--surface-20)]">
-                <div
-                  className="absolute inset-0 bg-center bg-cover"
-                  style={{ backgroundImage: `url(${presetUrl})` }}
-                />
-              </div>
-            </div>
+            <MainHeroFrameShell frame={frame} aspectClass="aspect-square max-w-full mx-auto">
+              <div
+                className="absolute inset-0 bg-center bg-cover"
+                style={{ backgroundImage: `url(${presetUrl})`, ...mainImageFilterStyle }}
+              />
+            </MainHeroFrameShell>
           );
         }
         const groomName = data.hosts.groom.name;
@@ -2447,58 +3080,57 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               : '';
 
         return (
-          <div className="w-full flex flex-col items-stretch gap-0">
-            <div className="w-full aspect-[3/4] rounded-none flex flex-col justify-end items-stretch text-white shadow-none overflow-hidden relative">
-              {/* 배경 이미지 레이어 */}
-              {transitionEffect === '디졸브' || transitionEffect === '크로스페이드' ? (
-                <>
-                  {/* 새 이미지(아래) */}
+          <MainHeroFrameShell frame={frame} aspectClass="aspect-[3/4]">
+            {/* 배경 이미지 레이어 */}
+            {transitionEffect === '디졸브' || transitionEffect === '크로스페이드' ? (
+              <>
+                {/* 새 이미지(아래) */}
+                <div
+                  className="absolute inset-0 bg-center bg-cover"
+                  style={{
+                    backgroundImage: currentUrl ? `url(${currentUrl})` : 'none',
+                    backgroundColor: currentUrl ? undefined : '#eee',
+                    ...mainImageFilterStyle,
+                  }}
+                />
+                {/* 이전 이미지(위) — 페이드 아웃 */}
+                {prevUrl && (
+                  <div
+                    key={`prev-${mainPreviewAnimKey}`}
+                    className={`absolute inset-0 bg-center bg-cover ${animClassForPrev}`}
+                    style={{ backgroundImage: `url(${prevUrl})`, ...mainImageFilterStyle }}
+                  />
+                )}
+              </>
+            ) : (
+              <>
+                {/* 이전 이미지(아래, 고정) */}
+                {prevUrl ? (
+                  <div
+                    className="absolute inset-0 bg-center bg-cover"
+                    style={{ backgroundImage: `url(${prevUrl})`, ...mainImageFilterStyle }}
+                  />
+                ) : (
                   <div
                     className="absolute inset-0 bg-center bg-cover"
                     style={{
                       backgroundImage: currentUrl ? `url(${currentUrl})` : 'none',
                       backgroundColor: currentUrl ? undefined : '#eee',
+                      ...mainImageFilterStyle,
                     }}
                   />
-                  {/* 이전 이미지(위) — 페이드 아웃 */}
-                  {prevUrl && (
-                    <div
-                      key={`prev-${mainPreviewAnimKey}`}
-                      className={`absolute inset-0 bg-center bg-cover ${animClassForPrev}`}
-                      style={{ backgroundImage: `url(${prevUrl})` }}
-                    />
-                  )}
-                </>
-              ) : (
-                <>
-                  {/* 이전 이미지(아래, 고정) */}
-                  {prevUrl ? (
-                    <div
-                      className="absolute inset-0 bg-center bg-cover"
-                      style={{ backgroundImage: `url(${prevUrl})` }}
-                    />
-                  ) : (
-                    <div
-                      className="absolute inset-0 bg-center bg-cover"
-                      style={{
-                        backgroundImage: currentUrl ? `url(${currentUrl})` : 'none',
-                        backgroundColor: currentUrl ? undefined : '#eee',
-                      }}
-                    />
-                  )}
-                  {/* 현재 이미지(위) — 선택 효과 */}
-                  {currentUrl && (
-                    <div
-                      key={`cur-${mainPreviewAnimKey}`}
-                      className={`absolute inset-0 bg-center bg-cover ${transitionEffect === '없음' ? '' : animClassForCurrent}`}
-                      style={{ backgroundImage: `url(${currentUrl})` }}
-                    />
-                  )}
-                </>
-              )}
-
-            </div>
-          </div>
+                )}
+                {/* 현재 이미지(위) — 선택 효과 */}
+                {currentUrl && (
+                  <div
+                    key={`cur-${mainPreviewAnimKey}`}
+                    className={`absolute inset-0 bg-center bg-cover ${transitionEffect === '없음' ? '' : animClassForCurrent}`}
+                    style={{ backgroundImage: `url(${currentUrl})`, ...mainImageFilterStyle }}
+                  />
+                )}
+              </>
+            )}
+          </MainHeroFrameShell>
         );
       }
       case 'greeting': {
@@ -2687,7 +3319,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
         return (
           <div className="mx-auto w-full space-y-5">
-            {!!(data.share?.thumbnail ?? '').trim() && (
+            {contactEnabled && !!(data.share?.thumbnail ?? '').trim() && (
               <div className="w-full aspect-video rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden mb-[40px]">
                 <img
                   src={(data.share?.thumbnail ?? '').trim()}
@@ -2794,19 +3426,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       case 'eventInfo': {
         const brideFirstInfo = !!((data as any).i18n?.brideFirstInfo ?? false);
         const dateText = (data.eventInfo.date ?? "").trim();
-        const eventDate = dateText ? new Date(`${dateText}T00:00:00`) : null;
-        const isValidEventDate = !!eventDate && Number.isFinite(eventDate.getTime());
-        const weekdayText = isValidEventDate
-          ? ["일", "월", "화", "수", "목", "금", "토"][eventDate!.getDay()]
-          : "";
-        const formattedDateWithWeekday = isValidEventDate
-          ? `${eventDate!.getFullYear()}년 ${String(eventDate!.getMonth() + 1).padStart(2, "0")}월 ${String(eventDate!.getDate()).padStart(2, "0")}일 · ${weekdayText}요일`
-          : data.eventInfo.date;
-        const showCalendar = !!(data.eventInfo as any)?.useCalendar;
-        const showCalendarBackground = !!((data.eventInfo as any)?.showCalendarBackground ?? true);
-        const showDday = !!(data.eventInfo as any)?.showDday;
-
-        let ddayLabel = "";
+        const eventDate = parseEventDateLocal(dateText);
+        const isValidEventDate = eventDate !== null;
+        const showDday = (data.eventInfo as any)?.showDday !== false;
+        const calendarDisplayType = normalizeCalendarDisplayType((data.eventInfo as any)?.calendarDisplayType);
+        const calendarUseThemeColor = true;
+        const timeTrimmed = (data.eventInfo.time ?? "").trim();
         let ddayStatusText = "";
         if (showDday && isValidEventDate) {
           const today = new Date();
@@ -2814,7 +3439,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           const target = new Date(eventDate!);
           target.setHours(0, 0, 0, 0);
           const diffDays = Math.round((target.getTime() - today.getTime()) / 86400000);
-          ddayLabel = diffDays > 0 ? `D-${diffDays}` : diffDays < 0 ? `D+${Math.abs(diffDays)}` : "D-DAY";
           const absDays = Math.abs(diffDays);
           if (diffDays > 0) ddayStatusText = `${absDays}일 남았습니다`;
           else if (diffDays < 0) ddayStatusText = `${absDays}일 지났습니다`;
@@ -2823,12 +3447,14 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         const ddayMatch = ddayStatusText.match(/^(\d+)(일 .+)$/);
         const ddayNumber = ddayMatch?.[1] ?? "";
         const ddaySuffix = ddayMatch?.[2] ?? ddayStatusText;
+        const ddayHeartCls = "text-[color:var(--key)]";
+        const ddayNumCls = "text-[color:var(--key-dark)] font-medium";
         const ddayMessage = ddayStatusText ? (
           <>
-            {brideFirstInfo ? '신부' : '신랑'} <span className="text-[color:var(--key)]">&hearts;</span> {brideFirstInfo ? '신랑' : '신부'}의 결혼식이{" "}
+            {brideFirstInfo ? '신부' : '신랑'} <span className={ddayHeartCls}>&hearts;</span> {brideFirstInfo ? '신랑' : '신부'}의 결혼식이{" "}
             {ddayNumber ? (
               <>
-                <span className="text-[color:var(--key-dark)]">{ddayNumber}</span>
+                <span className={ddayNumCls}>{ddayNumber}</span>
                 {ddaySuffix}
               </>
             ) : (
@@ -2838,83 +3464,41 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           </>
         ) : null;
 
-        let monthLabel = "";
-        let calendarCells: Array<{ key: string; day?: number; isEvent?: boolean }> = [];
-        if (showCalendar && isValidEventDate) {
-          const year = eventDate!.getFullYear();
-          const month = eventDate!.getMonth();
-          const firstWeekday = new Date(year, month, 1).getDay();
-          const lastDay = new Date(year, month + 1, 0).getDate();
-          monthLabel = `${year}.${String(month + 1).padStart(2, "0")}`;
-          for (let i = 0; i < firstWeekday; i += 1) {
-            calendarCells.push({ key: `blank-${i}` });
-          }
-          for (let d = 1; d <= lastDay; d += 1) {
-            calendarCells.push({
-              key: `day-${d}`,
-              day: d,
-              isEvent: d === eventDate!.getDate(),
-            });
-          }
-        }
+
+
+        const calendarCells = isValidEventDate ? buildDesignerCalendarCells(eventDate!) : [];
+
+        const eventInfoPreviewBg = !isValidEventDate
+          ? "bg-transparent"
+          : calendarUseThemeColor
+            ? "bg-[color:var(--primary-container-2)]"
+            : "bg-transparent";
+        const eventInfoPreviewBorder = calendarUseThemeColor ? "border-y-0" : "border-y border-border";
+        const ddayBlockCls = calendarUseThemeColor ? "text-[#413830]" : "text-neutral-600";
+        const eventInfoPreviewText = calendarUseThemeColor ? "text-[#413830]" : "text-neutral-700";
 
         return (
           <div
-            className={`max-w-full w-full mx-auto space-y-3 text-[0.8125em] text-on-surface-20 ${
-              showCalendar && showCalendarBackground ? 'bg-[color:var(--primary-container)]' : 'bg-transparent'
-            }`}
+            className={`max-w-full w-full mx-auto space-y-3 px-10 text-[0.8125em] ${eventInfoPreviewText} ${eventInfoPreviewBg} ${eventInfoPreviewBorder}`}
           >
-            {showCalendar && isValidEventDate && (
-              <div className="w-full rounded-none border-0 px-0 pt-[80px] pb-[60px] text-left shadow-none mt-0 mb-0 flex flex-col gap-10">
-                <div className="flex h-fit items-center justify-center mx-0">
-                    <div className="text-center text-[16px] text-[color:var(--on-primary-container)]/80 mb-0">
-                      <p>{formattedDateWithWeekday}</p>
-                      <p className="text-[18px] mt-1 font-medium">{data.eventInfo.time}</p>
-                      <div className="mx-auto mt-3 h-px w-80 bg-[color:var(--key)]/45" aria-hidden />
-                    </div>
-                </div>
-                <div className="mx-10">
-                  <div className="grid grid-cols-7 gap-1 px-0 text-center text-[clamp(12px,1.2vw,12px)] text-[color:var(--on-primary-container)]/70">
-                    {["일", "월", "화", "수", "목", "금", "토"].map((w) => (
-                      <span key={w}>{w}</span>
-                    ))}
+            {isValidEventDate && (
+              <div className="my-[60px] flex w-full flex-col items-center gap-10 rounded-none border-0 px-0 text-center shadow-none">
+                <DesignerCalendarPreview
+                  layout={calendarDisplayType}
+                  cells={calendarCells}
+                  eventDate={eventDate!}
+                  timeRaw={timeTrimmed}
+                  useThemeColor={calendarUseThemeColor}
+                />
+                {showDday && ddayMessage && (
+                  <div
+                    className={`w-full max-w-[19rem] text-[16px] font-normal leading-relaxed text-center ${ddayBlockCls}`}
+                  >
+                    {ddayMessage}
                   </div>
-                  <div className="grid grid-cols-7 gap-1">
-                    {calendarCells.map((cell) => (
-                      <div
-                        key={cell.key}
-                        className={[
-                          // 달력 셀: 가로/세로 고정해서 정사각형 비율 유지 + 원형 스타일
-                          "h-8 w-8 rounded-full flex items-center justify-center text-[12px] justify-self-center leading-none",
-                          cell.day
-                            ? cell.isEvent
-                              ? "bg-[color:var(--key)] text-white font-semibold shadow-sm"
-                              : "text-[color:var(--on-primary-container)]/85"
-                            : "",
-                        ].join(" ")}
-                      >
-                        {cell.day ?? ""}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {ddayMessage && (
-                  <>
-                    <div className="mx-auto mt-3 h-px w-80 bg-[color:var(--key)]/45" aria-hidden />
-                    <div className="w-full text-center text-[16px] font-normal text-on-surface-10 leading-none">
-                      {ddayMessage}
-                    </div>
-                  </>
                 )}
-
               </div>
             )}
-            {!showCalendar && ddayMessage && (
-              <div className="w-full py-6 text-center text-[16px] font-normal text-on-surface-10 leading-none">
-                {ddayMessage}
-              </div>
-            )}
-
           </div>
         );
       }
@@ -2961,7 +3545,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
             const compactParts = (locationLikeParts.length > 0 ? locationLikeParts : parts).slice(-3);
             return compactParts.join(' ').trim();
           })();
-          const title = ((data.location as any).title ?? '오시는 길') as string;
+          const title =
+            String((data.location as any).title ?? LOCATION_TITLE_OPTIONS[0]).trim() || LOCATION_TITLE_OPTIONS[0];
           const enc = encodeURIComponent(address);
           const naverWeb = address ? `https://map.naver.com/v5/search/${enc}` : '';
 
@@ -3043,7 +3628,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-[radial-gradient(circle_at_30%_30%,rgba(0,0,0,0.06),transparent_55%),radial-gradient(circle_at_70%_40%,rgba(0,0,0,0.05),transparent_55%),linear-gradient(135deg,rgba(0,0,0,0.03),rgba(0,0,0,0.01))] text-on-surface-20">
                         <div className="flex flex-col items-center gap-2 px-4">
                           <div className="w-10 h-10 rounded-full bg-white/90 border border-black/10 flex items-center justify-center shadow-sm">
-                            <span className="text-[1.125em]">📍</span>
+                            <span className="text-[1.125em] text-[color:var(--key)]">📍</span>
                           </div>
                           <div className="text-[0.75em] text-on-surface-30">
                             {locationPreviewLoading ? '지도를 불러오는 중…' : '지도를 불러오지 못했어요'}
@@ -3062,7 +3647,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
                   {/* 하단 앱 전송 바 (캡처 스타일) */}
                   {appLinks && (
-                    <div className="w-full bg-[color:var(--surface-10)] border-t border-black/5 grid grid-cols-3 divide-x divide-black/10 text-[13px]">
+                    <div className="preview-map-app-links w-full bg-[color:var(--surface-10)] border-t border-black/5 grid grid-cols-3 divide-x divide-black/10 text-[13px]">
                       <a
                         href={appLinks.naver.scheme}
                         onClick={openAppOrWeb(appLinks.naver.scheme, appLinks.naver.web)}
@@ -3101,18 +3686,19 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 </div>
 
                 {transportsClean.length > 0 && (
-                  <div className="pt-5 pb-5 flex flex-col gap-1 justify-start items-center">
+                  <div className="w-full pt-5 pb-5 flex flex-col gap-1 justify-start items-start">
                     {transportsClean.map((t, idx) => (
-                      <div key={`${t.mode}-${idx}`} className="mt-4 mb-8 text-[0.8125em] text-on-surface-20">
+                      <div key={`${t.mode}-${idx}`} className="w-full mt-4 mb-4 text-[0.8125em] text-on-surface-20 text-left">
                         {t.mode && (
-                          <div className="mb-1 inline-flex w-fit items-center gap-2 text-[16px] font-semibold text-on-surface-10">
-                            <span className="w-10 border-t border-dashed border-on-surface-30" />
-                            {t.mode}
-                            <span className="w-10 border-t border-dashed border-on-surface-30" />
+                          <div className="mb-1 text-[14px] font-semibold text-on-surface-10 text-left flex items-center justify-start gap-1.5 leading-none">
+                            <span aria-hidden className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-[color:var(--key)] leading-none">
+                              {getTransportModeIcon(t.mode)}
+                            </span>
+                            <span>{t.mode}</span>
                           </div>
                         )}
                         {t.detail && (
-                          <div className="text-[14px] text-on-surface-30 whitespace-pre-line">{t.detail}</div>
+                          <div className="text-[14px] leading-[24px] text-on-surface-30 whitespace-pre-line text-left">{t.detail}</div>
                         )}
                       </div>
                     ))}
@@ -3334,7 +3920,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         );
       }
       case 'account': {
-        const title = data.accounts?.title || "마음 전하실 곳";
+        const title = String(data.accounts?.title ?? ACCOUNT_TITLE_OPTIONS[0]).trim() || ACCOUNT_TITLE_OPTIONS[0];
         const subtitle2 = getOptionalSubtitle2('account');
         const content = data.accounts?.content || "";
         const list = Array.isArray(data.accounts?.list) ? data.accounts.list : [];
@@ -3345,13 +3931,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle} mb-1`}>{title}</p>
               <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle2} mb-0 pb-5`}>{subtitle2}</p>
             </div>
-            {content && <p className="whitespace-pre-line leading-relaxed">{content}</p>}
+            {content && <p className="whitespace-pre-line text-[14px] leading-[24px]">{content}</p>}
             <div className="space-y-2">
-              {list.length === 0 && (
-                <div className="rounded-lg border border-dashed border-border py-4 text-on-surface-30">
-                  노출할 계좌정보가 없습니다.
-                </div>
-              )}
               {list.map((acc) => {
                 const isOpen = displayMode === 'expanded' ? true : !!accountPreviewExpandedMap[acc.id];
                 return (
@@ -3370,11 +3951,11 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           }))
                         }
                       >
-                        <span className="font-semibold text-[color:var(--on-primary-container)]">{acc.groupName || "그룹명"}</span>
+                        <span className="font-semibold text-[color:var(--on-primary-container)]">{acc.groupName || "계좌명"}</span>
                         <ChevronDown className={`w-4 h-4 text-[color:var(--on-primary-container)]/70 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                       </button>
                     ) : (
-                      <div className="px-3 pt-3 text-[0.75em] text-[color:var(--on-primary-container)]/70">{acc.groupName || "그룹명"}</div>
+                      <div className="px-3 pt-3 text-[0.75em] text-[color:var(--on-primary-container)]/70">{acc.groupName || "계좌명"}</div>
                     )}
                     {isOpen && (
                       <div className={`${displayMode === 'accordion' ? 'px-3 pb-3' : 'px-3 py-3'}`}>
@@ -3404,7 +3985,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       }
       case 'guestbook': {
         const rawTitle = ((data.guestbook as any)?.title ?? "축하해 주세요") as string;
-        const title = rawTitle.trim() === "방명록" ? "축하해 주세요" : rawTitle;
+        const title = rawTitle.trim() || "축하해 주세요";
         const descriptionRaw = ((data.guestbook as any)?.description ?? "guestbook") as string;
         const description = descriptionRaw === "축하 인사를 남겨주세요." || descriptionRaw === "Guestbook"
           ? "Guestbook"
@@ -3434,6 +4015,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         const closeGuestbookDeleteDialog = () => {
           setGuestbookDeleteTargetEntryId(null);
           setGuestbookDeletePassword("");
+          setGuestbookDeletePasswordError("");
         };
         const canManageGuestbookEntry = (entry: any, password: string) => {
           const pass = password.trim();
@@ -3719,10 +4301,16 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                     <Input
                       type="password"
                       value={guestbookDeletePassword}
-                      onChange={(e) => setGuestbookDeletePassword(e.target.value)}
+                      onChange={(e) => {
+                        setGuestbookDeletePassword(e.target.value);
+                        if (guestbookDeletePasswordError) setGuestbookDeletePasswordError("");
+                      }}
                       placeholder="비밀번호를 입력해 주세요."
                       className="shadow-none"
                     />
+                    {!!guestbookDeletePasswordError && (
+                      <p className="text-[12px] text-red-600 mt-1">{guestbookDeletePasswordError}</p>
+                    )}
                     <div className="pt-1 flex justify-end gap-2">
                       <Button
                         type="button"
@@ -3739,7 +4327,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                         onClick={() => {
                           const targetEntry = orderedEntries.find((it: any) => String(it.id) === guestbookDeleteTargetEntryId);
                           if (!targetEntry || !canManageGuestbookEntry(targetEntry, guestbookDeletePassword)) {
-                            window.alert("비밀번호가 올바르지 않습니다.");
+                            setGuestbookDeletePasswordError("비밀번호가 틀립니다.");
                             return;
                           }
                           const nextEntries = orderedEntries.filter((it: any) => String(it.id) !== guestbookDeleteTargetEntryId);
@@ -3761,7 +4349,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         );
       }
       case 'youtube': {
-        const title = ((data.youtube as any)?.title ?? "영상으로 전하는 마음") as string;
+        const title = String((data.youtube as any)?.title ?? YOUTUBE_TITLE_OPTIONS[0]).trim() || YOUTUBE_TITLE_OPTIONS[0];
         const subtitle2 = getOptionalSubtitle2('youtube');
         const sourceType = ((data.youtube as any)?.sourceType ?? 'url') as 'file' | 'url';
         const fileUrl = ((data.youtube as any)?.fileUrl ?? '').trim();
@@ -3813,7 +4401,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       }
       case 'rsvp': {
         const r = (data as any).rsvp ?? {};
-        const title = (r.title ?? "참석 여부") as string;
+        const title = String(r.title ?? RSVP_TITLE_OPTIONS[0]).trim() || RSVP_TITLE_OPTIONS[0];
         const subtitle2 = getOptionalSubtitle2('rsvp');
         const description = (r.description ?? "") as string;
         return (
@@ -3836,7 +4424,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         );
       }
       case 'guestUpload': {
-        const title = ((data.guestUpload as any)?.title ?? "하객사진 받기") as string;
+        const title = String((data.guestUpload as any)?.title ?? GUEST_UPLOAD_TITLE_OPTIONS[0]).trim() || GUEST_UPLOAD_TITLE_OPTIONS[0];
         const subtitle2 = getOptionalSubtitle2('guestUpload');
         const description = ((data.guestUpload as any)?.description ?? "예식 후 촬영하신 사진/영상을 업로드해 주세요.") as string;
         return (
@@ -3940,85 +4528,88 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           ref={sidebarRef}
           className="w-[100px] flex-shrink-0 bg-white border-r border-border flex flex-col items-center py-6 z-20 overflow-y-auto no-scrollbar"
         >
-          
-          <div className="w-full text-center mb-2"><span className="text-[12px] font-bold text-on-surface-30">필수 사항</span></div>
-          <div className="flex flex-col gap-y-2 mb-6 w-full items-center">
-            {sidebarItems.filter(i => i.category === '필수').map((item) => {
-              const isActive = activeSection === item.id;
-              const isDisabled = item.hasSwitch && !isSectionEnabled(item.id);
-              return (
-                <div 
-                  key={item.id} onClick={() => scrollToSection(item.id)}
-                  data-sidebar-item-id={item.id}
-                  className={`flex flex-col items-center justify-center gap-y-1 w-[80px] h-[64px] rounded-lg cursor-pointer transition-colors shadow-none ${
-                    isDisabled
-                      ? 'opacity-50 text-on-surface-30 hover:bg-slate-100'
-                      : isActive
-                        ? 'bg-slate-100'
-                        : 'text-on-surface-20 hover:bg-slate-100'
-                  }`}
-                >
-                  <item.icon className={`w-6 h-6 ${isDisabled ? 'text-on-surface-30' : isActive ? 'text-[color:var(--key)]' : 'text-on-surface-30'}`} strokeWidth={1.5} />
-                  <span className={`text-[12px] font-normal ${isDisabled ? 'text-on-surface-30' : isActive ? 'text-[color:var(--key)]' : 'text-on-surface-20'}`}>{item.label}</span>
+          {SIDEBAR_NAV_SECTIONS.map(({ navGroup, title }, sectionIdx) => {
+            const itemsForNav =
+              navGroup === 1
+                ? (["hosts", "eventInfo"] as const).map((id) => itemById[id])
+                : navGroup === 2
+                  ? (["theme", "main", "bgm"] as const).map((id) => itemById[id])
+                  : navGroup === 3
+                    ? (["greeting", "contact", "eventDate", "location"] as const).map((id) => itemById[id])
+                    : navGroup === 4
+                      ? orderedContentOptionalItems
+                      : otherOptionItems;
+            return (
+              <div key={navGroup} className="w-full flex flex-col items-center mb-1">
+                <div className="w-full text-center mb-1.5 px-0.5">
+                  <span className="text-[12px] font-bold text-on-surface-30 leading-tight block">{title}</span>
                 </div>
-              );
-            })}
-          </div>
-
-          <div className="w-full border-t border-border my-2"></div>
-          
-          <div className="w-full text-center mb-2"><span className="text-[12px] font-bold text-on-surface-30">선택 사항</span></div>
-          <div className="flex flex-col gap-y-2 pb-5 w-full items-center">
-            {orderedContentOptionalItems.map((item) => {
-              const isActive = activeSection === item.id;
-              const isDisabled = item.hasSwitch && !isSectionEnabled(item.id);
-              const { handleProps, wrapperProps, isDragging } = sidebarSortable.getItemProps(item.id);
-              return (
-                <div
-                  key={item.id}
-                  {...wrapperProps}
-                  data-sidebar-item-id={item.id}
-                  className={`${wrapperProps.className} relative flex flex-col items-center justify-center gap-y-1 w-[80px] h-[64px] rounded-lg shadow-none cursor-grab active:cursor-grabbing ${
-                    isDisabled
-                      ? 'opacity-50 text-on-surface-30 hover:bg-slate-100'
-                      : `${isActive ? 'bg-slate-100' : 'text-on-surface-20 hover:bg-slate-100'}`
-                  }`}
-                  {...handleProps}
-                  onClick={() => { if (!isDragging) scrollToSection(item.id); }}
-                >
-                  <span className="absolute top-1 right-1 pointer-events-none text-[color:var(--on-surface-disabled)]">
-                    <ArrowUpDown className="w-3 h-3" strokeWidth={1.75} />
-                  </span>
-                  <item.icon className={`w-6 h-6 ${isDisabled ? 'text-on-surface-30' : isActive ? 'text-[color:var(--key)]' : 'text-on-surface-30'}`} strokeWidth={1.5} />
-                  <span className={`text-[12px] font-normal ${isDisabled ? 'text-on-surface-30' : isActive ? 'text-[color:var(--key)]' : 'text-on-surface-20'}`}>{item.label}</span>
+                <div className="flex flex-col gap-y-2 w-full items-center">
+                  {itemsForNav.map((item) => {
+                    const isActive = activeSection === item.id;
+                    const isDisabled = item.hasSwitch && !isSectionEnabled(item.id);
+                    if (navGroup === 4) {
+                      const { handleProps, wrapperProps, isDragging } = sidebarSortable.getItemProps(item.id);
+                      return (
+                        <div
+                          key={item.id}
+                          {...wrapperProps}
+                          data-sidebar-item-id={item.id}
+                          className={`${wrapperProps.className} relative flex flex-col items-center justify-center gap-y-1 w-[80px] min-h-[64px] py-1 rounded-lg shadow-none cursor-grab active:cursor-grabbing ${
+                            isDisabled
+                              ? "opacity-50 text-on-surface-30 hover:bg-slate-100"
+                              : `${isActive ? "bg-slate-100" : "text-on-surface-20 hover:bg-slate-100"}`
+                          }`}
+                          {...handleProps}
+                          onClick={() => {
+                            if (!isDragging) scrollToSection(item.id);
+                          }}
+                        >
+                          <span className="absolute top-1 right-1 pointer-events-none text-[color:var(--on-surface-disabled)]">
+                            <ArrowUpDown className="w-3 h-3" strokeWidth={1.75} />
+                          </span>
+                          <item.icon
+                            className={`w-6 h-6 shrink-0 ${isDisabled ? "text-on-surface-30" : isActive ? "text-[color:var(--key)]" : "text-on-surface-30"}`}
+                            strokeWidth={1.5}
+                          />
+                          <span
+                            className={`text-[12px] font-normal text-center leading-tight px-0.5 ${isDisabled ? "text-on-surface-30" : isActive ? "text-[color:var(--key)]" : "text-on-surface-20"}`}
+                          >
+                            {item.label}
+                          </span>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => scrollToSection(item.id)}
+                        data-sidebar-item-id={item.id}
+                        className={`flex flex-col items-center justify-center gap-y-1 w-[80px] min-h-[64px] py-1 rounded-lg cursor-pointer transition-colors shadow-none ${
+                          isDisabled
+                            ? "opacity-50 text-on-surface-30 hover:bg-slate-100"
+                            : isActive
+                              ? "bg-slate-100"
+                              : "text-on-surface-20 hover:bg-slate-100"
+                        }`}
+                      >
+                        <item.icon
+                          className={`w-6 h-6 shrink-0 ${isDisabled ? "text-on-surface-30" : isActive ? "text-[color:var(--key)]" : "text-on-surface-30"}`}
+                          strokeWidth={1.5}
+                        />
+                        <span
+                          className={`text-[12px] font-normal text-center leading-tight px-0.5 ${isDisabled ? "text-on-surface-30" : isActive ? "text-[color:var(--key)]" : "text-on-surface-20"}`}
+                        >
+                          {item.label}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
-
-          <div className="w-full border-t border-border my-2"></div>
-          <div className="w-full text-center mb-2"><span className="text-[12px] font-bold text-on-surface-30">옵션</span></div>
-          <div className="flex flex-col gap-y-2 pb-5 w-full items-center">
-            {otherOptionItems.map((item) => {
-              const isActive = activeSection === item.id;
-              const isDisabled = item.hasSwitch && !isSectionEnabled(item.id);
-              return (
-                <div
-                  key={item.id}
-                  onClick={() => scrollToSection(item.id)}
-                  data-sidebar-item-id={item.id}
-                  className={`flex flex-col items-center justify-center gap-y-1 w-[80px] h-[64px] rounded-lg cursor-pointer transition-colors shadow-none ${
-                    isDisabled
-                      ? 'opacity-50 text-on-surface-30 hover:bg-slate-100'
-                      : `${isActive ? 'bg-slate-100' : 'text-on-surface-20 hover:bg-slate-100'}`
-                  }`}
-                >
-                  <item.icon className={`w-6 h-6 ${isDisabled ? 'text-on-surface-30' : isActive ? 'text-[color:var(--key)]' : 'text-on-surface-30'}`} strokeWidth={1.5} />
-                  <span className={`text-[12px] font-normal ${isDisabled ? 'text-on-surface-30' : isActive ? 'text-[color:var(--key)]' : 'text-on-surface-20'}`}>{item.label}</span>
-                </div>
-              );
-            })}
-          </div>
+                {sectionIdx < SIDEBAR_NAV_SECTIONS.length - 1 ? <div className="w-full border-t border-border my-2" /> : null}
+              </div>
+            );
+          })}
         </aside>
 
         {/* 2. 중앙 에디터 패널 */}
@@ -4114,26 +4705,19 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               {orderedItems.map((item, idx) => {
                 const isInitiallyExpanded = true;
                 const isContentOptional = item.category === '선택' && !OTHER_OPTION_IDS.includes(item.id as any);
-                const isOtherOption = OTHER_OPTION_IDS.includes(item.id as any);
                 const prevItem = orderedItems[idx - 1];
-                const prevIsContentOptional = !!prevItem && prevItem.category === '선택' && !OTHER_OPTION_IDS.includes(prevItem.id as any);
-                const prevIsOtherOption = !!prevItem && OTHER_OPTION_IDS.includes(prevItem.id as any);
-                const isFirstContentOptional = isContentOptional && !prevIsContentOptional;
-                const isFirstOtherOption = isOtherOption && !prevIsOtherOption;
                 const editorSortProps = isContentOptional ? sidebarSortable.getItemProps(item.id) : null;
                 const isDragging = editorSortProps?.isDragging ?? false;
                 return (
                   <React.Fragment key={item.id}>
-                {isFirstContentOptional && (
+                {(!prevItem || prevItem.navGroup !== item.navGroup) && (
                   <>
-                    <div className="border-t border-dashed border-[color:var(--border-20)] my-2 mt-10" />
-                    <div className="text-[13px] font-bold text-on-surface-30 pt-2">선택사항</div>
-                  </>
-                )}
-                {isFirstOtherOption && (
-                  <>
-                    <div className="border-t border-dashed border-[color:var(--border-20)] my-2 mt-10" />
-                    <div className="text-[13px] font-bold text-on-surface-30 pt-2">옵션</div>
+                    {idx > 0 && (
+                      <div className="border-t border-dashed border-[color:var(--border-20)] my-2 mt-10" />
+                    )}
+                    <div className="text-[13px] font-bold text-on-surface-30 pt-2">
+                      {SIDEBAR_NAV_SECTIONS.find((s) => s.navGroup === item.navGroup)?.title ?? ""}
+                    </div>
                   </>
                 )}
                 <div
@@ -4156,7 +4740,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       {!isInitiallyExpanded && <CheckCircle2 className="w-5 h-5 text-on-surface-10 flex-shrink-0" />}
                       <h2 className="text-[15px] font-semibold text-on-surface-10 truncate m-0 pt-1">
-                        {item.id === 'hosts' ? '신랑&신부 정보' : item.label}
+                        {item.label}
                       </h2>
                       {item.hasSwitch && (
                         <Switch
@@ -4191,27 +4775,23 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                         <>
                           {/* 대표 컬러 */}
                           <FormItem label="테마컬러">
-                            {KEY_COLOR_PRESETS.map((preset) => {
-                              const isActive = ((data.theme as any)?.colorPreset ?? KEY_COLOR_PRESETS[0].id) === preset.id;
-                              return (
-                                <button
-                                  key={preset.id}
-                                  type="button"
-                                  onClick={() => updateData('theme.colorPreset', preset.id)}
-                                  className={`w-7 h-7 rounded-full transition-shadow flex items-center justify-center ${
-                                    isActive ? 'border-2 border-[color:var(--on-surface-10)]' : 'border border-[color:var(--border-10)]'
-                                  }`}
-                                  aria-label={preset.label}
-                                  title={preset.label}
-                                >
-                                  <span
-                                    className="w-6 h-6 rounded-full"
-                                    style={{ backgroundColor: preset.key }}
+                            <div className="flex flex-wrap gap-2">
+                              {KEY_COLOR_PRESETS.map((preset) => {
+                                const isActive = ((data.theme as any)?.colorPreset ?? KEY_COLOR_PRESETS[0].id) === preset.id;
+                                return (
+                                  <ThemeColorChip
+                                    key={preset.id}
+                                    label={preset.label}
+                                    color={preset.key}
+                                    active={isActive}
+                                    onClick={() => updateData('theme.colorPreset', preset.id)}
                                   />
-                                </button>
-                              );
-                            })}
+                                );
+                              })}
+                            </div>
                           </FormItem>
+
+                          <div className="w-full h-px bg-border/60 my-1" />
 
                           {/* 글꼴 선택 */}
                           <FormItem label="글꼴">
@@ -4230,27 +4810,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                     label={fontOpt.label}
                                     active={isActive}
                                     onClick={() => updateData('theme.fontFamily', fontOpt.value)}
-                                  />
-                                );
-                              })}
-                            </div>
-                          </FormItem>
-
-                          {/* 글꼴 크기 */}
-                          <FormItem label="글꼴 크기">
-                            <div className="flex flex-wrap gap-2">
-                              {[
-                                { value: 'sm' as const, label: '작게' },
-                                { value: 'md' as const, label: '중간' },
-                                { value: 'lg' as const, label: '크게' },
-                              ].map((opt) => {
-                                const isActive = (data.theme as any).fontScale === opt.value || (!(data.theme as any).fontScale && opt.value === 'md');
-                                return (
-                                  <OptionChip
-                                    key={opt.value}
-                                    label={opt.label}
-                                    active={isActive}
-                                    onClick={() => updateData('theme.fontScale', opt.value)}
                                   />
                                 );
                               })}
@@ -4312,7 +4871,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                         <>
                           <FormItem label="인트로 디자인">
                             <div className="flex flex-wrap gap-2">
-                              {(['A', 'B', 'C', 'D', 'E'] as const).map((t) => (
+                              {(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'] as const).map((t) => (
                                 <OptionChip
                                   key={t}
                                   label={`타입 ${t}`}
@@ -4506,6 +5065,34 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             </div>
                           </FormItem>
 
+                          <FormItem label="프레임">
+                            <div className="flex flex-wrap gap-3">
+                              {MAIN_IMAGE_FRAME_OPTIONS.map((opt) => {
+                                const active =
+                                  normalizeMainImageFrame((data.main as any).imageFrame) === opt.id;
+                                return (
+                                  <button
+                                    key={opt.id}
+                                    type="button"
+                                    onClick={() => updateData('main.imageFrame', opt.id)}
+                                    className={cn(
+                                      'flex flex-col items-center gap-1.5 rounded-lg p-1.5 transition-[color,background-color,outline-color,outline-offset]',
+                                      active
+                                        ? 'bg-slate-50 outline outline-1 outline-offset-2 outline-[color:var(--on-surface-10)]'
+                                        : 'outline-none ring-1 ring-transparent hover:bg-slate-50',
+                                    )}
+                                    title={opt.label}
+                                  >
+                                    <MainFrameSwatch variant={opt.id} />
+                                    <span className="text-[11px] font-medium text-on-surface-20">
+                                      {opt.label}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </FormItem>
+
                           {((data.main as any).imageMode ?? 'single') === 'multi' && (
                             <FormItem label="전환효과">
                               <div className="flex flex-wrap gap-2">
@@ -4545,6 +5132,27 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             </FormItem>
                           )}
 
+                          <FormItem label="옵션">
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                              onClick={() => updateData('main.blackAndWhite', !((data.main as any).blackAndWhite ?? false))}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  updateData('main.blackAndWhite', !((data.main as any).blackAndWhite ?? false));
+                                }
+                              }}
+                            >
+                              <CircleCheckbox
+                                checked={!!((data.main as any).blackAndWhite ?? false)}
+                                onChange={(e) => updateData('main.blackAndWhite', e.target.checked)}
+                              />
+                              흑백전환
+                            </span>
+                          </FormItem>
+
+                          {/* 메인 제목/본문 색상 — 우선 비노출 (구분선 포함)
                           <div className="border-t border-dashed border-[color:var(--border-20)] my-2" />
 
                           <FormItem label="제목 색상">
@@ -4608,6 +5216,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               초기화
                             </button>
                           </FormItem>
+                          */}
                         </>
                       )}
 
@@ -4841,79 +5450,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       {/* 신랑신부 섹션 (이름·관계 입력) */}
                       {item.id === 'hosts' && (
                         <div className="flex flex-col gap-5">
-                          <FormItem label="옵션">
-                            <span
-                              role="button"
-                              tabIndex={0}
-                              className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
-                              onClick={() => updateData('share.useThumbnail', !((data.share as any)?.useThumbnail ?? true))}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                  updateData('share.useThumbnail', !((data.share as any)?.useThumbnail ?? true));
-                                }
-                              }}
-                            >
-                              <CircleCheckbox
-                                checked={!!((data.share as any)?.useThumbnail ?? true)}
-                                onChange={(e) => updateData('share.useThumbnail', e.target.checked)}
-                              />
-                              이미지
-                            </span>
-                          </FormItem>
-                          {((data.share as any)?.useThumbnail ?? true) && (
-                            <FormItem label="썸네일">
-                              <div className="flex-1 flex flex-col gap-2">
-                                <div className="w-full h-[120px] flex items-center gap-2">
-                                  <div className="h-full aspect-video rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden">
-                                    {data.share?.thumbnail ? (
-                                      <img
-                                        src={data.share.thumbnail}
-                                        alt="공유 썸네일 미리보기"
-                                        className="w-full h-full object-cover"
-                                      />
-                                    ) : (
-                                      <div className="w-full h-full flex items-center justify-center text-[clamp(10px,1.6vw,12px)] text-on-surface-30">
-                                        썸네일 이미지가 없습니다.
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="h-full flex flex-col justify-start gap-2">
-                                    <label className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit self-start whitespace-nowrap leading-none flex-shrink-0">
-                                      사진 업로드
-                                      <input
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={(e) => {
-                                          const file = e.target.files?.[0];
-                                          if (!file) return;
-                                          const url = URL.createObjectURL(file);
-                                          updateData('share.thumbnail', url);
-                                          e.currentTarget.value = '';
-                                        }}
-                                      />
-                                    </label>
-                                    <button
-                                      type="button"
-                                      className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none flex-shrink-0 w-fit self-start"
-                                      onClick={() => setShareThumbnailPickerOpen(true)}
-                                    >
-                                      이미지 고르기
-                                    </button>
-                                    {data.share?.thumbnail && (
-                                      <button
-                                        type="button"
-                                        className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit self-start whitespace-nowrap leading-none flex-shrink-0"
-                                        onClick={() => updateData('share.thumbnail', '')}
-                                      >
-                                        삭제
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </FormItem>
-                          )}
                           <HostContactField
                             label="신랑"
                             nameValue={data.hosts.groom.name}
@@ -4976,32 +5512,107 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       {item.id === 'contact' && (
                         <>
                           <FormItem label="옵션">
-                            <div className="flex-1 flex flex-col gap-3">
+                            <div className="flex min-w-0 flex-1 flex-col gap-3">
                               <span
                                 role="button"
                                 tabIndex={0}
                                 className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
-                                onClick={() => {
-                                  const nextChecked = !isSectionEnabled('contactParents');
-                                  setSectionEnabled((prev) => ({ ...prev, contactParents: nextChecked }));
-                                }}
+                                onClick={() => updateData('share.useThumbnail', !((data.share as any)?.useThumbnail ?? true))}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter' || e.key === ' ') {
-                                    const nextChecked = !isSectionEnabled('contactParents');
-                                    setSectionEnabled((prev) => ({ ...prev, contactParents: nextChecked }));
+                                    updateData('share.useThumbnail', !((data.share as any)?.useThumbnail ?? true));
                                   }
                                 }}
                               >
                                 <CircleCheckbox
-                                  checked={isSectionEnabled('contactParents')}
-                                  onChange={(e) => {
-                                    const checked = e.target.checked;
-                                    setSectionEnabled((prev) => ({ ...prev, contactParents: checked }));
-                                  }}
+                                  checked={!!((data.share as any)?.useThumbnail ?? true)}
+                                  onChange={(e) => updateData('share.useThumbnail', e.target.checked)}
                                 />
-                                부모님 연락처
+                                이미지
                               </span>
                             </div>
+                          </FormItem>
+                          {((data.share as any)?.useThumbnail ?? true) && (
+                            <FormItem label="썸네일">
+                              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                                <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:gap-3">
+                                  <div className="flex w-full min-w-0 justify-center sm:flex-1 sm:justify-start">
+                                    <div className="aspect-[4/3] w-full max-w-[200px] rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden">
+                                      {data.share?.thumbnail ? (
+                                        <img
+                                          src={data.share.thumbnail}
+                                          alt="공유 썸네일 미리보기"
+                                          className="h-full w-full object-cover"
+                                        />
+                                      ) : (
+                                        <div className="flex h-full w-full items-center justify-center px-2 text-center text-[clamp(10px,1.6vw,12px)] text-on-surface-30">
+                                          썸네일 이미지가 없습니다.
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex min-w-0 w-full flex-col gap-2 sm:flex-1 sm:max-w-[min(100%,200px)]">
+                                    <label className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit max-w-full whitespace-nowrap leading-none flex-shrink-0">
+                                      사진 업로드
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (!file) return;
+                                          const url = URL.createObjectURL(file);
+                                          updateData('share.thumbnail', url);
+                                          e.currentTarget.value = '';
+                                        }}
+                                      />
+                                    </label>
+                                    <button
+                                      type="button"
+                                      className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none flex-shrink-0 w-fit max-w-full"
+                                      onClick={() => setShareThumbnailPickerOpen(true)}
+                                    >
+                                      이미지 고르기
+                                    </button>
+                                    {data.share?.thumbnail && (
+                                      <button
+                                        type="button"
+                                        className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit max-w-full whitespace-nowrap leading-none flex-shrink-0"
+                                        onClick={() => updateData('share.thumbnail', '')}
+                                      >
+                                        삭제
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </FormItem>
+                          )}
+                          <FormItem label="옵션">
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                              onClick={() => {
+                                const nextChecked = !isSectionEnabled('contactParents');
+                                setSectionEnabled((prev) => ({ ...prev, contactParents: nextChecked }));
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  const nextChecked = !isSectionEnabled('contactParents');
+                                  setSectionEnabled((prev) => ({ ...prev, contactParents: nextChecked }));
+                                }
+                              }}
+                            >
+                              <CircleCheckbox
+                                checked={isSectionEnabled('contactParents')}
+                                onChange={(e) => {
+                                  const checked = e.target.checked;
+                                  setSectionEnabled((prev) => ({ ...prev, contactParents: checked }));
+                                }}
+                              />
+                              부모님 연락처
+                            </span>
                           </FormItem>
                           {isSectionEnabled('contact') && (
                             <div className="flex flex-col gap-4">
@@ -5073,17 +5684,46 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           </FormItem>
                           <FormItem label="시간">
                             {(() => {
-                              const { period, hour, minute } = parseKoreanTime(data.eventInfo.time);
-                              const hourValue = `${period} ${hour}`;
+                              const timeRaw = (data.eventInfo.time ?? "").trim();
+                              const m = timeRaw.match(/^(오전|오후)\s*(\d{1,2}):(\d{2})$/);
+                              const period = m?.[1] === "오전" ? "오전" : m?.[1] === "오후" ? "오후" : null;
+                              const hourNum = m ? Number(m[2]) : NaN;
+                              const minuteStr = m?.[3];
+                              const hourOk =
+                                period !== null &&
+                                Number.isFinite(hourNum) &&
+                                hourNum >= 1 &&
+                                hourNum <= 12;
+                              const hourValue = hourOk ? `${period} ${hourNum}` : "";
+                              const minuteValue =
+                                hourOk && minuteStr && ["00", "10", "20", "30", "40", "50"].includes(minuteStr)
+                                  ? minuteStr
+                                  : hourOk
+                                    ? "00"
+                                    : "";
+
                               const setHourValue = (nextHourValue: string) => {
-                                const [p, h] = nextHourValue.split(' ');
+                                if (!nextHourValue) {
+                                  updateData("eventInfo.time", "");
+                                  return;
+                                }
+                                const [p, h] = nextHourValue.split(" ");
                                 const hh = Number(h);
-                                const next = `${p} ${Number.isFinite(hh) ? hh : hour}:${minute}`;
-                                updateData('eventInfo.time', next);
+                                if (!Number.isFinite(hh)) return;
+                                const mm = minuteValue || "00";
+                                updateData("eventInfo.time", `${p} ${hh}:${mm}`);
                               };
                               const setMinuteValue = (nextMinute: string) => {
-                                const mm = String(nextMinute).padStart(2, '0');
-                                updateData('eventInfo.time', `${period} ${hour}:${mm}`);
+                                if (!hourValue) return;
+                                const [p, h] = hourValue.split(" ");
+                                const hh = Number(h);
+                                if (!Number.isFinite(hh)) return;
+                                if (!nextMinute) {
+                                  updateData("eventInfo.time", `${p} ${hh}:00`);
+                                  return;
+                                }
+                                const mm = String(nextMinute).padStart(2, "0");
+                                updateData("eventInfo.time", `${p} ${hh}:${mm}`);
                               };
 
                               return (
@@ -5094,7 +5734,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                       onChange={(e) => setHourValue(e.target.value)}
                                       className="h-10 w-full min-w-0 rounded-lg border border-input bg-white px-3 py-1 text-[13px] text-on-surface-20 appearance-none transition-colors outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50"
                                     >
-                                      {(['오전', '오후'] as const).flatMap((p) =>
+                                      <option value="">시 선택</option>
+                                      {(["오전", "오후"] as const).flatMap((p) =>
                                         Array.from({ length: 12 }, (_, i) => {
                                           const h = i + 1;
                                           const v = `${p} ${h}`;
@@ -5103,7 +5744,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                               {p} {h}시
                                             </option>
                                           );
-                                        })
+                                        }),
                                       )}
                                     </select>
                                     <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
@@ -5113,11 +5754,13 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
                                   <div className="relative w-full">
                                     <select
-                                      value={minute}
+                                      value={hourValue ? minuteValue : ""}
                                       onChange={(e) => setMinuteValue(e.target.value)}
+                                      disabled={!hourValue}
                                       className="h-10 w-full min-w-0 rounded-lg border border-input bg-white px-3 py-1 text-[13px] text-on-surface-20 appearance-none transition-colors outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50"
                                     >
-                                      {['00', '10', '20', '30', '40', '50'].map((mm) => (
+                                      <option value="">분 선택</option>
+                                      {["00", "10", "20", "30", "40", "50"].map((mm) => (
                                         <option key={mm} value={mm}>
                                           {mm}분
                                         </option>
@@ -5132,7 +5775,92 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             })()}
                           </FormItem>
                           <FormItem label="웨딩홀">
-                            <Input placeholder="예: 더 신라 서울" value={data.eventInfo.venueName} onChange={(e) => updateData('eventInfo.venueName', e.target.value)} className="shadow-none flex-1" />
+                            <div ref={venueInputWrapRef} className="relative w-full">
+                              <Input
+                                placeholder="예: 더 신라 서울"
+                                value={data.eventInfo.venueName}
+                                onFocus={() => {
+                                  if (hasVenueQuery) setVenueSuggestOpen(true);
+                                }}
+                                onChange={(e) => {
+                                  updateData('eventInfo.venueName', e.target.value);
+                                  setVenueSuggestOpen(e.target.value.trim().length > 0);
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Escape') setVenueSuggestOpen(false);
+                                  if (e.key === 'Enter' && venueSuggestions.length > 0 && venueInputValue.trim().length > 0) {
+                                    e.preventDefault();
+                                    void applyVenueSuggestion(venueSuggestions[0]);
+                                  }
+                                }}
+                                className="shadow-none flex-1"
+                              />
+                            </div>
+                            {venueSuggestOpen && hasVenueQuery && venueDropdownStyle && portalRoot && createPortal(
+                              <div
+                                ref={venueDropdownRef}
+                                className="fixed z-[200] overflow-hidden rounded-lg border border-border bg-white shadow-sm"
+                                style={{
+                                  top: venueDropdownStyle.top,
+                                  left: venueDropdownStyle.left,
+                                  width: venueDropdownStyle.width,
+                                }}
+                              >
+                                {venueSuggestions.length > 0 ? (
+                                  <ul className="max-h-56 overflow-y-auto py-1">
+                                    {venueSuggestions.map((venue) => (
+                                      <li key={`${venue.name}-${venue.address}`}>
+                                        <button
+                                          type="button"
+                                          className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left hover:bg-slate-50"
+                                          onClick={() => void applyVenueSuggestion(venue)}
+                                        >
+                                          <span className="text-[13px] text-on-surface-10">{venue.name}</span>
+                                          <span className="text-[11px] text-on-surface-30">{venue.area}</span>
+                                          <span className="text-[11px] text-on-surface-30/80">{venue.address}</span>
+                                        </button>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p className="px-3 py-2 text-[12px] text-on-surface-30">
+                                    일치하는 예식장이 없습니다.
+                                  </p>
+                                )}
+                              </div>,
+                              portalRoot
+                            )}
+                          </FormItem>
+                          <FormItem label="웨딩홀 상세">
+                            <Input
+                              placeholder="층수, 홀 정보 입력"
+                              value={String((data.eventInfo as any)?.venueDetail ?? "")}
+                              onChange={(e) => updateData("eventInfo.venueDetail", e.target.value)}
+                              className="shadow-none flex-1"
+                            />
+                          </FormItem>
+                        </div>
+                      )}
+
+                      {item.id === 'eventDate' && (
+                        <div className="flex flex-col gap-5">
+                          <FormItem label="달력 화면">
+                            <div className="flex flex-wrap gap-2 w-full">
+                              {(
+                                [
+                                  { id: 'A' as const, label: '타입 A' },
+                                  { id: 'B' as const, label: '타입 B' },
+                                  { id: 'C' as const, label: '타입 C' },
+                                ] as const
+                              ).map(({ id, label }) => (
+                                <OptionChip
+                                  key={id}
+                                  label={label}
+                                  active={normalizeCalendarDisplayType((data.eventInfo as any)?.calendarDisplayType) === id}
+                                  onClick={() => updateData('eventInfo.calendarDisplayType', id)}
+                                />
+                              ))}
+                            </div>
                           </FormItem>
                           <FormItem label="옵션">
                             <div className="flex flex-col gap-3 w-full">
@@ -5140,28 +5868,23 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 role="button"
                                 tabIndex={0}
                                 className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
-                                onClick={() => updateData('eventInfo.useCalendar', !data.eventInfo.useCalendar)}
+                                onClick={() =>
+                                  updateData(
+                                    'eventInfo.showDday',
+                                    !((data.eventInfo as any)?.showDday !== false),
+                                  )
+                                }
                                 onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === ' ') updateData('eventInfo.useCalendar', !data.eventInfo.useCalendar);
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    updateData(
+                                      'eventInfo.showDday',
+                                      !((data.eventInfo as any)?.showDday !== false),
+                                    );
+                                  }
                                 }}
                               >
                                 <CircleCheckbox
-                                  checked={!!data.eventInfo.useCalendar}
-                                  onChange={(e) => updateData('eventInfo.useCalendar', e.target.checked)}
-                                />
-                                달력 사용
-                              </span>
-                              <span
-                                role="button"
-                                tabIndex={0}
-                                className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
-                                onClick={() => updateData('eventInfo.showDday', !data.eventInfo.showDday)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === ' ') updateData('eventInfo.showDday', !data.eventInfo.showDday);
-                                }}
-                              >
-                                <CircleCheckbox
-                                  checked={!!data.eventInfo.showDday}
+                                  checked={(data.eventInfo as any)?.showDday !== false}
                                   onChange={(e) => updateData('eventInfo.showDday', e.target.checked)}
                                 />
                                 D-Day 표시
@@ -5473,9 +6196,29 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                         <>
                           <div className="flex flex-col gap-5">
                             <FormItem label="제목">
+                              <div className="flex flex-wrap gap-2 w-full">
+                                {LOCATION_TITLE_OPTIONS.map((opt) => {
+                                  const current = String((data.location as any)?.title ?? "").trim();
+                                  const active =
+                                    current === opt ||
+                                    (!current && opt === LOCATION_TITLE_OPTIONS[0]);
+                                  return (
+                                    <OptionChip
+                                      key={opt}
+                                      label={opt}
+                                      active={active}
+                                      onClick={() => updateData("location.title", opt)}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            </FormItem>
+                            <FormItem label="웨딩홀">
                               <Input
-                                value={(data.location as any).title ?? '오시는 길'}
-                                onChange={(e) => updateData('location.title', e.target.value)}
+                                disabled
+                                readOnly
+                                value={eventVenueReadonlyDisplay(data.eventInfo)}
+                                placeholder="예식정보에서 웨딩홀을 입력하세요"
                                 className="shadow-none flex-1"
                               />
                             </FormItem>
@@ -5544,23 +6287,37 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               </div>
                             ))}
 
-                            {transportItems.length < 3 && (
-                              <div className="pt-0 flex justify-center">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  className="rounded-lg px-4 h-10 text-[13px]"
-                                  onClick={() => {
+                            <div className="pt-0 flex justify-center">
+                              <div className="relative w-full max-w-[220px]">
+                                <select
+                                  value={selectedTransportMode}
+                                  onChange={(e) => {
+                                    const nextMode = e.target.value;
+                                    setSelectedTransportMode(nextMode);
+                                    if (!nextMode) return;
                                     setTransportItems([
                                       ...transportItems,
-                                      { mode: '', detail: '' },
+                                      { mode: nextMode, detail: '' },
                                     ]);
+                                    setSelectedTransportMode('');
                                   }}
+                                  disabled={availableTransportModeOptions.length === 0}
+                                  className="group/button inline-flex h-10 w-full min-w-0 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-background bg-clip-padding px-4 pr-9 text-center text-[13px] font-medium text-foreground whitespace-nowrap appearance-none select-none transition-all outline-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:border-input dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
                                 >
-                                  + 교통수단 추가
-                                </Button>
+                                  <option value="">
+                                    {availableTransportModeOptions.length > 0 ? "+ 교통수단 추가" : "추가 가능한 항목 없음"}
+                                  </option>
+                                  {availableTransportModeOptions.map((option) => (
+                                    <option key={option} value={option}>
+                                      {option}
+                                    </option>
+                                  ))}
+                                </select>
+                                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                                  <ChevronDown className="w-4 h-4 text-on-surface-30" />
+                                </span>
                               </div>
-                            )}
+                            </div>
                           </div>
 
                           <AddressSearchDialog
@@ -5581,12 +6338,22 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           {/* 1. 상단 공통 영역 */}
                           <div className="flex flex-col gap-5">
                             <FormItem label="제목">
-                              <Input
-                                value={data.accounts.title}
-                                onChange={(e) => updateData('accounts.title', e.target.value)}
-                                placeholder="마음 전하실 곳"
-                                className="shadow-none flex-1"
-                              />
+                              <div className="flex flex-wrap gap-2 w-full">
+                                {ACCOUNT_TITLE_OPTIONS.map((opt) => {
+                                  const current = String(data.accounts?.title ?? "").trim();
+                                  const active =
+                                    current === opt ||
+                                    (!current && opt === ACCOUNT_TITLE_OPTIONS[0]);
+                                  return (
+                                    <OptionChip
+                                      key={opt}
+                                      label={opt}
+                                      active={active}
+                                      onClick={() => updateData("accounts.title", opt)}
+                                    />
+                                  );
+                                })}
+                              </div>
                             </FormItem>
                             <FormItem label="내용">
                               <Textarea
@@ -5622,8 +6389,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             <React.Fragment key={item.id}>
                               <div className="border-t border-dashed border-[color:var(--border-20)] my-2" />
                               <div className="flex flex-col gap-5 mb-0">
-                                {/* 상단 행: 그룹명 + 삭제 */}
-                                <FormItem label="그룹명">
+                                {/* 상단 행: 계좌명 + 삭제 */}
+                                <FormItem label="계좌명">
                                   <Input
                                     value={item.groupName}
                                     onChange={(e) => {
@@ -6202,12 +6969,22 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       {item.id === 'guestbook' && (
                         <>
                           <FormItem label="제목">
-                            <Input
-                              value={(data.guestbook as any)?.title ?? ""}
-                              onChange={(e) => updateData('guestbook.title', e.target.value)}
-                              placeholder="축하해 주세요"
-                              className="shadow-none flex-1"
-                            />
+                            <div className="flex flex-wrap gap-2 w-full">
+                              {GUESTBOOK_TITLE_OPTIONS.map((opt) => {
+                                const current = String((data.guestbook as any)?.title ?? "").trim();
+                                const active =
+                                  current === opt ||
+                                  (!current && opt === GUESTBOOK_TITLE_OPTIONS[0]);
+                                return (
+                                  <OptionChip
+                                    key={opt}
+                                    label={opt}
+                                    active={active}
+                                    onClick={() => updateData("guestbook.title", opt)}
+                                  />
+                                );
+                              })}
+                            </div>
                           </FormItem>
                           <FormItem label="설명">
                             <Textarea
@@ -6270,12 +7047,22 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       {item.id === 'youtube' && (
                         <>
                           <FormItem label="제목">
-                            <Input
-                              value={(data.youtube as any)?.title ?? ""}
-                              onChange={(e) => updateData('youtube.title', e.target.value)}
-                              placeholder="영상으로 전하는 마음"
-                              className="shadow-none flex-1"
-                            />
+                            <div className="flex flex-wrap gap-2 w-full">
+                              {YOUTUBE_TITLE_OPTIONS.map((opt) => {
+                                const current = String((data.youtube as any)?.title ?? "").trim();
+                                const active =
+                                  current === opt ||
+                                  (!current && opt === YOUTUBE_TITLE_OPTIONS[0]);
+                                return (
+                                  <OptionChip
+                                    key={opt}
+                                    label={opt}
+                                    active={active}
+                                    onClick={() => updateData("youtube.title", opt)}
+                                  />
+                                );
+                              })}
+                            </div>
                           </FormItem>
                           <FormItem label="타입">
                             <div className="flex flex-wrap gap-2">
@@ -6373,12 +7160,22 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       {item.id === 'rsvp' && (
                         <>
                           <FormItem label="제목">
-                            <Input
-                              value={(data as any).rsvp?.title ?? ""}
-                              onChange={(e) => updateData("rsvp.title", e.target.value)}
-                              placeholder="참석 여부"
-                              className="shadow-none flex-1"
-                            />
+                            <div className="flex flex-wrap gap-2 w-full">
+                              {RSVP_TITLE_OPTIONS.map((opt) => {
+                                const current = String((data as any).rsvp?.title ?? "").trim();
+                                const active =
+                                  current === opt ||
+                                  (!current && opt === RSVP_TITLE_OPTIONS[0]);
+                                return (
+                                  <OptionChip
+                                    key={opt}
+                                    label={opt}
+                                    active={active}
+                                    onClick={() => updateData("rsvp.title", opt)}
+                                  />
+                                );
+                              })}
+                            </div>
                           </FormItem>
                           <FormItem label="안내 문구">
                             <Textarea
@@ -6432,12 +7229,22 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       {item.id === 'guestUpload' && (
                         <>
                           <FormItem label="제목">
-                            <Input
-                              value={(data.guestUpload as any)?.title ?? ""}
-                              onChange={(e) => updateData('guestUpload.title', e.target.value)}
-                              placeholder="추억을 공유해 주세요"
-                              className="shadow-none flex-1"
-                            />
+                            <div className="flex flex-wrap gap-2 w-full">
+                              {GUEST_UPLOAD_TITLE_OPTIONS.map((opt) => {
+                                const current = String((data.guestUpload as any)?.title ?? "").trim();
+                                const active =
+                                  current === opt ||
+                                  (!current && opt === GUEST_UPLOAD_TITLE_OPTIONS[0]);
+                                return (
+                                  <OptionChip
+                                    key={opt}
+                                    label={opt}
+                                    active={active}
+                                    onClick={() => updateData("guestUpload.title", opt)}
+                                  />
+                                );
+                              })}
+                            </div>
                           </FormItem>
                           <FormItem label="안내 문구">
                             <Textarea
@@ -6801,7 +7608,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   '--primary-custom': selectedKeyColorPreset.key,
                   '--key': `color-mix(in srgb, ${selectedKeyColorPreset.key} 82%, ${selectedKeyColorPreset.keyDark})`,
                   '--key-dark': selectedKeyColorPreset.keyDark,
-                  '--primary-container': `color-mix(in srgb, ${selectedKeyColorPreset.primaryContainer} 46%, white)`,
+                  '--primary-container': `color-mix(in srgb, ${selectedKeyColorPreset.primaryContainer} 56%, white)`,
+                  '--primary-container-2': `color-mix(in srgb, ${selectedKeyColorPreset.key} 8%, ${selectedKeyColorPreset.primaryContainer})`,
                   '--on-primary-container': selectedKeyColorPreset.onPrimaryContainer,
                   '--on-surface-10': `color-mix(in srgb, #282828 95%, ${selectedKeyColorPreset.key} 5%)`,
                   '--on-surface-20': `color-mix(in srgb, #424242 95%, ${selectedKeyColorPreset.key} 5%)`,
@@ -6844,7 +7652,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                         data-preview-section-id={sectionId}
                         className={`${sectionId === 'main'
                           ? "w-full flex flex-col items-stretch text-center"
-                          : sectionId === 'eventInfo' && (data.eventInfo as any)?.useCalendar
+                          : sectionId === 'eventInfo'
                             ? "w-full p-0 flex flex-col items-center text-center"
                           : "w-full pt-[80px] pb-[80px] px-6 flex flex-col items-center text-center"
                           } ${data.theme.scrollEffect
@@ -7289,7 +8097,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                         className="h-full w-full object-cover"
                       />
                     </div>
-                    <span className="text-[11px] font-medium text-on-surface-20">{t.label}</span>
                   </button>
                 );
               })}
