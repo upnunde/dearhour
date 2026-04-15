@@ -3739,20 +3739,23 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   <div className="w-full aspect-[16/10] relative">
                     {locationPreviewCoords ? (
                       <>
-                        <NaverMapEmbed
-                          lat={locationPreviewCoords.lat}
-                          lon={locationPreviewCoords.lon}
-                          className="absolute inset-0 w-full h-full"
-                          onAuthError={() => setNaverPreviewFailed(true)}
-                          onMapReady={() => setNaverPreviewFailed(false)}
+                        <iframe
+                          title="지도 미리보기"
+                          className={cn(
+                            "absolute inset-0 w-full h-full border-0 z-0",
+                            naverPreviewFailed ? "opacity-100" : "opacity-100",
+                          )}
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                          src={buildOsmEmbedUrl(locationPreviewCoords.lat, locationPreviewCoords.lon)}
                         />
-                        {(!process.env.NEXT_PUBLIC_NAVER_MAPS_CLIENT_ID || naverPreviewFailed) && (
-                          <iframe
-                            title="지도 미리보기"
-                            className="absolute inset-0 w-full h-full border-0"
-                            loading="lazy"
-                            referrerPolicy="no-referrer-when-downgrade"
-                            src={buildOsmEmbedUrl(locationPreviewCoords.lat, locationPreviewCoords.lon)}
+                        {process.env.NEXT_PUBLIC_NAVER_MAPS_CLIENT_ID && !naverPreviewFailed && (
+                          <NaverMapEmbed
+                            lat={locationPreviewCoords.lat}
+                            lon={locationPreviewCoords.lon}
+                            className="absolute inset-0 z-[1] w-full h-full"
+                            onAuthError={() => setNaverPreviewFailed(true)}
+                            onMapReady={() => setNaverPreviewFailed(false)}
                           />
                         )}
                       </>
@@ -8009,12 +8012,25 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
         {/* 3. 우측 미리보기 패널 */}
         {(!isTabletViewport || mobilePanel === 'preview') && (
-        <main className={cn("flex flex-1 flex-col min-w-0 items-center", isTabletViewport ? "px-3 py-3" : "px-4 py-4")}>
+        <main
+          className={cn(
+            "flex flex-1 min-h-0 flex-col min-w-0",
+            isTabletViewport ? "items-stretch px-0 py-0" : "items-center px-4 py-4",
+          )}
+        >
           {/* 바깥 컨테이너는 고정, 내부 프레임만 스크롤 */}
-          <div className={cn("flex-1 min-h-0 flex justify-center w-full bg-transparent items-stretch shadow-none", isTabletViewport ? "max-w-[480px]" : "max-w-[400px] min-h-full")}>
+          <div
+            className={cn(
+              "flex-1 min-h-0 flex w-full bg-transparent items-stretch shadow-none",
+              isTabletViewport ? "justify-stretch max-w-none h-full" : "justify-center max-w-[400px] min-h-full",
+            )}
+          >
             <div
               ref={previewFrameRef}
-              className="preview-font-floor w-full border border-border rounded-lg bg-white flex flex-col items-stretch text-center overflow-hidden relative"
+              className={cn(
+                "preview-font-floor w-full bg-white flex flex-col items-stretch text-center overflow-hidden relative",
+                isTabletViewport ? "h-full border-0 rounded-none" : "border border-border rounded-lg",
+              )}
               style={
                 {
                   // 향후 theme.bgColor / theme.fontFamily를 전역 테마로 사용
