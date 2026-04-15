@@ -124,7 +124,7 @@ export default function GuestPhotoUploadForm({
 
       <Button
         type="button"
-        variant="secondary"
+        variant="default"
         onClick={() => {
           // UX: 파일이 없으면 파일 선택창부터 열고, 선택이 있으면 제출로 동작
           if (senderName.trim().length === 0) return;
@@ -134,10 +134,10 @@ export default function GuestPhotoUploadForm({
           }
           void handleUploadSubmit();
         }}
-        disabled={isSubmitting}
-        className="h-9 px-3 rounded-lg text-[13px] font-medium shadow-none"
+        disabled={isSubmitting || senderName.trim().length === 0}
+        className="h-10 w-full px-3 rounded-lg text-[13px] font-medium shadow-none bg-[color:var(--key)] text-white hover:brightness-95 disabled:bg-[color:var(--key)]/40 disabled:text-white"
       >
-        {isSubmitting ? "업로드 중..." : "업로드"}
+        {isSubmitting ? "업로드 중..." : "사진, 영상 선택하기"}
       </Button>
 
       {/* 요구사항: 추가 텍스트/파일 목록은 불필요. */}

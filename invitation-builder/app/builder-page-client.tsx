@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { Palette, Music, Image as ImageIcon, Users, MessageSquare, MessageCircle, Phone, CalendarHeart, MapPin, Bell, Images, Wallet, BookOpen, Youtube, Share2, Shield, CheckCircle2, GripVertical, Play, Pause, VolumeX, Volume2, X, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, RotateCw, RefreshCcw, Move, ArrowUpDown, ClipboardCheck, Calendar, Settings, Bus, Train, Car, ParkingCircle, Route } from 'lucide-react';
+import { Palette, Music, Image as ImageIcon, Users, MessageSquare, MessageCircle, Phone, CalendarHeart, MapPin, Bell, Images, Wallet, BookOpen, Youtube, Share2, Shield, CheckCircle2, GripVertical, Play, Pause, VolumeX, Volume2, X, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, RotateCw, RefreshCcw, Move, ArrowUpDown, ClipboardCheck, Calendar, Settings, Bus, Train, Car, ParkingCircle, Route, AlertCircle } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import type { CardData, EventInfo } from "../store/useCardStore";
 import { DEFAULT_MAIN_PRESET_URL, MAIN_IMAGE_PRESETS } from "@/lib/main-image-presets";
@@ -45,7 +45,7 @@ const KEY_COLOR_PRESETS: KeyColorPreset[] = [
 const PREVIEW_TYPOGRAPHY_GUIDE = {
   subtitle: "text-[22px] font-medium text-on-surface-10",
   body: "whitespace-pre-line leading-[26px]",
-  subtitle2: "text-[14px] font-normal text-on-surface-30 opacity-70 [font-stretch:120%]",
+  subtitle2: "text-[13px] font-normal text-on-surface-30 opacity-70 [font-stretch:120%]",
 } as const;
 
 /** 방명록 섹션 제목 — 에디터에서 프리셋만 선택 */
@@ -70,6 +70,14 @@ const LOCATION_TITLE_OPTIONS = [
   "위치 안내",
   "찾아오시는 길",
   "교통 안내",
+] as const;
+
+/** 안내사항 미리보기 상단 큰 제목(기존 고정 '안내' 대체) */
+const NOTICE_HEADING_OPTIONS = [
+  "안내사항",
+  "예식 안내",
+  "함께해 주셔서 감사합니다",
+  "소중한 분들께 전하는 안내",
 ] as const;
 
 const TRANSPORT_MODE_OPTIONS = [
@@ -1469,6 +1477,28 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const [editingInvitationTabName, setEditingInvitationTabName] = useState("");
   const isSwitchingInvitationRef = useRef(false);
   const onboardingAppliedRef = useRef(false);
+  const shareTitleManuallyEditedRef = useRef(false);
+
+  const autoShareTitle = useMemo(() => {
+    const brideFirst = !!((data as any).i18n?.brideFirstInfo ?? false);
+    const groom = (data.hosts.groom.name ?? "").trim();
+    const bride = (data.hosts.bride.name ?? "").trim();
+    const firstDisplayName = brideFirst ? (bride || "신부") : (groom || "신랑");
+    const secondDisplayName = brideFirst ? (groom || "신랑") : (bride || "신부");
+    return `${firstDisplayName} ♥ ${secondDisplayName} 결혼식`;
+  }, [data.hosts.groom.name, data.hosts.bride.name, (data as any).i18n?.brideFirstInfo]);
+
+  useEffect(() => {
+    shareTitleManuallyEditedRef.current = false;
+  }, [activeInvitationTabId]);
+
+  useEffect(() => {
+    if (shareTitleManuallyEditedRef.current) return;
+    const current = (data.share?.title ?? "").trim();
+    if (current === autoShareTitle.trim()) return;
+    updateData("share.title", autoShareTitle);
+  }, [autoShareTitle, data.share?.title, updateData]);
+
   /** Preview order: calendar / D-Day (`eventInfo`) sits directly above location. */
   const baseLayoutOrder = ['hosts', 'main', 'greeting', 'contact', 'eventInfo', 'location'];
   const sectionEnabled = data.sectionEnabled ?? {};
@@ -1513,6 +1543,11 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const [noticeSelectedSample, setNoticeSelectedSample] = useState<{ title: string; content: string } | null>(null);
   const [noticeEditorTabIndex, setNoticeEditorTabIndex] = useState(0);
   const [noticePreviewTabIndex, setNoticePreviewTabIndex] = useState(0);
+  const [rsvpSampleOpen, setRsvpSampleOpen] = useState(false);
+  const [rsvpSampleTab, setRsvpSampleTab] = useState<'general' | 'formal' | 'friendly'>('general');
+  const [rsvpSelectedSample, setRsvpSelectedSample] = useState<{ title: string; content: string } | null>(null);
+  const [guestUploadSampleOpen, setGuestUploadSampleOpen] = useState(false);
+  const [guestUploadSelectedSample, setGuestUploadSelectedSample] = useState<string | null>(null);
   const [locationSearchOpen, setLocationSearchOpen] = useState(false);
   // 사용자가 검색어(키워드)를 입력하는 로컬 상태
   // 최종 주소 확정은 모달에서 '적용'을 눌렀을 때만 updateData('location.address', ...)로 반영
@@ -1793,81 +1828,17 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     }
   }, [initialSearchParams, updateData]);
 
-  // 공유 섹션 기본 썸네일 프리셋 (SVG를 data-uri로 생성)
-  const shareThumbnailPresets = useMemo(() => {
-    const makeDataUri = (svg: string) =>
-      `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-
-    const makeBase = (bg1: string, bg2: string, inner: string) => `
-      <svg xmlns="http://www.w3.org/2000/svg" width="300" height="157" viewBox="0 0 300 157">
-        <defs>
-          <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="${bg1}"/>
-            <stop offset="1" stop-color="${bg2}"/>
-          </linearGradient>
-        </defs>
-        <rect width="300" height="157" rx="22" fill="url(#bg)"/>
-        <rect x="0" y="0" width="300" height="157" rx="22" fill="rgba(255,255,255,0.12)"/>
-        ${inner}
-      </svg>
-    `;
-
-    const heart = (color: string) => `
-      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="${color}" transform="translate(132 45) scale(4.2)"/>
-      <path d="M150 87c-10-7-22-17-22-29 0-6 5-11 11-11 4 0 8 3 11 7 3-4 7-7 11-7 6 0 11 5 11 11 0 12-12 22-22 29z" fill="rgba(255,255,255,0.25)"/>
-    `;
-
-    const ring = (stroke: string) => `
-      <g fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round">
-        <path d="M150 54c-44 0-80 25-80 54s36 54 80 54 80-25 80-54-36-54-80-54z" opacity="0.12"/>
-        <circle cx="150" cy="90" r="44"/>
-        <circle cx="150" cy="90" r="30" stroke="rgba(255,255,255,0.35)" stroke-width="6"/>
-      </g>
-      <path d="M150 56c-26 6-42 22-42 34 0 14 18 31 42 34 24-3 42-20 42-34 0-12-16-28-42-34z" fill="rgba(255,255,255,0.12)"/>
-    `;
-
-    const flower = (color: string) => `
-      <g opacity="0.95">
-        ${[0, 60, 120, 180, 240, 300].map((a) => {
-          const rad = (a * Math.PI) / 180;
-          const x = 150 + Math.cos(rad) * 36;
-          const y = 90 + Math.sin(rad) * 26;
-          return `<circle cx="${x}" cy="${y}" r="14" fill="${color}" opacity="0.75"/>`;
-        }).join("")}
-        <circle cx="150" cy="90" r="16" fill="${color}"/>
-        <circle cx="150" cy="90" r="8" fill="rgba(255,255,255,0.35)"/>
-      </g>
-    `;
-
-    const bow = (color: string) => `
-      <path d="M135 70c-18-14-40-12-52 2-8 10-7 23 2 32 12 12 31 12 46 4 9-5 15-12 17-16z" fill="${color}" opacity="0.8"/>
-      <path d="M165 70c18-14 40-12 52 2 8 10 7 23-2 32-12 12-31 12-46 4-9-5-15-12-17-16z" fill="${color}" opacity="0.8"/>
-      <path d="M150 74c-10 0-18 8-18 18s8 18 18 18 18-8 18-18-8-18-18-18z" fill="${color}"/>
-      <path d="M150 92c-18 0-30 10-30 18 0 6 12 14 30 14s30-8 30-14c0-8-12-18-30-18z" fill="rgba(255,255,255,0.18)"/>
-    `;
-
-    const sparkle = (color: string) => `
-      <g>
-        <path d="M150 52l10 24 24 10-24 10-10 24-10-24-24-10 24-10z" fill="${color}"/>
-        <circle cx="210" cy="95" r="10" fill="${color}" opacity="0.75"/>
-        <circle cx="90" cy="95" r="8" fill="${color}" opacity="0.65"/>
-        <path d="M62 78l4 9 9 4-9 4-4 9-4-9-9-4 9-4z" fill="rgba(255,255,255,0.35)"/>
-      </g>
-    `;
-
-    const presets = [
-      { id: 'heart', label: '하트', bg1: '#FCE7F3', bg2: '#EDE0FD', icon: heart('#7A2FEB') },
-      { id: 'flower', label: '플라워', bg1: '#EAF8F5', bg2: '#FDEFF6', icon: flower('#2D8C7F') },
-      { id: 'ring', label: '링', bg1: '#EEF3FF', bg2: '#EDE0FD', icon: ring('#5D76C9') },
-      { id: 'bow', label: '리본', bg1: '#FFFDFE', bg2: '#F3ECFF', icon: bow('#7A2FEB') },
-      { id: 'sparkle', label: '반짝', bg1: '#F8F9FA', bg2: '#EDE0FD', icon: sparkle('#7A2FEB') },
-    ];
-
-    return presets.map((p) => ({
-      ...p,
-      url: p.id === 'flower' ? '/chrysanthemum.svg' : makeDataUri(makeBase(p.bg1, p.bg2, p.icon)),
-    }));
-  }, []);
+  // 공유 섹션 썸네일 프리셋 (사용자 제공 배너 리소스)
+  const shareThumbnailPresets = useMemo(
+    () => [
+      { id: 'banner-01', label: '배너 1', url: '/images/share-thumbnails/banner_01.png' },
+      { id: 'banner-02', label: '배너 2', url: '/images/share-thumbnails/banner_02.png' },
+      { id: 'banner-03', label: '배너 3', url: '/images/share-thumbnails/banner_03.png' },
+      { id: 'banner-04', label: '배너 4', url: '/images/share-thumbnails/banner_04.png' },
+      { id: 'banner-05', label: '배너 5', url: '/images/share-thumbnails/banner_05.png' },
+    ],
+    [],
+  );
 
   const flowerThumbnailPresets = useMemo(
     () => [
@@ -1924,6 +1895,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   }, [data.theme.scrollEffect, data.sectionEnabled, optionalOrder]);
 
   const scrollPreviewToSection = (sectionId: string) => {
+    if (sectionId === "hosts" || sectionId === "eventInfo") return;
     const root = previewScrollRef.current;
     if (!root) return;
     const previewSectionId = sectionId === "eventDate" ? "eventInfo" : sectionId;
@@ -2122,8 +2094,19 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   // location 교통수단 목록: 기존 subway/bus 값을 1개 항목으로 호환
   const transportItems = useMemo(() => {
     const transports = (data.location as any)?.transports;
-    if (Array.isArray(transports) && transports.length > 0) return transports as Array<{ mode: string; detail: string }>;
-    return [{ mode: data.location.subway || '', detail: data.location.bus || '' }];
+    if (Array.isArray(transports)) {
+      const list = transports as Array<{ mode: string; detail: string }>;
+      if (list.length === 0) return [];
+      const hasAny = list.some(
+        (t) => String(t?.mode ?? "").trim() || String(t?.detail ?? "").trim(),
+      );
+      if (!hasAny) return [];
+      return list;
+    }
+    const mode = String(data.location.subway ?? "").trim();
+    const detail = String(data.location.bus ?? "").trim();
+    if (!mode && !detail) return [];
+    return [{ mode, detail }];
   }, [data.location]);
 
   const setTransportItems = (next: Array<{ mode: string; detail: string }>) => {
@@ -2421,6 +2404,85 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         },
       ],
     } as const;
+  }, []);
+
+  const rsvpSamples = useMemo(() => {
+    return {
+      general: [
+        {
+          title: '참석 회신 안내',
+          content: `원활한 예식 준비를 위해 참석 여부를 남겨주세요.
+소중한 답변 하나하나 큰 도움이 됩니다.`,
+        },
+        {
+          title: '회신 부탁드립니다',
+          content: `식사와 좌석 준비를 위해 참석 여부를 부탁드립니다.
+잠시만 시간 내어 응답해 주시면 감사하겠습니다.`,
+        },
+        {
+          title: '간단 응답 안내',
+          content: `아래 버튼으로 참석/불참을 간단히 남겨주세요.
+회신해 주신 내용은 예식 준비에만 사용됩니다.`,
+        },
+      ],
+      formal: [
+        {
+          title: '예식 참석 의사 확인',
+          content: `예식 진행 및 하객 안내 준비를 위해
+참석 의사를 회신해 주시길 부탁드립니다.`,
+        },
+        {
+          title: '회신 요청',
+          content: `원활한 행사 운영을 위해 참석 여부를 확인하고 있습니다.
+바쁘시더라도 회신 부탁드립니다.`,
+        },
+        {
+          title: '하객 응답 안내',
+          content: `식순 및 연회 준비를 위해 하객 응답을 받고 있습니다.
+간단한 확인 부탁드립니다.`,
+        },
+      ],
+      friendly: [
+        {
+          title: '편하게 알려주세요',
+          content: `오실 수 있는지 편하게 알려주세요 :)
+따뜻한 마음으로 기다리고 있겠습니다.`,
+        },
+        {
+          title: '짧게 체크 부탁해요',
+          content: `아래에서 참석 여부만 가볍게 체크해 주세요!
+준비하는 데 큰 힘이 됩니다.`,
+        },
+        {
+          title: '함께해 주실까요?',
+          content: `바쁜 일정 중에도 함께해 주실 수 있다면 정말 기쁠 것 같아요.
+참석 여부를 남겨주세요.`,
+        },
+      ],
+    } as const;
+  }, []);
+
+  const guestUploadSamples = useMemo(() => {
+    return [
+      `예식 후 촬영하신 사진과 영상을 업로드해 주세요.
+소중한 순간을 함께 모아 오래 간직하고 싶습니다.`,
+      `하객분들이 담아주신 장면이 큰 선물이 됩니다.
+편하실 때 사진/영상을 올려주세요.`,
+      `예식 당일의 생생한 순간을 공유해 주세요.
+모든 사진은 감사한 마음으로 소중히 보관하겠습니다.`,
+      `찍어주신 인생샷, 짧은 영상 모두 환영해요!
+함께 만든 추억을 공유해 주세요.`,
+      `예쁜 장면을 많이 남겨주셨다면
+아래에서 간단히 업로드 부탁드려요 :)`,
+      `하객분들의 시선으로 담긴 장면이 궁금해요.
+사진/영상을 자유롭게 올려주세요!`,
+      `가로/세로 사진 모두 업로드 가능합니다.
+여러 장 선택도 가능하니 편하게 등록해 주세요.`,
+      `영상은 용량이 큰 경우 업로드에 시간이 걸릴 수 있습니다.
+와이파이 환경에서 등록하시면 더 안정적입니다.`,
+      `업로드된 파일은 예식 추억 공유 용도로만 사용됩니다.
+원치 않으시는 사진은 제외 후 업로드해 주세요.`,
+    ] as const;
   }, []);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -3147,7 +3209,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
             <div className="space-y-5">
               {greetingEntries.map((entry, idx) => (
                 <div key={`greeting-entry-${idx}`}>
-                  <h3 className="text-[1em] font-semibold text-on-surface-10 mb-8">{entry.title}</h3>
+                  <h3 className="text-[1em] font-semibold text-on-surface-10 mb-6">{entry.title}</h3>
                   <p className="text-[14px] leading-[26px] text-on-surface-20 whitespace-pre-wrap">
                     {entry.content}
                   </p>
@@ -3219,6 +3281,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       }
       case 'contact': {
         const contactEnabled = isSectionEnabled('contact');
+        const useContactThumbnail = (data.share as any)?.useThumbnail ?? true;
         const brideFirstInfo = !!((data as any).i18n?.brideFirstInfo ?? false);
         const groomName = (data.hosts.groom.name ?? '').trim() || '신랑';
         const brideName = (data.hosts.bride.name ?? '').trim() || '신부';
@@ -3319,8 +3382,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
         return (
           <div className="mx-auto w-full space-y-5">
-            {contactEnabled && !!(data.share?.thumbnail ?? '').trim() && (
-              <div className="w-full aspect-video rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden mb-[40px]">
+            {contactEnabled && useContactThumbnail && !!(data.share?.thumbnail ?? '').trim() && (
+              <div className="w-full aspect-video bg-[color:var(--surface-20)] overflow-hidden mb-[40px]">
                 <img
                   src={(data.share?.thumbnail ?? '').trim()}
                   alt="혼주 섹션 이미지"
@@ -3551,7 +3614,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           const naverWeb = address ? `https://map.naver.com/v5/search/${enc}` : '';
 
           const transportsRaw = (data.location as any)?.transports;
-          const transports: Array<{ mode: string; detail: string }> = Array.isArray(transportsRaw) && transportsRaw.length > 0
+          const transports: Array<{ mode: string; detail: string }> = Array.isArray(transportsRaw)
             ? transportsRaw
             : [
                 { mode: (data.location as any).subway || '', detail: (data.location as any).bus || '' },
@@ -3713,9 +3776,11 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         const activeSection = noticeSections[activeTabIndex] ?? noticeSections[0];
         const rawContent = String(activeSection?.content ?? "");
         const content = rawContent.trim().length > 0 ? rawContent : "안내 내용을 입력해 주세요.";
+        const noticeHeading =
+          String((data.notice as any)?.sectionHeading ?? "").trim() || NOTICE_HEADING_OPTIONS[0];
         const noticeTitle = (
           <div className="space-y-1">
-            <div className={PREVIEW_TYPOGRAPHY_GUIDE.subtitle}>안내</div>
+            <div className={PREVIEW_TYPOGRAPHY_GUIDE.subtitle}>{noticeHeading}</div>
             <div className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle2} pb-[30px]`}>
               Information
             </div>
@@ -4415,7 +4480,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               <button
                 type="button"
                 onClick={() => setRsvpPreviewModalOpen(true)}
-                className="h-10 w-full rounded-lg bg-[color:var(--primary-container)] text-[color:var(--on-primary-container)] text-[13px] font-semibold inline-flex items-center justify-center hover:bg-[color:var(--primary-container)]/80 hover:text-[color:var(--on-primary-container)] transition"
+                className="h-10 w-full rounded-lg bg-[color:var(--key)] text-white text-[13px] font-semibold inline-flex items-center justify-center hover:brightness-95 transition"
               >
                 참석여부 전달하기
               </button>
@@ -4433,7 +4498,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle} mb-1`}>{title}</p>
               <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle2} mb-0 pb-5`}>{subtitle2}</p>
             </div>
-            {description && <p className="whitespace-pre-line leading-relaxed">{description}</p>}
+            {description && <p className="whitespace-pre-line text-[14px] leading-[24px] text-center mb-[24px]">{description}</p>}
             <GuestPhotoUploadForm maxTotalMB={50} />
           </div>
         );
@@ -4493,6 +4558,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   return (
     <div className="flex flex-col gap-0 h-screen w-full bg-gray-50 overflow-hidden">
       <AppHeader
+        hideSiteNav
         rightSlot={
           <button
             type="button"
@@ -4871,12 +4937,20 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                         <>
                           <FormItem label="인트로 디자인">
                             <div className="flex flex-wrap gap-2">
-                              {(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'] as const).map((t) => (
+                              {([
+                                { value: 'A' as const, label: 'A' },
+                                { value: 'B' as const, label: 'B' },
+                                { value: 'E' as const, label: 'C' },
+                                { value: 'F' as const, label: 'D' },
+                                { value: 'G' as const, label: 'E' },
+                                { value: 'H' as const, label: 'F' },
+                                { value: 'I' as const, label: 'G' },
+                              ] as const).map((opt) => (
                                 <OptionChip
-                                  key={t}
-                                  label={`타입 ${t}`}
-                                  active={(data.main as any).introType === t}
-                                  onClick={() => updateData('main.introType', t)}
+                                  key={opt.value}
+                                  label={`타입 ${opt.label}`}
+                                  active={(data.main as any).introType === opt.value}
+                                  onClick={() => updateData('main.introType', opt.value)}
                                 />
                               ))}
                             </div>
@@ -5537,7 +5611,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               <div className="flex min-w-0 flex-1 flex-col gap-2">
                                 <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:gap-3">
                                   <div className="flex w-full min-w-0 justify-center sm:flex-1 sm:justify-start">
-                                    <div className="aspect-[4/3] w-full max-w-[200px] rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden">
+                                    <div className="aspect-video w-full max-w-[200px] rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden">
                                       {data.share?.thumbnail ? (
                                         <img
                                           src={data.share.thumbnail}
@@ -6031,23 +6105,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               </React.Fragment>
                             ))}
 
-                            {greetingEntries.length < 3 && (
-                              <div className="pt-0 flex justify-center">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  className="rounded-lg px-4 h-10 text-[13px]"
-                                  onClick={() => {
-                                    if (greetingEntries.length >= 3) return;
-                                    const next = [...greetingEntries, { title: '', content: '' }];
-                                    setGreetingEntries(next);
-                                    setGreetingEditorIndex(next.length - 1);
-                                  }}
-                                >
-                                  + 추가하기
-                                </Button>
-                              </div>
-                            )}
                           </div>
 
                           {greetingSampleOpen && createPortal(
@@ -6248,17 +6305,17 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             {transportItems.map((t, idx) => (
                               <div key={idx} className="flex flex-col gap-2">
                                 <FormItem label={idx === 0 ? "교통수단" : ""}>
-                                  <Input
-                                    value={t.mode}
-                                    onChange={(e) => {
-                                      const next = [...transportItems];
-                                      next[idx] = { ...next[idx], mode: e.target.value };
-                                      setTransportItems(next);
-                                    }}
-                                    className="shadow-none flex-1"
-                                    placeholder="예: 지하철"
-                                  />
-                                  {idx > 0 && (
+                                  <div className="flex items-center gap-2 flex-1">
+                                    <Input
+                                      value={t.mode}
+                                      onChange={(e) => {
+                                        const next = [...transportItems];
+                                        next[idx] = { ...next[idx], mode: e.target.value };
+                                        setTransportItems(next);
+                                      }}
+                                      className="shadow-none flex-1"
+                                      placeholder="예: 지하철"
+                                    />
                                     <button
                                       type="button"
                                       onClick={() => {
@@ -6269,7 +6326,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                     >
                                       삭제
                                     </button>
-                                  )}
+                                  </div>
                                 </FormItem>
                                 <FormItem label="">
                                   <Textarea
@@ -6288,7 +6345,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             ))}
 
                             <div className="pt-0 flex justify-center">
-                              <div className="relative w-full max-w-[220px]">
+                              <div className="relative w-max max-w-full">
                                 <select
                                   value={selectedTransportMode}
                                   onChange={(e) => {
@@ -6302,7 +6359,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                     setSelectedTransportMode('');
                                   }}
                                   disabled={availableTransportModeOptions.length === 0}
-                                  className="group/button inline-flex h-10 w-full min-w-0 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-background bg-clip-padding px-4 pr-9 text-center text-[13px] font-medium text-foreground whitespace-nowrap appearance-none select-none transition-all outline-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:border-input dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
+                                  className="group/button inline-flex h-10 w-max max-w-full min-w-0 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-background bg-clip-padding px-4 pr-9 text-center text-[13px] font-medium text-foreground whitespace-nowrap appearance-none select-none transition-all outline-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:border-input dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
                                 >
                                   <option value="">
                                     {availableTransportModeOptions.length > 0 ? "+ 교통수단 추가" : "추가 가능한 항목 없음"}
@@ -6718,11 +6775,31 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       {/* 안내사항 섹션 */}
                       {item.id === 'notice' && (
                         <>
+                          <div className="flex flex-col gap-5">
+                            <FormItem label="제목">
+                              <div className="flex flex-wrap gap-2 w-full">
+                                {NOTICE_HEADING_OPTIONS.map((opt) => {
+                                  const current = String((data.notice as any)?.sectionHeading ?? "").trim();
+                                  const active =
+                                    current === opt ||
+                                    (!current && opt === NOTICE_HEADING_OPTIONS[0]);
+                                  return (
+                                    <OptionChip
+                                      key={opt}
+                                      label={opt}
+                                      active={active}
+                                      onClick={() => updateData("notice.sectionHeading", opt)}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            </FormItem>
+                          </div>
                           {noticeSections.map((section, idx) => (
                             <React.Fragment key={section.id}>
                               {idx > 0 && <div className="border-t border-dashed border-[color:var(--border-20)] my-2" />}
                               <div className="flex flex-col gap-5 mb-0">
-                                <FormItem label="제목">
+                                <FormItem label="소제목">
                                   {idx > 0 ? (
                                     <div className="flex items-center gap-2 flex-1">
                                       <Input
@@ -6986,15 +7063,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               })}
                             </div>
                           </FormItem>
-                          <FormItem label="설명">
-                            <Textarea
-                              rows={3}
-                              value={(data.guestbook as any)?.description ?? ""}
-                              onChange={(e) => updateData('guestbook.description', e.target.value)}
-                              placeholder="guestbook"
-                              className="resize-none shadow-none flex-1"
-                            />
-                          </FormItem>
                           <FormItem label="비밀번호">
                             <div className="flex-1 flex flex-col gap-2">
                               <Input
@@ -7178,13 +7246,29 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             </div>
                           </FormItem>
                           <FormItem label="안내 문구">
-                            <Textarea
-                              rows={3}
-                              value={(data as any).rsvp?.description ?? ""}
-                              onChange={(e) => updateData("rsvp.description", e.target.value)}
-                              placeholder="참석 여부를 알려주시면 준비에 도움이 됩니다."
-                              className="resize-none shadow-none flex-1"
-                            />
+                            <div className="flex-1 flex flex-col gap-2">
+                              <Textarea
+                                rows={3}
+                                value={(data as any).rsvp?.description ?? ""}
+                                onChange={(e) => updateData("rsvp.description", e.target.value)}
+                                placeholder="참석 여부를 알려주시면 준비에 도움이 됩니다."
+                                className="resize-none shadow-none flex-1"
+                              />
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
+                                  onClick={() => {
+                                    setRsvpSampleTab('general');
+                                    setRsvpSelectedSample(null);
+                                    setRsvpSampleOpen(true);
+                                  }}
+                                >
+                                  샘플보기
+                                </Button>
+                              </div>
+                            </div>
                           </FormItem>
                           <FormItem label="옵션">
                             <span
@@ -7223,6 +7307,134 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               </div>
                             </div>
                           </FormItem>
+                          {rsvpSampleOpen && createPortal(
+                            <div
+                              className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50"
+                              onClick={() => setRsvpSampleOpen(false)}
+                            >
+                              <div
+                                className="w-full max-w-md rounded-2xl bg-white border border-[color:var(--border-10)] p-6 flex flex-col gap-5 h-[min(800px,calc(100vh-48px))] overflow-hidden"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <h3 className="text-[15px] font-semibold text-on-surface-10">샘플 문구</h3>
+                                </div>
+
+                                <div className="relative">
+                                  <div className="grid grid-cols-3 border-b border-[color:var(--border-10)]">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setRsvpSampleTab('general');
+                                        setRsvpSelectedSample(null);
+                                      }}
+                                      className={[
+                                        'h-10 flex items-center justify-center text-[16px] font-medium transition-colors',
+                                        rsvpSampleTab === 'general'
+                                          ? 'text-on-surface-10'
+                                          : 'text-[color:var(--on-surface-disabled)] hover:text-on-surface-30',
+                                      ].join(' ')}
+                                    >
+                                      일반
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setRsvpSampleTab('formal');
+                                        setRsvpSelectedSample(null);
+                                      }}
+                                      className={[
+                                        'h-10 flex items-center justify-center text-[16px] font-medium transition-colors',
+                                        rsvpSampleTab === 'formal'
+                                          ? 'text-on-surface-10'
+                                          : 'text-[color:var(--on-surface-disabled)] hover:text-on-surface-30',
+                                      ].join(' ')}
+                                    >
+                                      정중
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setRsvpSampleTab('friendly');
+                                        setRsvpSelectedSample(null);
+                                      }}
+                                      className={[
+                                        'h-10 flex items-center justify-center text-[16px] font-medium transition-colors',
+                                        rsvpSampleTab === 'friendly'
+                                          ? 'text-on-surface-10'
+                                          : 'text-[color:var(--on-surface-disabled)] hover:text-on-surface-30',
+                                      ].join(' ')}
+                                    >
+                                      친근
+                                    </button>
+                                  </div>
+                                  <div
+                                    className={[
+                                      'absolute bottom-0 left-0 h-[2px] w-1/3 bg-black transition-transform duration-200',
+                                      rsvpSampleTab === 'general'
+                                        ? 'translate-x-0'
+                                        : rsvpSampleTab === 'formal'
+                                          ? 'translate-x-full'
+                                          : 'translate-x-[200%]',
+                                    ].join(' ')}
+                                  />
+                                </div>
+
+                                <div className="flex-1 overflow-y-auto no-scrollbar">
+                                  <div className="flex flex-col gap-3">
+                                    {rsvpSamples[rsvpSampleTab].map((sample) => (
+                                      <div
+                                        key={`${sample.title}-${sample.content.slice(0, 20)}`}
+                                        role="button"
+                                        tabIndex={0}
+                                        onClick={() => setRsvpSelectedSample(sample)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter' || e.key === ' ') setRsvpSelectedSample(sample);
+                                        }}
+                                        className={[
+                                          'rounded-lg border bg-white px-4 py-5 cursor-pointer transition-colors outline-none',
+                                          rsvpSelectedSample?.content === sample.content && rsvpSelectedSample?.title === sample.title
+                                            ? 'border-black'
+                                            : 'border-[color:var(--border-10)] hover:border-[color:var(--border-20)]',
+                                        ].join(' ')}
+                                      >
+                                        <div className="text-[14px] leading-relaxed text-on-surface-10 text-center whitespace-pre-wrap">
+                                          {sample.content}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div className="pt-0 flex justify-end gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="w-fit h-10 px-5 rounded-lg text-[14px] font-semibold border-[color:var(--border-30)] bg-white text-on-surface-20 hover:bg-slate-50 hover:text-on-surface-10"
+                                    onClick={() => {
+                                      setRsvpSelectedSample(null);
+                                      setRsvpSampleOpen(false);
+                                    }}
+                                  >
+                                    취소
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    className="w-fit h-10 px-5 rounded-lg text-[14px] font-semibold"
+                                    disabled={!rsvpSelectedSample}
+                                    onClick={() => {
+                                      if (!rsvpSelectedSample) return;
+                                      updateData('rsvp.description', String(rsvpSelectedSample.content).replace(/\r\n?/g, '\n'));
+                                      setRsvpSampleOpen(false);
+                                    }}
+                                  >
+                                    적용하기
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>,
+                            document.body
+                          )}
                         </>
                       )}
 
@@ -7247,42 +7459,27 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             </div>
                           </FormItem>
                           <FormItem label="안내 문구">
-                            <Textarea
-                              rows={3}
-                              value={(data.guestUpload as any)?.description ?? ""}
-                              onChange={(e) => updateData('guestUpload.description', e.target.value)}
-                              placeholder="예식 후 촬영하신 사진/영상을 업로드해 주세요."
-                              className="resize-none shadow-none flex-1"
-                            />
-                          </FormItem>
-                          <FormItem label="용량 선택">
-                            <div className="flex flex-col gap-2 flex-1">
-                              <div className="flex flex-wrap gap-2">
-                                {([2, 5, 10, 20] as const).map((gb) => (
-                                  <OptionChip
-                                    key={gb}
-                                    label={gb === 2 ? "2GB (무료)" : `${gb}GB (유료)`}
-                                    active={(((data.guestUpload as any)?.storageGb ?? 2) === gb)}
-                                    onClick={() => updateData("guestUpload.storageGb", gb)}
-                                  />
-                                ))}
+                            <div className="flex-1 flex flex-col gap-2">
+                              <Textarea
+                                rows={3}
+                                value={(data.guestUpload as any)?.description ?? ""}
+                                onChange={(e) => updateData('guestUpload.description', e.target.value)}
+                                placeholder="예식 후 촬영하신 사진/영상을 업로드해 주세요."
+                                className="resize-none shadow-none flex-1"
+                              />
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
+                                  onClick={() => {
+                                    setGuestUploadSelectedSample(null);
+                                    setGuestUploadSampleOpen(true);
+                                  }}
+                                >
+                                  샘플보기
+                                </Button>
                               </div>
-                              {(() => {
-                                const gb = (((data.guestUpload as any)?.storageGb ?? 2) as 2 | 5 | 10 | 20);
-                                const hint =
-                                  gb === 2
-                                    ? "사진 약 400~660장 · 15초 영상 약 60~200개"
-                                    : gb === 5
-                                      ? "사진 약 1,000~1,650장 · 15초 영상 약 150~500개"
-                                      : gb === 10
-                                        ? "사진 약 2,000~3,300장 · 15초 영상 약 300~1,000개"
-                                        : "사진 약 4,000~6,600장 · 15초 영상 약 600~2,000개";
-                                return (
-                                  <div className="text-[12px] text-on-surface-30 leading-relaxed">
-                                    {hint}
-                                  </div>
-                                );
-                              })()}
                             </div>
                           </FormItem>
                           <FormItem label="옵션">
@@ -7319,6 +7516,80 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               </div>
                             </div>
                           </FormItem>
+                          <div className="rounded-2xl bg-[color:var(--surface-20)] px-4 py-3.5 flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 shrink-0 text-on-surface-30 mt-0.5" />
+                            <p className="text-[13px] text-on-surface-30 leading-relaxed">
+                              기본 제공 용량(2GB)을 초과하는 업로드 용량을 이용할 경우 추가 결제가 발생할 수 있습니다.
+                            </p>
+                          </div>
+                          {guestUploadSampleOpen && createPortal(
+                            <div
+                              className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50"
+                              onClick={() => setGuestUploadSampleOpen(false)}
+                            >
+                              <div
+                                className="w-full max-w-md rounded-2xl bg-white border border-[color:var(--border-10)] p-6 flex flex-col gap-5 h-[min(800px,calc(100vh-48px))] overflow-hidden"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <h3 className="text-[15px] font-semibold text-on-surface-10">샘플 문구</h3>
+                                </div>
+
+                                <div className="flex-1 overflow-y-auto no-scrollbar">
+                                  <div className="flex flex-col gap-3">
+                                    {guestUploadSamples.map((sample) => (
+                                      <div
+                                        key={sample.slice(0, 28)}
+                                        role="button"
+                                        tabIndex={0}
+                                        onClick={() => setGuestUploadSelectedSample(sample)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter' || e.key === ' ') setGuestUploadSelectedSample(sample);
+                                        }}
+                                        className={[
+                                          'rounded-lg border bg-white px-4 py-5 cursor-pointer transition-colors outline-none',
+                                          guestUploadSelectedSample === sample
+                                            ? 'border-black'
+                                            : 'border-[color:var(--border-10)] hover:border-[color:var(--border-20)]',
+                                        ].join(' ')}
+                                      >
+                                        <div className="text-[14px] leading-relaxed text-on-surface-10 text-center whitespace-pre-wrap">
+                                          {sample}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div className="pt-0 flex justify-end gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="w-fit h-10 px-5 rounded-lg text-[14px] font-semibold border-[color:var(--border-30)] bg-white text-on-surface-20 hover:bg-slate-50 hover:text-on-surface-10"
+                                    onClick={() => {
+                                      setGuestUploadSelectedSample(null);
+                                      setGuestUploadSampleOpen(false);
+                                    }}
+                                  >
+                                    취소
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    className="w-fit h-10 px-5 rounded-lg text-[14px] font-semibold"
+                                    disabled={!guestUploadSelectedSample}
+                                    onClick={() => {
+                                      if (!guestUploadSelectedSample) return;
+                                      updateData('guestUpload.description', String(guestUploadSelectedSample).replace(/\r\n?/g, '\n'));
+                                      setGuestUploadSampleOpen(false);
+                                    }}
+                                  >
+                                    적용하기
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>,
+                            document.body
+                          )}
                         </>
                       )}
 
@@ -7401,7 +7672,16 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           <FormItem label="공유 제목">
                             <Input
                               value={data.share?.title ?? ""}
-                              onChange={(e) => updateData('share.title', e.target.value)}
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                if (!v.trim()) {
+                                  shareTitleManuallyEditedRef.current = false;
+                                  updateData("share.title", autoShareTitle);
+                                  return;
+                                }
+                                shareTitleManuallyEditedRef.current = true;
+                                updateData("share.title", v);
+                              }}
                               placeholder="공유 시 노출될 제목"
                               className="shadow-none flex-1"
                             />
@@ -7654,6 +7934,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           ? "w-full flex flex-col items-stretch text-center"
                           : sectionId === 'eventInfo'
                             ? "w-full p-0 flex flex-col items-center text-center"
+                          : sectionId === 'guestbook'
+                            ? "w-full pt-[80px] pb-[80px] px-6 flex flex-col items-center text-center bg-[color:var(--primary-container-2)]"
+                          : sectionId === 'contact'
+                            ? "w-full pt-[80px] pb-[80px] px-0 flex flex-col items-center text-center"
+                          : sectionId === 'location'
+                            ? "w-full pt-[80px] pb-[80px] px-6 flex flex-col items-center text-center border-b border-border"
                           : "w-full pt-[80px] pb-[80px] px-6 flex flex-col items-center text-center"
                           } ${data.theme.scrollEffect
                             ? (previewVisibleSections[sectionId]

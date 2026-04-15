@@ -227,7 +227,7 @@ function HostsIntroPreviewSoloB({ base }: { base: HostsIntroPreviewBase }) {
 function HostsIntroPreviewHeroC({ base, hero }: { base: HostsIntroPreviewBase; hero: React.ReactNode }) {
   const { titleColor, bodyColor, firstName, secondName, dateTimeLine, venueBlock, mm, dd } = base;
   const dateSideStyle = {
-    color: `color-mix(in srgb, ${titleColor} 70%, transparent)`,
+    color: `var(--key, ${titleColor})`,
   } as const;
   const dateSideClassName = "text-[38px] font-light tabular-nums tracking-tight shrink-0 text-center";
   return (
@@ -417,7 +417,7 @@ function HostsIntroPreviewSoloE({ base }: { base: HostsIntroPreviewBase }) {
 function HostsIntroPreviewHeroF({ base, hero }: { base: HostsIntroPreviewBase; hero: React.ReactNode }) {
   const { titleColor, bodyColor, firstName, secondName, dateTimeLine, venueBlock } = base;
   const nameClass =
-    "text-[clamp(20px,5.5vw,30px)] font-normal leading-[1.4] tracking-[0.12em] text-center";
+    "text-[28px] font-[200] leading-[34px] tracking-[5px] text-center align-middle";
   return (
     <div className="w-full flex flex-col items-stretch pt-0">
       <div className="w-full max-w-[340px] mx-auto px-6 pt-12 pb-8 flex flex-col items-center justify-center text-center">
@@ -426,7 +426,7 @@ function HostsIntroPreviewHeroF({ base, hero }: { base: HostsIntroPreviewBase; h
         </p>
         <p
           className="hosts-intro-f-and-calligraphy mt-0.5 mb-0.5 text-[clamp(16px,4.5vw,26px)] font-normal leading-none tracking-normal opacity-[0.88]"
-          style={{ color: titleColor }}
+          style={{ color: `var(--key, ${titleColor})` }}
           lang="en"
         >
           and
@@ -449,7 +449,7 @@ function HostsIntroPreviewHeroF({ base, hero }: { base: HostsIntroPreviewBase; h
 function HostsIntroPreviewSoloF({ base }: { base: HostsIntroPreviewBase }) {
   const { titleColor, bodyColor, firstName, secondName, dateTimeLine, venueBlock } = base;
   const nameClass =
-    "text-[clamp(20px,5.5vw,30px)] font-normal leading-[1.4] tracking-[0.12em] text-center";
+    "text-[26px] font-normal leading-[34px] tracking-[5px] text-center align-middle";
   return (
     <div className="w-full max-w-[340px] mx-auto px-6 pt-12 pb-6 flex flex-col items-center text-center">
       <p className={nameClass} style={{ color: titleColor }}>
@@ -483,11 +483,11 @@ function HostsIntroPreviewHeroG({ base, hero }: { base: HostsIntroPreviewBase; h
     <div className="w-full flex flex-col items-stretch pt-0">
       <div className="w-full max-w-[340px] mx-auto px-6 pt-20 pb-10 flex flex-col items-center text-center gap-2">
         <p className="flex justify-center items-center gap-[5px] text-[clamp(17px,4.2vw,22px)] font-medium leading-snug">
-          <span className="text-[28px]" style={{ color: titleColor }}>{firstName}</span>
+          <span className="text-[24px] font-medium" style={{ color: titleColor }}>{firstName}</span>
           <span className="mx-2 font-normal text-base text-on-surface-30">그리고</span>
-          <span className="text-[28px]" style={{ color: titleColor }}>{secondName}</span>
+          <span className="text-[24px] font-medium" style={{ color: titleColor }}>{secondName}</span>
         </p>
-        <p className="text-[clamp(17px,4.2vw,22px)] font-medium leading-tight" style={{ color: titleColor }}>
+        <p className="text-[24px] font-[200] leading-tight" style={{ color: `var(--key-dark, var(--key, ${titleColor}))` }}>
           결혼합니다
         </p>
       </div>
@@ -555,7 +555,7 @@ function HostsIntroPreviewHeroH({ base, hero }: { base: HostsIntroPreviewBase; h
   return (
     <div className="w-full flex flex-col items-stretch pt-0">
       <div className="w-full max-w-[340px] mx-auto px-6 pt-[58px] pb-[28px] flex flex-col items-center text-center gap-2">
-        <p className="text-[50px] font-extralight leading-[0.9] tracking-[0.02em]" style={{ color: titleColor }}>
+        <p className="text-[50px] font-extralight leading-[0.9] tracking-[0.02em]" style={{ color: `var(--key, ${titleColor})` }}>
           {dd}
         </p>
         <div className="mt-2 mb-2 h-px w-[160px] opacity-30" style={{ backgroundColor: titleColor }} aria-hidden />
@@ -615,18 +615,18 @@ function HostsIntroPreviewSoloH({ base }: { base: HostsIntroPreviewBase }) {
 
 function HostsIntroPreviewHeroI({ base, hero }: { base: HostsIntroPreviewBase; hero: React.ReactNode }) {
   const { titleColor, bodyColor, firstName, secondName, firstRoleEn, secondRoleEn, dateTimeLine, venueBlock } = base;
-  const subtleColor = { color: `color-mix(in srgb, ${bodyColor} 34%, white)` } as const;
+  const subtleColor = { color: `var(--key, ${titleColor})` } as const;
   const dividerColor = { backgroundColor: `color-mix(in srgb, ${bodyColor} 24%, white)` } as const;
 
   return (
     <div className="w-full flex flex-col items-stretch pt-0">
       <div className="max-w-[340px] mx-auto w-full h-fit px-4 pt-[60px] pb-[40px]">
-        <div className="grid w-full grid-cols-[1fr_auto_1fr] items-end gap-1 text-center">
+        <div className="grid w-full grid-cols-[1fr_auto_1fr] items-end gap-0 text-center">
           <div className="flex min-w-0 flex-col items-center gap-2">
             <p className="text-[13px] font-light tracking-[0.3em]" style={subtleColor}>
               {firstRoleEn}
             </p>
-            <p className="text-[34px] font-extralight leading-[0.92] tracking-[4px] pl-[0.16em]" style={{ color: titleColor }}>
+            <p className="text-[28px] font-extralight leading-[0.92] tracking-[4px] pl-0" style={{ color: titleColor }}>
               {firstName}
             </p>
           </div>
@@ -635,7 +635,7 @@ function HostsIntroPreviewHeroI({ base, hero }: { base: HostsIntroPreviewBase; h
             <p className="text-[13px] font-light tracking-[0.3em]" style={subtleColor}>
               {secondRoleEn}
             </p>
-            <p className="text-[32px] font-extralight leading-[0.92] tracking-[4px] pl-[0.16em]" style={{ color: titleColor }}>
+            <p className="text-[28px] font-extralight leading-[0.92] tracking-[4px] pl-0" style={{ color: titleColor }}>
               {secondName}
             </p>
           </div>

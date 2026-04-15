@@ -87,7 +87,7 @@ export interface CardData {
   hosts: { groom: Profile; bride: Profile; showContacts: boolean };
   eventInfo: EventInfo;
   greeting: { title: string; content: string };
-  notice: { title: string; content: string };
+  notice: { title: string; content: string; /** 미리보기 상단 큰 제목 */ sectionHeading?: string };
   location: {
     title?: string;
     address: string;
@@ -192,11 +192,11 @@ export const useCardStore = create<CardStore>((set) => ({
   data: {
     style: { primaryColor: '#882CDF', bgColor: '#FFFFFF', fontFamily: 'Pretendard', borderRadius: '8px' },
     music: { selectedId: 'classic-1', uploadedFile: null, isLoop: true },
-    theme: { fontFamily: 'Pretendard', fontScale: 'md', colorPreset: 'pastel-1', bgm: 'none', bgmAutoplay: false, scrollEffect: true, particleEffect: 'none' },
+    theme: { fontFamily: 'Pretendard', fontScale: 'md', colorPreset: 'spring-blossom', bgm: 'none', bgmAutoplay: false, scrollEffect: true, particleEffect: 'none' },
     main: {
       image: '',
       images: [],
-      title: '신동주 ♥ 김민선 결혼식',
+      title: '김햇님 ♥ 김별님 결혼식',
       titleColor: '#333333',
       bodyColor: '#666666',
       animation: '없음',
@@ -210,12 +210,12 @@ export const useCardStore = create<CardStore>((set) => ({
     },
     hosts: {
       groom: { 
-        name: '신동주', phone: '010-0000-0000', relation: '장남',
+        name: '김햇님', phone: '010-0000-0000', relation: '장남',
         father: { name: '', phone: '', isDeceased: false, isOn: true },
         mother: { name: '', phone: '', isDeceased: false, isOn: true }
       },
       bride: { 
-        name: '김민선', phone: '010-1111-1111', relation: '장녀',
+        name: '김별님', phone: '010-1111-1111', relation: '장녀',
         father: { name: '', phone: '', isDeceased: false, isOn: true },
         mother: { name: '', phone: '', isDeceased: false, isOn: true }
       },
@@ -234,6 +234,7 @@ export const useCardStore = create<CardStore>((set) => ({
     notice: {
       title: '안내사항',
       content: '마음 편히 오셔서 함께 축복해 주세요.\n예식장 내 주차가 가능하며, 식전 30분 전부터 입장이 가능합니다.',
+      sectionHeading: '안내사항',
     },
     location: {
       title: '오시는 길',
@@ -241,7 +242,7 @@ export const useCardStore = create<CardStore>((set) => ({
       car: '',
       bus: '',
       subway: '',
-      transports: [{ mode: '', detail: '' }],
+      transports: [],
       mapProvider: 'naver',
       mapType: 'photo',
     },
@@ -291,7 +292,7 @@ export const useCardStore = create<CardStore>((set) => ({
     share: {
       useThumbnail: true,
       thumbnail: '',
-      title: '김민준 ♥ 박서연 결혼식',
+      title: '김햇님 ♥ 김별님 결혼식',
       description: '서로가 마주보며 다져온 사랑을 이제 함께 한 곳을 바라보며 걸어가고자 합니다.',
       link: '',
       enableCopy: true,

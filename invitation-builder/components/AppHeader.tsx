@@ -9,6 +9,7 @@ import { Menu, X } from "lucide-react";
 
 type AppHeaderProps = {
   rightSlot?: ReactNode;
+  hideSiteNav?: boolean;
 };
 
 const categoryLinks = [
@@ -93,7 +94,7 @@ function MobileNavPanel({ onNavigate }: { onNavigate: () => void }) {
   );
 }
 
-export default function AppHeader({ rightSlot }: AppHeaderProps) {
+export default function AppHeader({ rightSlot, hideSiteNav = false }: AppHeaderProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const menuPanelId = useId();
@@ -150,22 +151,30 @@ export default function AppHeader({ rightSlot }: AppHeaderProps) {
         {rightSlot ? (
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <div className="min-w-0">{rightSlot}</div>
-            {menuButton}
-            <div className="hidden md:block">
-              <DesktopNav />
-            </div>
+            {!hideSiteNav && (
+              <>
+                {menuButton}
+                <div className="hidden md:block">
+                  <DesktopNav />
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <>
-            <div className="hidden md:block">
-              <DesktopNav />
-            </div>
-            {menuButton}
+            {!hideSiteNav && (
+              <>
+                <div className="hidden md:block">
+                  <DesktopNav />
+                </div>
+                {menuButton}
+              </>
+            )}
           </>
         )}
       </div>
 
-      {mobileOpen && (
+      {!hideSiteNav && mobileOpen && (
         <>
           <button
             type="button"
