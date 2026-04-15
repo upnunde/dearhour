@@ -1240,12 +1240,14 @@ function MultiImageGrid({
   onSlotClick,
   onEdit,
   onDelete,
+  touchMode = false,
 }: {
   images: string[];
   onReorder: (next: string[]) => void;
   onSlotClick: (index: number, hasImg: boolean) => void;
   onEdit: (index: number, src: string) => void;
   onDelete: (index: number) => void;
+  touchMode?: boolean;
 }) {
   const normalized = Array.from({ length: 4 }, (_, i) => images[i] || "");
   const slots = normalized.map((src, i) => ({
@@ -1260,12 +1262,28 @@ function MultiImageGrid({
       onReorder(next);
     },
   });
+  const allowReorder = !touchMode;
 
   return (
     <div className="flex gap-2 flex-wrap w-full bg-[color:var(--surface-20)] p-4 rounded-lg">
       {slots.map((slot, realIndex) => {
         const hasImg = !!slot.src;
-        const { handleProps, wrapperProps } = sortable.getItemProps(slot.id);
+        const sortableProps = allowReorder
+          ? sortable.getItemProps(slot.id)
+          : {
+              handleProps: {
+                onPointerDown: () => {},
+                style: {},
+                "aria-label": "이미지 이동 비활성화",
+              },
+              wrapperProps: {
+                onPointerEnter: () => {},
+                style: {},
+                className: "",
+                ref: () => {},
+              },
+            };
+        const { handleProps, wrapperProps } = sortableProps;
         return (
           <div
             key={slot.id}
@@ -1285,7 +1303,7 @@ function MultiImageGrid({
               {hasImg ? '' : '+'}
             </button>
             {hasImg && (
-              <div className="absolute right-1 top-1 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className={cn("absolute right-1 top-1 flex flex-col gap-1 transition-opacity", touchMode ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
                 <button
                   type="button"
                   className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white"
@@ -1302,15 +1320,17 @@ function MultiImageGrid({
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
-                <button
-                  type="button"
-                  {...handleProps}
-                  className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white cursor-grab active:cursor-grabbing"
-                  aria-label="이미지 이동"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Move className="w-4 h-4" />
-                </button>
+                {allowReorder && (
+                  <button
+                    type="button"
+                    {...handleProps}
+                    className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white cursor-grab active:cursor-grabbing"
+                    aria-label="이미지 이동"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Move className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -1326,12 +1346,14 @@ function GalleryImageGrid({
   onEdit,
   imageRatio,
   max = 50,
+  touchMode = false,
 }: {
   images: string[];
   onChange: (next: string[]) => void;
   onEdit?: (index: number, src: string) => void;
   imageRatio?: "square" | "portrait";
   max?: number;
+  touchMode?: boolean;
 }) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const normalized = images.slice(0, max);
@@ -1341,6 +1363,7 @@ function GalleryImageGrid({
     items: slots,
     onReorder: (reordered) => onChange(reordered.map((x) => x.src)),
   });
+  const allowReorder = !touchMode;
   const thumbAspectClass = imageRatio === "square" ? "aspect-square" : "aspect-[3/4]";
 
   return (
@@ -1348,7 +1371,22 @@ function GalleryImageGrid({
       <div className="pr-1">
         <div className="flex gap-2 flex-wrap w-full bg-[color:var(--surface-20)] p-4 rounded-lg max-h-[420px] overflow-y-auto">
           {slots.map((slot, i) => {
-            const { handleProps, wrapperProps } = sortable.getItemProps(slot.id);
+            const sortableProps = allowReorder
+              ? sortable.getItemProps(slot.id)
+              : {
+                  handleProps: {
+                    onPointerDown: () => {},
+                    style: {},
+                    "aria-label": "이미지 이동 비활성화",
+                  },
+                  wrapperProps: {
+                    onPointerEnter: () => {},
+                    style: {},
+                    className: "",
+                    ref: () => {},
+                  },
+                };
+            const { handleProps, wrapperProps } = sortableProps;
             return (
               <div
                 key={`${slot.id}-${i}`}
@@ -1365,7 +1403,7 @@ function GalleryImageGrid({
                   }}
                   aria-label={`갤러리 이미지 ${i + 1} 수정`}
                 />
-                <div className="absolute right-1 top-1 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className={cn("absolute right-1 top-1 flex flex-col gap-1 transition-opacity", touchMode ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
                   <button
                     type="button"
                     className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white"
@@ -1395,15 +1433,17 @@ function GalleryImageGrid({
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
-                  <button
-                    type="button"
-                    {...handleProps}
-                    className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white cursor-grab active:cursor-grabbing"
-                    onClick={(e) => e.stopPropagation()}
-                    aria-label="이미지 이동"
-                  >
-                    <Move className="w-4 h-4" />
-                  </button>
+                  {allowReorder && (
+                    <button
+                      type="button"
+                      {...handleProps}
+                      className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white cursor-grab active:cursor-grabbing"
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label="이미지 이동"
+                    >
+                      <Move className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -1413,7 +1453,7 @@ function GalleryImageGrid({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className={`relative w-[100px] ${thumbAspectClass} rounded-lg border border-dashed border-border bg-white hover:bg-slate-50 flex items-center justify-center text-3xl text-on-surface-30 bg-center bg-cover bg-clip-border bg-origin-border`}
+              className={`relative w-[100px] ${thumbAspectClass} rounded-lg border border-dashed border-border bg-white hover:bg-slate-50 active:bg-slate-50 flex items-center justify-center text-3xl text-on-surface-30 bg-center bg-cover bg-clip-border bg-origin-border`}
               aria-label="갤러리 이미지 추가"
             >
               +
@@ -1509,6 +1549,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     updateData('sectionEnabled', next);
   };
   const [editorWidth, setEditorWidth] = useState(560);
+  const [isTabletViewport, setIsTabletViewport] = useState(false);
+  const [mobilePanel, setMobilePanel] = useState<'editor' | 'preview'>('editor');
   const isResizingEditorRef = useRef(false);
   const editorResizeStartRef = useRef<{ x: number; width: number } | null>(null);
   const editorResizePointerIdRef = useRef<number | null>(null);
@@ -1531,6 +1573,22 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       return [...normalizedPrev, ...missing];
     });
   }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 1024px)');
+    const handleViewportChange = () => setIsTabletViewport(mediaQuery.matches);
+    handleViewportChange();
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleViewportChange);
+      return () => mediaQuery.removeEventListener('change', handleViewportChange);
+    }
+    mediaQuery.addListener(handleViewportChange);
+    return () => mediaQuery.removeListener(handleViewportChange);
+  }, []);
+
+  useEffect(() => {
+    if (!isTabletViewport) setMobilePanel('editor');
+  }, [isTabletViewport]);
 
   const [bankModalIndex, setBankModalIndex] = useState<number | null>(null);
   const [bankSearch, setBankSearch] = useState('');
@@ -2961,6 +3019,17 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     const maxTop = Math.max(0, container.scrollHeight - container.clientHeight);
     const nextTop = Math.min(maxTop, Math.max(0, targetTop));
     container.scrollTo({ top: nextTop, behavior: 'smooth' });
+  };
+
+  const handleMobileTabSelect = (id: string) => {
+    if (!isTabletViewport || mobilePanel === 'editor') {
+      scrollToSection(id);
+      return;
+    }
+    setMobilePanel('editor');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => scrollToSection(id));
+    });
   };
 
   const openImageEditor = (target: { kind: 'single' } | { kind: 'multi'; index: number } | { kind: 'gallery'; index: number }, src: string) => {
@@ -4560,39 +4629,93 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       <AppHeader
         hideSiteNav
         rightSlot={
-          <button
-            type="button"
-            className="bg-[color:var(--key)] text-white text-sm font-bold px-5 py-2 rounded-lg hover:bg-[color:var(--key-dark)] transition-colors shadow-none"
-            onClick={() => {
-              updateData("billing.savedAt", new Date().toISOString());
-              try {
-                window.localStorage.setItem('mcard:hasDraft', '1');
-                window.localStorage.setItem(
-                  'mcard:lastDraft',
-                  JSON.stringify({
-                    id: `draft-${Date.now()}`,
-                    title: String(data.main?.title || "새 청첩장").trim() || "새 청첩장",
-                    deleteAt: "저장 직후",
-                    status: "결제 전",
-                  }),
-                );
-              } catch (_e) {
-                // ignore localStorage errors
-              }
-              router.push('/mypage?saved=1');
-            }}
-          >
-            저장하기
-          </button>
+          <div className="flex items-center gap-2">
+            {isTabletViewport && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (mobilePanel === 'editor') {
+                    setMobilePanel('preview');
+                    requestAnimationFrame(() => scrollPreviewToSection(activeSection));
+                    return;
+                  }
+                  setMobilePanel('editor');
+                }}
+                className="h-9 shrink-0 rounded-lg border border-[color:var(--key)] bg-white px-3 text-[12px] font-semibold text-[color:var(--key)] hover:bg-[color:var(--primary-container)]/30"
+              >
+                {mobilePanel === 'editor' ? '미리보기 전환' : '에디터 전환'}
+              </button>
+            )}
+            <button
+              type="button"
+              className="bg-[color:var(--key)] text-white text-sm font-bold px-5 py-2 rounded-lg hover:bg-[color:var(--key-dark)] transition-colors shadow-none"
+              onClick={() => {
+                updateData("billing.savedAt", new Date().toISOString());
+                try {
+                  window.localStorage.setItem('mcard:hasDraft', '1');
+                  window.localStorage.setItem(
+                    'mcard:lastDraft',
+                    JSON.stringify({
+                      id: `draft-${Date.now()}`,
+                      title: String(data.main?.title || "새 청첩장").trim() || "새 청첩장",
+                      deleteAt: "저장 직후",
+                      status: "결제 전",
+                    }),
+                  );
+                } catch (_e) {
+                  // ignore localStorage errors
+                }
+                router.push('/mypage?saved=1');
+              }}
+            >
+              저장하기
+            </button>
+          </div>
         }
       />
 
-      <div className="flex flex-1 overflow-hidden relative">
+      {isTabletViewport && mobilePanel === 'editor' && (
+        <div className="bg-white border-b border-border px-3 py-2.5">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0 overflow-x-auto no-scrollbar">
+              <div className="flex items-center gap-2 w-max">
+                {orderedItems.map((item) => {
+                  const isActive = activeSection === item.id;
+                  const isDisabled = item.hasSwitch && !isSectionEnabled(item.id);
+                  return (
+                    <button
+                      key={`mobile-tab-${item.id}`}
+                      type="button"
+                      disabled={isDisabled}
+                      onClick={() => handleMobileTabSelect(item.id)}
+                      className={cn(
+                        'h-8 rounded-lg border px-3 text-[12px] font-medium whitespace-nowrap transition-colors',
+                        isDisabled
+                          ? 'border-border text-on-surface-disabled bg-[color:var(--surface-20)] cursor-not-allowed'
+                          : isActive
+                            ? 'border-[color:var(--key)] text-[color:var(--key)] bg-white'
+                            : 'border-border text-on-surface-20 bg-white hover:bg-slate-50',
+                      )}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className={cn("flex flex-1 overflow-hidden relative", isTabletViewport ? "flex-col" : "flex-row")}>
 
         {/* 1. 좌측 사이드바 내비게이션 */}
         <aside
           ref={sidebarRef}
-          className="w-[100px] flex-shrink-0 bg-white border-r border-border flex flex-col items-center py-6 z-20 overflow-y-auto no-scrollbar"
+          className={cn(
+            "w-[100px] flex-shrink-0 bg-white border-r border-border flex flex-col items-center py-6 z-20 overflow-y-auto no-scrollbar",
+            isTabletViewport && "hidden",
+          )}
         >
           {SIDEBAR_NAV_SECTIONS.map(({ navGroup, title }, sectionIdx) => {
             const itemsForNav =
@@ -4679,10 +4802,14 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         </aside>
 
         {/* 2. 중앙 에디터 패널 */}
+        {(!isTabletViewport || mobilePanel === 'editor') && (
         <section
           id="editor-scroll-area"
-          className="flex-shrink-0 self-stretch min-h-0 bg-white border-r border-border flex flex-col relative z-10 overflow-hidden"
-          style={{ width: editorWidth }}
+          className={cn(
+            "self-stretch min-h-0 bg-white flex flex-col relative z-10 overflow-hidden",
+            isTabletViewport ? "flex-1 border-r-0" : "flex-shrink-0 border-r border-border",
+          )}
+          style={isTabletViewport ? undefined : { width: editorWidth }}
         >
           <div ref={editorScrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-smooth no-scrollbar">
             <div className="px-4 pt-4 pb-2 bg-[color:var(--surface-20)]">
@@ -5016,7 +5143,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                         onClick={() => mainImageInputRef.current?.click()}
                                         aria-label="이미지 추가"
                                       />
-                                      <div className="absolute right-2 top-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <div
+                                        className={cn(
+                                          "absolute right-2 top-2 flex flex-col gap-2 transition-opacity",
+                                          isTabletViewport ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+                                        )}
+                                      >
                                         <button
                                           type="button"
                                           className="w-8 h-8 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white"
@@ -5088,6 +5220,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                       next[i] = '';
                                       updateData('main.images', next);
                                     }}
+                                    touchMode={isTabletViewport}
                                   />
                                   <div className="text-[12px] text-on-surface-30">* 이미지를 한 번에 최대 4장까지 선택해서 추가할 수 있어요.</div>
                                   <input
@@ -6619,6 +6752,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 onEdit={(i, src) => openImageEditor({ kind: 'gallery', index: i }, src)}
                                 imageRatio={((data.gallery as any).imageRatio ?? 'portrait') as 'square' | 'portrait'}
                                 max={50}
+                                touchMode={isTabletViewport}
                               />
                               <div className="text-[12px] text-on-surface-30">
                                 * 이미지를 한 번에 최대 50장까지 선택해서 추가할 수 있어요.
@@ -7149,8 +7283,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           {(((data.youtube as any)?.sourceType ?? 'url') === 'file') ? (
                             <FormItem label="영상 파일">
                               <div className="flex-1 flex flex-col gap-2">
-                                <div className="w-full h-[120px] flex items-center gap-2">
-                                  <div className="h-full aspect-video rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden">
+                                <div className="w-full min-w-0 flex flex-col gap-3 sm:h-[120px] sm:flex-row sm:items-center">
+                                  <div className="w-full max-w-[240px] aspect-video rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden sm:h-full sm:w-auto sm:max-w-none">
                                     {((data.youtube as any)?.fileUrl ?? '') ? (
                                       <video
                                         src={(data.youtube as any).fileUrl}
@@ -7164,7 +7298,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                       </div>
                                     )}
                                   </div>
-                                  <div className="h-full flex flex-col justify-start gap-2">
+                                  <div className="flex w-full flex-wrap items-center gap-2 sm:h-full sm:w-auto sm:flex-col sm:items-start sm:justify-start">
                                     <label className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50">
                                       파일 선택
                                       <input
@@ -7618,8 +7752,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           {((data.share as any)?.useThumbnail ?? true) && (
                             <FormItem label="썸네일">
                               <div className="flex-1 flex flex-col gap-2">
-                                <div className="w-full h-[120px] flex items-center gap-2">
-                                  <div className="h-full aspect-video rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden">
+                                <div className="w-full min-w-0 flex flex-col gap-3 sm:h-[120px] sm:flex-row sm:items-center">
+                                  <div className="w-full max-w-[240px] aspect-video rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden sm:h-full sm:w-auto sm:max-w-none">
                                     {data.share?.thumbnail ? (
                                       <img
                                         src={data.share.thumbnail}
@@ -7632,7 +7766,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                       </div>
                                     )}
                                   </div>
-                                  <div className="h-full flex flex-col justify-start gap-2">
+                                  <div className="flex w-full flex-wrap items-center gap-2 sm:h-full sm:w-auto sm:flex-col sm:items-start sm:justify-start">
                                     <label className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit self-start whitespace-nowrap leading-none flex-shrink-0">
                                       사진 업로드
                                       <input
@@ -7838,43 +7972,46 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
             </div>
           </div>
 
-          {/* 우측 리사이즈 핸들 (400~560px) */}
-          <div
-            role="separator"
-            aria-label="에디터 패널 너비 조절"
-            className="absolute -right-2 top-0 bottom-0 w-6 cursor-ew-resize z-20 pointer-events-auto bg-transparent"
-            style={{ height: '100%' }}
-            onPointerDown={(e) => {
-              e.preventDefault();
-              isResizingEditorRef.current = true;
-              editorResizeStartRef.current = { x: e.clientX, width: editorWidth };
-              editorResizePointerIdRef.current = e.pointerId;
-              (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
-              document.body.style.cursor = 'ew-resize';
-              document.body.style.userSelect = 'none';
-            }}
-            onPointerUp={(e) => {
-              if (!isResizingEditorRef.current) return;
-              if (editorResizePointerIdRef.current !== null) {
-                try {
-                  (e.currentTarget as HTMLDivElement).releasePointerCapture(editorResizePointerIdRef.current);
-                } catch {
-                  // ignore
+          {!isTabletViewport && (
+            <div
+              role="separator"
+              aria-label="에디터 패널 너비 조절"
+              className="absolute -right-2 top-0 bottom-0 w-6 cursor-ew-resize z-20 pointer-events-auto bg-transparent"
+              style={{ height: '100%' }}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                isResizingEditorRef.current = true;
+                editorResizeStartRef.current = { x: e.clientX, width: editorWidth };
+                editorResizePointerIdRef.current = e.pointerId;
+                (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+                document.body.style.cursor = 'ew-resize';
+                document.body.style.userSelect = 'none';
+              }}
+              onPointerUp={(e) => {
+                if (!isResizingEditorRef.current) return;
+                if (editorResizePointerIdRef.current !== null) {
+                  try {
+                    (e.currentTarget as HTMLDivElement).releasePointerCapture(editorResizePointerIdRef.current);
+                  } catch {
+                    // ignore
+                  }
                 }
-              }
-              isResizingEditorRef.current = false;
-              editorResizeStartRef.current = null;
-              editorResizePointerIdRef.current = null;
-              document.body.style.cursor = '';
-              document.body.style.userSelect = '';
-            }}
-          />
+                isResizingEditorRef.current = false;
+                editorResizeStartRef.current = null;
+                editorResizePointerIdRef.current = null;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+              }}
+            />
+          )}
         </section>
+        )}
 
         {/* 3. 우측 미리보기 패널 */}
-        <main className="flex flex-1 flex-col min-w-0 items-center px-4 py-4">
+        {(!isTabletViewport || mobilePanel === 'preview') && (
+        <main className={cn("flex flex-1 flex-col min-w-0 items-center", isTabletViewport ? "px-3 py-3" : "px-4 py-4")}>
           {/* 바깥 컨테이너는 고정, 내부 프레임만 스크롤 */}
-          <div className="flex-1 min-h-0 flex justify-center w-full max-w-[400px] min-h-full bg-transparent items-stretch shadow-none">
+          <div className={cn("flex-1 min-h-0 flex justify-center w-full bg-transparent items-stretch shadow-none", isTabletViewport ? "max-w-[480px]" : "max-w-[400px] min-h-full")}>
             <div
               ref={previewFrameRef}
               className="preview-font-floor w-full border border-border rounded-lg bg-white flex flex-col items-stretch text-center overflow-hidden relative"
@@ -8041,6 +8178,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
             </div>
           </div>
         </main>
+        )}
         
       </div>
 
