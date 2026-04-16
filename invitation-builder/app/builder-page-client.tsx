@@ -1288,7 +1288,7 @@ function MultiImageGrid({
           <div
             key={slot.id}
             {...wrapperProps}
-            className={`${wrapperProps.className} relative w-[100px] aspect-[3/4] group`}
+            className={`${wrapperProps.className} relative w-[100px] min-w-[80px] aspect-[3/4] group`}
           >
             <button
               type="button"
@@ -1365,6 +1365,7 @@ function GalleryImageGrid({
   });
   const allowReorder = !touchMode;
   const thumbAspectClass = imageRatio === "square" ? "aspect-square" : "aspect-[3/4]";
+  const thumbMinWidthClass = imageRatio === "square" ? "" : "min-w-[80px]";
 
   return (
     <div className="w-full flex flex-col gap-2">
@@ -1391,7 +1392,7 @@ function GalleryImageGrid({
               <div
                 key={`${slot.id}-${i}`}
                 {...wrapperProps}
-                className={`${wrapperProps.className} relative w-[100px] ${thumbAspectClass} group`}
+                className={`${wrapperProps.className} relative w-[100px] ${thumbMinWidthClass} ${thumbAspectClass} group`}
               >
                 <button
                   type="button"
@@ -1453,7 +1454,7 @@ function GalleryImageGrid({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className={`relative w-[100px] ${thumbAspectClass} rounded-lg border border-dashed border-border bg-white hover:bg-slate-50 active:bg-slate-50 flex items-center justify-center text-3xl text-on-surface-30 bg-center bg-cover bg-clip-border bg-origin-border`}
+              className={`relative w-[100px] ${thumbMinWidthClass} ${thumbAspectClass} rounded-lg border border-dashed border-border bg-white hover:bg-slate-50 active:bg-slate-50 flex items-center justify-center text-3xl text-on-surface-30 bg-center bg-cover bg-clip-border bg-origin-border`}
               aria-label="갤러리 이미지 추가"
             >
               +
@@ -1542,7 +1543,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   /** Preview order: calendar / D-Day (`eventInfo`) sits directly above location. */
   const baseLayoutOrder = ['hosts', 'main', 'greeting', 'contact', 'eventInfo', 'location'];
   const sectionEnabled = data.sectionEnabled ?? {};
-  const isSectionEnabled = (id: string) => sectionEnabled[id] ?? (id === 'bgm');
+  const isSectionEnabled = (id: string) => sectionEnabled[id] ?? (id === 'bgm' || id === 'contact');
   const isBgmEnabled = isSectionEnabled('bgm');
   const setSectionEnabled = (updater: Record<string, boolean> | ((prev: Record<string, boolean>) => Record<string, boolean>)) => {
     const next = typeof updater === 'function' ? updater(sectionEnabled) : updater;
@@ -3496,7 +3497,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         }
 
         return (
-          <div className="mx-auto w-full space-y-5">
+          <div className="mx-auto w-full px-5 space-y-5">
             {contactEnabled && useContactThumbnail && !!(data.share?.thumbnail ?? '').trim() && (
               <div className="w-full aspect-video bg-[color:var(--surface-20)] overflow-hidden mb-[40px]">
                 <img
@@ -5236,7 +5237,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                   ) : (
                                     <button
                                       type="button"
-                                      className="w-[100px] aspect-[3/4] rounded-lg border bg-white flex items-center justify-center text-3xl text-on-surface-30 bg-center bg-cover bg-clip-border bg-origin-border border-dashed border-border hover:bg-slate-50"
+                                      className="w-[100px] min-w-[80px] aspect-[3/4] rounded-lg border bg-white flex items-center justify-center text-3xl text-on-surface-30 bg-center bg-cover bg-clip-border bg-origin-border border-dashed border-border hover:bg-slate-50"
                                       onClick={() => mainImageInputRef.current?.click()}
                                       aria-label="이미지 추가"
                                     >
@@ -6302,7 +6303,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               onClick={() => setGreetingSampleOpen(false)}
                             >
                               <div
-                                className="w-full max-w-md rounded-2xl bg-white border border-[color:var(--border-10)] p-4 sm:p-6 flex flex-col gap-5 max-h-[calc(100dvh-16px)] overflow-hidden"
+                                className="w-full max-w-md rounded-2xl bg-white border border-[color:var(--border-10)] p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <div className="flex items-center justify-between">
@@ -6737,7 +6738,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           {/* 은행 선택 모달 (Portal로 body에 렌더링) */}
                           {bankModalIndex !== null && createPortal(
                             <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-2 sm:p-4" onClick={() => setBankModalIndex(null)}>
-                              <div className="w-full max-w-md rounded-2xl bg-white border border-[color:var(--border-10)] p-4 sm:p-6 flex flex-col gap-5 max-h-[calc(100dvh-16px)] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                              <div className="w-full max-w-md rounded-2xl bg-white border border-[color:var(--border-10)] p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
                                 <div className="flex items-center justify-between">
                                   <h3 className="text-[15px] font-semibold text-on-surface-10">은행선택</h3>
                                 </div>
@@ -7068,7 +7069,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               onClick={() => setNoticeSampleOpen(false)}
                             >
                               <div
-                                className="w-full max-w-md rounded-2xl bg-white border border-[color:var(--border-10)] p-4 sm:p-6 flex flex-col gap-5 max-h-[calc(100dvh-16px)] overflow-hidden"
+                                className="w-full max-w-md rounded-2xl bg-white border border-[color:var(--border-10)] p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <div className="flex items-center justify-between">
@@ -7503,7 +7504,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               onClick={() => setRsvpSampleOpen(false)}
                             >
                               <div
-                                className="w-full max-w-md rounded-2xl bg-white border border-[color:var(--border-10)] p-4 sm:p-6 flex flex-col gap-5 max-h-[calc(100dvh-16px)] overflow-hidden"
+                                className="w-full max-w-md rounded-2xl bg-white border border-[color:var(--border-10)] p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <div className="flex items-center justify-between">
@@ -7718,7 +7719,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               onClick={() => setGuestUploadSampleOpen(false)}
                             >
                               <div
-                                className="w-full max-w-md rounded-2xl bg-white border border-[color:var(--border-10)] p-4 sm:p-6 flex flex-col gap-5 max-h-[calc(100dvh-16px)] overflow-hidden"
+                                className="w-full max-w-md rounded-2xl bg-white border border-[color:var(--border-10)] p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <div className="flex items-center justify-between">
@@ -8552,7 +8553,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   <button
                     key={t.id}
                     type="button"
-                    className={`w-full max-w-[120px] aspect-square rounded-lg overflow-hidden border bg-white flex items-center justify-center ${
+                    className={`w-full min-w-[120px] aspect-square rounded-lg overflow-hidden border bg-white flex items-center justify-center ${
                       selected ? 'border-[color:var(--key)]' : 'border-border'
                     } hover:border-[color:var(--key)]/50`}
                     onClick={() => {
