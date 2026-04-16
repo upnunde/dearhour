@@ -24,6 +24,7 @@ export interface SortableItemProps {
     style: React.CSSProperties;
     className: string;
     ref: (el: HTMLDivElement | null) => void;
+    "data-sortable-id": string;
   };
   /** 현재 드래그 중인 아이템인지 */
   isDragging: boolean;
@@ -45,6 +46,7 @@ export function useSortable<T extends SortableItem>({
 }: UseSortableOptions<T>) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const activeIdRef = useRef<string | null>(null);
+  const activePointerIdRef = useRef<number | null>(null);
   const itemRefs = useRef(new Map<string, HTMLDivElement>());
   const prevRectsRef = useRef(new Map<string, DOMRect>());
   const shouldAnimateRef = useRef(false);
@@ -87,25 +89,10 @@ export function useSortable<T extends SortableItem>({
     prevRectsRef.current = nextRects;
   }, [items, activeId]);
 
-  useEffect(() => {
-    if (!activeId) return;
-    const up = () => {
-      setActiveId(null);
-      activeIdRef.current = null;
-    };
-    document.addEventListener("pointerup", up);
-    document.addEventListener("pointercancel", up);
-    document.body.style.userSelect = "none";
-    return () => {
-      document.removeEventListener("pointerup", up);
-      document.removeEventListener("pointercancel", up);
-      document.body.style.userSelect = "";
-    };
-  }, [activeId]);
-
-  const startDrag = useCallback((id: string) => {
+  const startDrag = useCallback((id: string, pointerId: number) => {
     setActiveId(id);
     activeIdRef.current = id;
+    activePointerIdRef.current = pointerId;
   }, []);
 
   const enterItem = useCallback(
@@ -124,6 +111,33 @@ export function useSortable<T extends SortableItem>({
     [items, onReorder],
   );
 
+  useEffect(() => {
+    if (!activeId) return;
+    const up = () => {
+      setActiveId(null);
+      activeIdRef.current = null;
+      activePointerIdRef.current = null;
+    };
+    const move = (e: PointerEvent) => {
+      if (activePointerIdRef.current !== null && e.pointerId !== activePointerIdRef.current) return;
+      const target = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+      const wrapper = target?.closest?.("[data-sortable-id]") as HTMLElement | null;
+      const id = wrapper?.dataset?.sortableId;
+      if (!id) return;
+      enterItem(id);
+    };
+    document.addEventListener("pointerup", up);
+    document.addEventListener("pointercancel", up);
+    document.addEventListener("pointermove", move, { passive: true });
+    document.body.style.userSelect = "none";
+    return () => {
+      document.removeEventListener("pointerup", up);
+      document.removeEventListener("pointercancel", up);
+      document.removeEventListener("pointermove", move);
+      document.body.style.userSelect = "";
+    };
+  }, [activeId, enterItem]);
+
   const getItemProps = useCallback(
     (id: string): SortableItemProps => {
       const dragging = activeId === id;
@@ -132,7 +146,7 @@ export function useSortable<T extends SortableItem>({
         handleProps: {
           onPointerDown: (e: React.PointerEvent) => {
             e.preventDefault();
-            startDrag(id);
+            startDrag(id, e.pointerId);
           },
           style: { cursor: "grab", touchAction: "none" },
           "aria-label": "드래그하여 순서 변경",
@@ -140,6 +154,7 @@ export function useSortable<T extends SortableItem>({
         wrapperProps: {
           onPointerEnter: () => enterItem(id),
           style: {},
+          "data-sortable-id": id,
           className: [
             "transition-all duration-200 ease-out",
             dragging ? "opacity-60 scale-[0.97] z-10 relative shadow-lg" : "",

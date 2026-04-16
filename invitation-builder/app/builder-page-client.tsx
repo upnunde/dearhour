@@ -4689,12 +4689,11 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                     <button
                       key={`mobile-tab-${item.id}`}
                       type="button"
-                      disabled={isDisabled}
                       onClick={() => handleMobileTabSelect(item.id)}
                       className={cn(
                         'h-8 rounded-lg border px-3 text-[12px] font-medium whitespace-nowrap transition-colors',
                         isDisabled
-                          ? 'border-border text-on-surface-disabled bg-[color:var(--surface-20)] cursor-not-allowed'
+                          ? 'border-border text-on-surface-disabled bg-[color:var(--surface-20)]'
                           : isActive
                             ? 'border-[color:var(--key)] text-[color:var(--key)] bg-white'
                             : 'border-border text-on-surface-20 bg-white hover:bg-slate-50',
@@ -8059,7 +8058,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 {layoutOrder.includes('hosts') && (
                   <div
                     data-preview-section-id="main"
-                    className={`w-full flex flex-col items-stretch text-center ${data.theme.scrollEffect
+                    className={`w-full flex flex-col items-stretch text-center ${(data.theme.scrollEffect && !isTabletViewport)
                       ? (previewVisibleSections.main
                         ? 'opacity-100 translate-y-0 duration-[750ms] ease-out'
                         : 'opacity-0 translate-y-3 duration-[750ms] ease-out')
@@ -8094,7 +8093,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           : sectionId === 'location'
                             ? "w-full pt-[80px] pb-[80px] px-6 flex flex-col items-center text-center border-b border-border"
                           : "w-full pt-[80px] pb-[80px] px-6 flex flex-col items-center text-center"
-                          } ${data.theme.scrollEffect
+                          } ${(data.theme.scrollEffect && !isTabletViewport)
                             ? (previewVisibleSections[sectionId]
                               ? 'opacity-100 translate-y-0 duration-[750ms] ease-out'
                               : 'opacity-0 translate-y-3 duration-[750ms] ease-out')
