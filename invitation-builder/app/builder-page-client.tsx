@@ -1592,6 +1592,17 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   }, [isTabletViewport]);
 
   useEffect(() => {
+    if (!isTabletViewport || mobilePanel !== 'editor') return;
+    if (!shouldRestoreEditorScrollRef.current) return;
+    requestAnimationFrame(() => {
+      const container = editorScrollRef.current;
+      if (!container) return;
+      container.scrollTop = editorScrollTopRef.current;
+      shouldRestoreEditorScrollRef.current = false;
+    });
+  }, [isTabletViewport, mobilePanel]);
+
+  useEffect(() => {
     const updateViewportHeight = () => {
       const visualHeight = window.visualViewport?.height;
       const next = Math.round((visualHeight && visualHeight > 0 ? visualHeight : window.innerHeight));
@@ -1779,8 +1790,11 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const [rsvpPreviewName, setRsvpPreviewName] = useState('');
   const [rsvpPreviewGuestCount, setRsvpPreviewGuestCount] = useState('0');
   const [rsvpPreviewPrivacyAgreed, setRsvpPreviewPrivacyAgreed] = useState(false);
+  const [pendingDeleteTab, setPendingDeleteTab] = useState<{ id: string; label: string } | null>(null);
   const [galleryDetailOpen, setGalleryDetailOpen] = useState(false);
   const [galleryDetailIndex, setGalleryDetailIndex] = useState(0);
+  const editorScrollTopRef = useRef(0);
+  const shouldRestoreEditorScrollRef = useRef(false);
   const previewScrollRef = useRef<HTMLDivElement | null>(null);
   const previewFrameRef = useRef<HTMLDivElement | null>(null);
   const sidebarRef = useRef<HTMLElement | null>(null);
@@ -1841,6 +1855,18 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       setActiveInvitationTabId(fallback.id);
       setData(cloneCardData(fallback.data));
     }
+  };
+
+  const requestRemoveInvitationTab = (tabId: string, label: string) => {
+    if (invitationTabs.length <= 1) return;
+    if (invitationTabs[0]?.id === tabId) return;
+    setPendingDeleteTab({ id: tabId, label });
+  };
+
+  const confirmRemoveInvitationTab = () => {
+    if (!pendingDeleteTab) return;
+    removeInvitationTab(pendingDeleteTab.id);
+    setPendingDeleteTab(null);
   };
 
   const startEditInvitationTabName = (tabId: string, currentLabel: string) => {
@@ -4661,10 +4687,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 type="button"
                 onClick={() => {
                   if (mobilePanel === 'editor') {
+                    editorScrollTopRef.current = editorScrollRef.current?.scrollTop ?? 0;
                     setMobilePanel('preview');
                     requestAnimationFrame(() => scrollPreviewToSection(activeSection));
                     return;
                   }
+                  shouldRestoreEditorScrollRef.current = true;
                   setMobilePanel('editor');
                 }}
                 className="h-9 shrink-0 rounded-lg border border-[color:var(--key)] bg-white px-3 text-[12px] font-semibold text-[color:var(--key)] hover:bg-[color:var(--primary-container)]/30"
@@ -4892,7 +4920,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             {!isDefaultTab ? (
                               <button
                                 type="button"
-                                onClick={() => removeInvitationTab(tab.id)}
+                                onClick={() => requestRemoveInvitationTab(tab.id, tab.label)}
                                 disabled={invitationTabs.length <= 1}
                                 className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border bg-white text-on-surface-20 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                                 aria-label={`${tab.label} 탭 제거`}
@@ -4940,6 +4968,9 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 )}
                 <div
                   id={item.id}
+                  data-sortable-id={isContentOptional ? item.id : undefined}
+                  ref={isContentOptional ? editorSortProps?.wrapperProps.ref : undefined}
+                  style={isContentOptional ? editorSortProps?.wrapperProps.style : undefined}
                   className={`scroll-mt-6 border rounded-xl overflow-hidden bg-white transition-all duration-200 ease-out ${
                     item.id === 'main' ? 'mb-0' : ''
                   } ${
@@ -8219,6 +8250,35 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         )}
         
       </div>
+
+      <Dialog open={!!pendingDeleteTab} onOpenChange={(open) => !open && setPendingDeleteTab(null)}>
+        <DialogContent className="w-[420px] max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-16px)] rounded-2xl border border-border p-0 overflow-hidden flex flex-col">
+          <div className="p-5 border-b border-border bg-white">
+            <DialogTitle className="text-[16px] font-semibold text-on-surface-10">탭 삭제</DialogTitle>
+          </div>
+          <div className="p-4 sm:p-5 bg-[color:var(--surface-10)] text-[14px] leading-relaxed text-on-surface-20 flex-1 min-h-0 overflow-y-auto">
+            {pendingDeleteTab ? `‘${pendingDeleteTab.label}’ 탭을 정말 삭제하시겠어요?` : "탭을 정말 삭제하시겠어요?"}
+            <div className="mt-2 text-[12px] text-on-surface-30">삭제하면 탭 안의 작성 내용도 함께 제거됩니다.</div>
+          </div>
+          <div className="p-4 border-t border-border bg-white flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-9 px-4 text-[12px]"
+              onClick={() => setPendingDeleteTab(null)}
+            >
+              취소
+            </Button>
+            <Button
+              type="button"
+              className="h-9 px-4 text-[12px] bg-red-600 hover:bg-red-700"
+              onClick={confirmRemoveInvitationTab}
+            >
+              삭제
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={imageEditorOpen} onOpenChange={(o) => !o && closeImageEditor()}>
         <DialogContent className="bg-[color:var(--surface-10)] w-[min(420px,calc(100vw-16px))] max-h-[calc(100dvh-16px)] rounded-2xl shadow-[0px_8px_16px_8px_rgba(0,0,0,0.16)] outline outline-1 outline-offset-[-1px] outline-[color:var(--border-10)]/5 p-0 overflow-hidden border-0 flex flex-col">
