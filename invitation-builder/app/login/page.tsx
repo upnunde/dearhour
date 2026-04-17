@@ -1,6 +1,5 @@
 import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
-import LoginMagicLinkForm from "./login-magic-link-form";
 
 const providers = [
   { id: "kakao", label: "카카오" },
@@ -26,17 +25,7 @@ export default async function LoginPage({
             회원가입 없이 로그인만으로 바로 초대장을 만들 수 있습니다.
           </p>
 
-          <div className="mt-6">
-            <LoginMagicLinkForm next={next} />
-          </div>
-
-          <div className="my-6 flex items-center gap-3">
-            <div className="h-px flex-1 bg-[#e5e7eb]" />
-            <span className="text-xs text-[#9ca3af]">또는</span>
-            <div className="h-px flex-1 bg-[#e5e7eb]" />
-          </div>
-
-          <div className="space-y-2">
+          <div className="mt-6 space-y-2">
             {providers.map((provider) => (
               <Link
                 key={provider.id}
