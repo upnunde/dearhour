@@ -2680,7 +2680,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     | { kind: 'multi'; index: number }
     | { kind: 'gallery'; index: number }
     | { kind: 'shareThumbnail' }
-    | { kind: 'mainPreset' }
     | { kind: 'intro'; role: 'groom' | 'bride' }
     | null
   >(null);
@@ -3593,7 +3592,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       | { kind: 'multi'; index: number }
       | { kind: 'gallery'; index: number }
       | { kind: 'shareThumbnail' }
-      | { kind: 'mainPreset' }
       | { kind: 'intro'; role: 'groom' | 'bride' },
     src: string,
   ) => {
@@ -3671,12 +3669,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         try { URL.revokeObjectURL(prevUrl); } catch {}
       }
       updateData('share.thumbnail', url);
-    } else if (imageEditorTarget.kind === 'mainPreset') {
-      const prevUrl = String((data.main as any)?.presetImage ?? '');
-      if (prevUrl.startsWith('blob:')) {
-        try { URL.revokeObjectURL(prevUrl); } catch {}
-      }
-      updateData('main.presetImage', url);
     } else if (imageEditorTarget.kind === 'intro') {
       const prevIntroUrl = String(((data as any).intro?.[imageEditorTarget.role]?.image ?? ''));
       if (prevIntroUrl.startsWith('blob:')) {
@@ -6062,7 +6054,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                     const hasPreset = !!presetUrl;
                                     return (
                                       <>
-                                        <div className="w-[120px] aspect-[3/4] rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden flex items-center justify-center flex-shrink-0">
+                                        <div className="w-[120px] h-[120px] rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden flex items-center justify-center flex-shrink-0">
                                           {hasPreset ? (
                                             <img
                                               src={presetUrl}
@@ -6070,11 +6062,9 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                               className="w-full h-full object-cover"
                                             />
                                           ) : (
-                                            <ImageIcon
-                                              className="w-8 h-8 text-[color:var(--on-surface-disabled)]"
-                                              strokeWidth={1.25}
-                                              aria-hidden
-                                            />
+                                            <span className="text-[12px] text-on-surface-40 text-center px-2">
+                                              기본 이미지 없음
+                                            </span>
                                           )}
                                         </div>
                                         <div className="h-full flex flex-col justify-start gap-2 min-w-0">
@@ -6083,33 +6073,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                             className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
                                             onClick={() => setMainPresetPickerOpen(true)}
                                           >
-                                            {hasPreset ? '사진 변경' : '사진 업로드'}
+                                            이미지 고르기
                                           </button>
-                                          {hasPreset && (
-                                            <>
-                                              <button
-                                                type="button"
-                                                className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
-                                                onClick={() => openImageEditor({ kind: 'mainPreset' }, presetUrl)}
-                                              >
-                                                이미지 편집
-                                              </button>
-                                              <button
-                                                type="button"
-                                                className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-30 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
-                                                onClick={() => {
-                                                  if (presetUrl.startsWith('blob:')) {
-                                                    try {
-                                                      URL.revokeObjectURL(presetUrl);
-                                                    } catch {}
-                                                  }
-                                                  updateData('main.presetImage', '');
-                                                }}
-                                              >
-                                                사진 제거
-                                              </button>
-                                            </>
-                                          )}
                                         </div>
                                       </>
                                     );

@@ -101,7 +101,7 @@ function HostsIntroPreviewHeroA({
     <div className={`w-full flex flex-col items-stretch ${topPaddingClass}`}>
       {hero}
       <div className="max-w-[340px] mx-auto w-full px-6 pt-10 pb-[50px] space-y-5 text-center">
-        <p className="mb-6 flex justify-center items-center text-[26px] font-extralight tracking-[0.02em] leading-none" style={{ color: titleColor }}>
+        <p className="mb-6 flex justify-center items-center text-[26px] font-normal tracking-[0.02em] leading-none" style={{ color: titleColor }}>
           {firstName}
           <span className="mx-2 inline-flex items-center align-middle leading-none" style={{ color: `var(--key, ${titleColor})` }}>
             ♥
@@ -149,24 +149,24 @@ function HostsIntroPreviewHeroB({ base, hero }: { base: HostsIntroPreviewBase; h
     <div className="w-full flex flex-col items-stretch pt-0">
       <div className="px-5 py-0 flex flex-col items-center text-center gap-2 mt-[60px] mb-5">
         <div className="flex items-baseline justify-center gap-2 sm:gap-3">
-          <span className="text-[clamp(22px,6vw,30px)] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
+          <span className="text-[clamp(22px,6vw,34px)] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
             {yy}
           </span>
           <span className="text-[14px] font-extralight opacity-35" style={{ color: bodyColor }}>
             |
           </span>
-          <span className="text-[clamp(22px,6vw,30px)] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
+          <span className="text-[clamp(22px,6vw,34px)] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
             {mm}
           </span>
           <span className="text-[14px] font-extralight opacity-35" style={{ color: bodyColor }}>
             |
           </span>
-          <span className="text-[clamp(22px,6vw,30px)] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
+          <span className="text-[clamp(22px,6vw,34px)] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
             {dd}
           </span>
         </div>
         {hasValidDate && (
-          <p className="text-[13px] tracking-[0.3em] opacity-65" style={{ color: bodyColor }}>
+          <p className="text-[16px] tracking-[0.3em] opacity-65" style={{ color: bodyColor }}>
             {weekdayKo}요일
           </p>
         )}
@@ -565,7 +565,7 @@ function HostsIntroPreviewHeroH({ base, hero }: { base: HostsIntroPreviewBase; h
   return (
     <div className="w-full flex flex-col items-stretch pt-0">
       <div className="w-full max-w-[340px] mx-auto px-6 pt-[58px] pb-[28px] flex flex-col items-center text-center gap-2">
-        <p className="text-[50px] font-extralight leading-[0.9] tracking-[0.02em]" style={{ color: `var(--key, ${titleColor})` }}>
+        <p className="text-[50px] font-semibold leading-[0.9] tracking-[0.02em]" style={{ color: `var(--key, ${titleColor})` }}>
           {dd}
         </p>
         <div className="mt-2 mb-2 h-px w-[160px] opacity-30" style={{ backgroundColor: titleColor }} aria-hidden />
@@ -576,7 +576,7 @@ function HostsIntroPreviewHeroH({ base, hero }: { base: HostsIntroPreviewBase; h
       </div>
       <div className="w-full p-0 m-0">{hero}</div>
       <div className="max-w-[340px] mx-auto w-full px-6 pt-8 pb-[50px] text-center space-y-3">
-        <p className="flex justify-center items-center gap-1 text-[22px] font-semibold tracking-[0.04em]" style={{ color: titleColor }}>
+        <p className="flex justify-center items-center gap-1 text-[22px] font-normal tracking-[0.04em]" style={{ color: titleColor }}>
           {firstName}
           <span className="mx-2 inline-block h-[22px] w-px align-middle border-l-[0.5px] border-current opacity-45" aria-hidden />
           {secondName}
