@@ -85,10 +85,20 @@ function buildHostsIntroBase(data: CardData): HostsIntroPreviewBase {
 
 /* ========== A 타입 ========== */
 
-function HostsIntroPreviewHeroA({ base, hero }: { base: HostsIntroPreviewBase; hero: React.ReactNode }) {
+function HostsIntroPreviewHeroA({
+  base,
+  hero,
+  imageFrame,
+}: {
+  base: HostsIntroPreviewBase;
+  hero: React.ReactNode;
+  imageFrame?: string;
+}) {
   const { titleColor, bodyColor, firstName, secondName, dateTimeLine, venueBlock } = base;
+  /** 기본(full) 프레임은 풀블리드라 상단 60px 공백이 어색 → 자동 제거 */
+  const topPaddingClass = imageFrame === "full" ? "pt-0" : "pt-[60px]";
   return (
-    <div className="w-full flex flex-col items-stretch pt-[60px]">
+    <div className={`w-full flex flex-col items-stretch ${topPaddingClass}`}>
       {hero}
       <div className="max-w-[340px] mx-auto w-full px-6 pt-10 pb-[50px] space-y-5 text-center">
         <p className="mb-6 flex justify-center items-center text-[26px] font-extralight tracking-[0.02em] leading-none" style={{ color: titleColor }}>
@@ -694,6 +704,7 @@ function HostsIntroPreviewSoloI({ base }: { base: HostsIntroPreviewBase }) {
  */
 export function HostsIntroPreview({ data, hero }: { data: CardData; hero?: React.ReactNode }) {
   const introType = ((data.main as any).introType ?? "A") as "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I";
+  const imageFrame = String((data.main as any)?.imageFrame ?? "full");
   const base = useMemo(() => buildHostsIntroBase(data), [data]);
 
   if (hero) {
@@ -705,7 +716,7 @@ export function HostsIntroPreview({ data, hero }: { data: CardData; hero?: React
     if (introType === "G") return <HostsIntroPreviewHeroG base={base} hero={hero} />;
     if (introType === "H") return <HostsIntroPreviewHeroH base={base} hero={hero} />;
     if (introType === "I") return <HostsIntroPreviewHeroI base={base} hero={hero} />;
-    return <HostsIntroPreviewHeroA base={base} hero={hero} />;
+    return <HostsIntroPreviewHeroA base={base} hero={hero} imageFrame={imageFrame} />;
   }
 
   if (introType === "B") return <HostsIntroPreviewSoloB base={base} />;

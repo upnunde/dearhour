@@ -47,6 +47,19 @@ export interface AccountItem {
   isExpanded: boolean;
 }
 
+export interface IntroProfile {
+  /** 소개 카드에 사용할 프로필 사진(data URL / object URL / 원격 URL) */
+  image: string;
+  /** 생년월일 또는 나이 텍스트 (예: "1990.12.10" 혹은 "35세") */
+  birthDate: string;
+  /** MBTI 4글자 */
+  mbti: string;
+  /** 취미(쉼표로 구분) 예: "캠핑, 러닝" */
+  hobbies: string;
+  /** 한 줄 소개·특징 */
+  traits: string;
+}
+
 export interface MusicConfig {
   selectedId: string;
   uploadedFile: { name: string; url: string } | null;
@@ -87,6 +100,18 @@ export interface CardData {
   hosts: { groom: Profile; bride: Profile; showContacts: boolean };
   eventInfo: EventInfo;
   greeting: { title: string; content: string };
+  /** 신랑/신부 소개(About Us) — 섹션 ON/OFF는 `sectionEnabled.intro` */
+  intro: {
+    /** 미리보기 상단 큰 제목 */
+    sectionHeading: string;
+    /**
+     * 프로필 레이아웃 타입.
+     * A: 에디토리얼 미러(좌우 교차) · B: 상단 가로사진 스택 · C: 원형 포트레이트 센터 · D: 소프트 카드
+     */
+    layoutType?: 'A' | 'B' | 'C' | 'D';
+    groom: IntroProfile;
+    bride: IntroProfile;
+  };
   notice: { title: string; content: string; /** 미리보기 상단 큰 제목 */ sectionHeading?: string };
   location: {
     title?: string;
@@ -231,6 +256,24 @@ export const useCardStore = create<CardStore>((set) => ({
       calendarUseThemeColor: false,
     },
     greeting: { title: '초대합니다', content: '서로가 마주보며 다져온 사랑을\n이제 함께 한 곳을 바라보며\n걸어가고자 합니다.' },
+    intro: {
+      sectionHeading: '저희를 소개합니다',
+      layoutType: 'A',
+      groom: {
+        image: '',
+        birthDate: '1995.04.21',
+        mbti: 'ENFP',
+        hobbies: '',
+        traits: '웃음이 많고 다정한 사람입니다.',
+      },
+      bride: {
+        image: '',
+        birthDate: '1996.07.15',
+        mbti: 'ISFJ',
+        hobbies: '',
+        traits: '따뜻한 마음으로 주변을 밝히는 사람입니다.',
+      },
+    },
     notice: {
       title: '안내사항',
       content: '마음 편히 오셔서 함께 축복해 주세요.\n예식장 내 주차가 가능하며, 식전 30분 전부터 입장이 가능합니다.',

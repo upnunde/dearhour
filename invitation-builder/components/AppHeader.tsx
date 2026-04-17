@@ -84,9 +84,6 @@ function MobileNavPanel({
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-on-surface-30">
-          서비스
-        </p>
         <nav className="flex flex-col">
           {categoryLinks.map((link) => (
             <Link
@@ -101,9 +98,6 @@ function MobileNavPanel({
         </nav>
       </div>
       <div>
-        <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-on-surface-30">
-          바로가기
-        </p>
         <nav className="flex flex-col gap-2">
           {authState === "signed_in" ? (
             <>
@@ -265,7 +259,7 @@ export default function AppHeader({ rightSlot, hideSiteNav = false }: AppHeaderP
         <>
           <button
             type="button"
-            className="fixed inset-0 z-40 bg-black/40 md:hidden"
+            className="fixed inset-x-0 bottom-0 top-16 z-40 bg-black/40 md:hidden"
             aria-label="메뉴 닫기"
             onClick={closeMobile}
           />

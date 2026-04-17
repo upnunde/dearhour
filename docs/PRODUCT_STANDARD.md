@@ -61,7 +61,10 @@
 ### 3.1 회원 모델
 - 회원가입 폼을 **운영하지 않는다**.
 - 모든 계정은 **소셜 간편로그인**으로 생성된다.
-- Provider는 **Google / Kakao / Apple** 3종을 기본으로 한다.
+- Provider 운영 현황 (2026-04-17 기준)
+  - **Google**: 운영 활성화 완료 (`/auth/oauth?provider=google` PKCE 플로우 검증).
+  - **Kakao**: 로그인 UI는 노출되나 Supabase Provider 설정 완료 이후 활성화 예정.
+  - **Apple**: 현재 목표 라인업에서 제외(재검토 필요).
   - 네이버/페이스북 등은 후순위 확장.
 
 ### 3.2 계정 식별 및 병합
@@ -81,8 +84,11 @@
 ### 3.4 API (구현 완료)
 - `GET /api/auth/me` — 현재 세션 사용자 정보 반환.
 - `POST /api/auth/logout` — 서버 세션 종료 + `AuditLog(auth.logout)` 기록.
-- `GET /auth/oauth?provider=google|kakao|apple&next=...` — 소셜 로그인 시작.
-- `GET /auth/callback?next=...` — 소셜 로그인 콜백 + `syncUserProfile` + `AuditLog(auth.login)`.
+- `GET /auth/oauth?provider=google|kakao&next=...` — 소셜 로그인 시작.
+  - 내부적으로 **Supabase SSR 클라이언트**(`createSupabaseServerClient`)를 사용해 PKCE verifier 쿠키를 서버 응답에 안전하게 심는다.
+  - Google 요청 시 `access_type=offline`, `prompt=consent`를 전달해 refresh token 발급을 보장한다.
+- `GET /auth/callback?next=...` — 소셜 로그인 콜백 + `exchangeCodeForSession` + `syncUserProfile` + `AuditLog(auth.login)`.
+- `POST /admin/login` — 운영자 전용 이메일+비밀번호 로그인(마스터 계정 복구/초기 생성용, §3.7 참조).
 
 ### 3.5 권한
 - `UserRole` 값: `USER`, `ADMIN`.
@@ -102,24 +108,39 @@ npm run set-admin -- your@email.com
 - 관리자 강등이 필요할 경우 동일 스크립트를 확장해 `role=USER`로 되돌린다(향후 작업).
 - 상세 운영 절차, 장애 대응, 체크리스트는 `docs/ADMIN_GUIDE.md` 참조.
 
----
-
-## 4. 데이터 모델 기준 (현재 구현)
+### 3.7 마스터 전용 로그인 페이지(`/admin/login`)
+- 일반 사용자 로그인(`/login`)은 소셜 로그인만 노출한다.
+- 마스터 계정 이메일+비밀번호 로그인은 `/admin/login`에서만 처리하며, 이 경로는 메뉴/네비게이션에 공개하지 않는다.
+- 주 용도: **최초 마스터 계정 생성/복구**, **소셜 OAuth 장애 시 백업 로그인 경로**.
+- 동일 이메일이 Google OAuth로도 로그인하면 `syncUserProfile`이 이메일 기준으로 동일 `User` 행에 병합하므로, 일상 로그인은 소셜을 그대로 사용해도 된다.
 
 실제 Prisma 스키마 기준이며, `BACKEND_MVP_SPEC.md`의 목표 모델과 범위 차이는 “향후”로 명시한다.
 
 ### 4.1 현재 모델
-- `User { id (UUID, auth.users 연결), email(unique), name, avatarUrl, role, createdAt, updatedAt }`
+- `User { id (cuid, 인증 provider 독립), authProviderId(UUID?, Supabase auth.users 참조), email(unique), name, avatarUrl, role, createdAt, updatedAt }`
 - `Invitation { id, userId, title, code(unique), status(DRAFT|PUBLISHED|ARCHIVED), content(Json), expiresAt, createdAt, updatedAt }`
 - `Payment { id, userId, invitationId?, orderId(unique), provider(TOSS), amount, currency(KRW), status(READY|PAID|FAILED|CANCELED|REFUNDED), paidAt?, ... }`
 - `AuditLog { id, userId?, action, targetType?, targetId?, ip, userAgent, payload?, createdAt }`
 
-### 4.2 현재 정책
+> `User.id`는 Supabase `auth.users.id`에 직접 종속되지 않고 자체 `cuid`를 사용한다. Supabase UID는 `authProviderId`로 분리 보관해, 차후 인증 스택을 교체하더라도 내부 FK(예: `Invitation.userId`) 마이그레이션을 최소화한다.
+
+### 4.2 에디터 payload 스키마(현재 구현 주요 필드)
+- `main` — 히어로 이미지/프레임/전환효과.
+- `hosts` — 신랑/신부 연락처 및 부모 정보.
+- `greeting` — 인사말.
+- **`intro`** *(2026-04 추가)* — "신랑/신부 소개" 섹션.
+  - `sectionHeading`: 프리셋 4종 + 직접입력.
+  - `layoutType`: `A`(에디토리얼 미러) / `B`(상단 가로사진 스택) / `C`(원형 포트레이트) / `D`(소프트 카드).
+  - `groom`, `bride`: `{ image, birthDate, mbti, hobbies, traits }`. `hobbies`는 스키마 호환을 위해 유지하되 현재 UI에는 노출하지 않는다.
+- `eventInfo`, `notice`, `location`, `accounts`, `gallery`, `guestbook`, `youtube`, `guestUpload`, `share`, `protect`, `i18n` — 기존 섹션.
+- `sectionEnabled` — 섹션 단위 ON/OFF 플래그. `eventInfo`, `eventDate`(D-Day), `location`, `intro`는 토글로 끌 수 있다. 구버전 데이터는 렌더 단계에서 섹션별 기본값(예: `eventInfo` 기본 ON, `intro` 기본 OFF)으로 보정한다.
+
+### 4.3 현재 정책
 - 초대장 만료 기본값: **저장 시점으로부터 90일**(추후 플랜별로 상향 가능).
 - 초대장 `code`는 6자 대문자/숫자 랜덤.
 - 결제는 **상태 모델만 선구축**, 실제 PG는 2차 연동.
 
-### 4.3 향후 확장 (목표)
+### 4.4 향후 확장 (목표)
 - `InvitationVersion(payloadJson, versionNo)` — 버전 관리.
 - `PublishLink(slug unique, isActive, expiresAt)` — 공개 URL 분리.
 - `MediaAsset` — S3/R2 기반 객체 스토리지 연동.
@@ -193,15 +214,17 @@ npm run set-admin -- your@email.com
 ## 9. 환경/배포 기준
 
 ### 9.1 필수 환경변수 (`.env.local`)
-- `NEXT_PUBLIC_APP_URL` — 콜백 URL 기준. 개발: `http://localhost:3001`
+- `NEXT_PUBLIC_APP_URL` — 콜백 URL 기준. 개발: `http://localhost:3000`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `DATABASE_URL` — Supabase Transaction URI(pooled, 앱 런타임)
 - `DIRECT_URL` — Supabase Session URI(migrate/db push)
 
 ### 9.2 OAuth Redirect URL 등록
-- 개발: `http://localhost:3001/auth/callback`
+- 개발: `http://localhost:3000/auth/callback`
 - 배포: `https://<배포도메인>/auth/callback`
+- Supabase Dashboard → Authentication → URL Configuration → **Redirect URLs** 에 개발·배포 두 항목을 모두 등록.
+- Google Cloud Console → OAuth Client → **Authorized redirect URIs** 에는 Supabase가 제공하는 `https://<project-ref>.supabase.co/auth/v1/callback`을 등록(앱 콜백이 아님에 유의).
 
 ### 9.3 초기화 순서
 1) Supabase 프로젝트 생성 → URL/anon key/DB URL 발급
@@ -246,17 +269,33 @@ npm run set-admin -- your@email.com
 
 ## 부록 A — 현재 구현 상태 요약
 
-- [x] 소셜 로그인 라우트 (`/auth/oauth`, `/auth/callback`)
+### 인증/세션
+- [x] 소셜 로그인 라우트 (`/auth/oauth`, `/auth/callback`) — PKCE 안정화 완료
+- [x] Google OAuth provider 운영 활성화
+- [ ] Kakao OAuth provider Supabase 설정
+- [x] 마스터 전용 이메일+비밀번호 로그인(`/admin/login`)
 - [x] 보호 라우트 미들웨어 (`/mypage`, `/admin`, `/payment`)
 - [x] 세션 조회(`GET /api/auth/me`), 서버 로그아웃(`POST /api/auth/logout`)
 - [x] 로그인/로그아웃 AuditLog 기록
-- [x] 에디터 저장 API(`POST /api/invitations/draft`) + 저장 실패 시 자동 로그인 유도
 - [x] 관리자 승격 스크립트(`npm run set-admin -- <email>`)
 - [x] 계정 병합(이메일 기준 `P2002` 복구)
+
+### 에디터/미리보기
+- [x] 에디터 저장 API(`POST /api/invitations/draft`) + 저장 실패 시 자동 로그인 유도
+- [x] `intro`(신랑/신부 소개) 섹션 — 4개 레이아웃 + 프리셋 헤딩
+- [x] 섹션 토글(`eventInfo`, `eventDate`, `location`, `intro`) + 사이드바 클릭 시 토글 자동 활성화
+- [x] 섹션 헤딩 프리셋 칩 + "직접입력" 옵션 공통화(`HeadingChipPicker`)
+- [x] 웨딩홀 입력 공통 컴포넌트(`VenueSearchField`) — 예식정보↔오시는길 commit-only 동기화, 모바일 드롭다운 위치 정상화
+- [x] 메인 이미지 전환 애니메이션 개선(1400ms, two-layer in/out)
+- [x] 음악 플레이어 이퀄라이저 아이콘
+- [x] 인트로 디자인/프레임/소개 레이아웃 비주얼 스와치 선택기
+- [x] 에디터 입력 필드 모바일 반응형 정리
+
+### 향후
 - [ ] 실제 PG 결제 승인(`/api/payments/*`)
 - [ ] 발행 URL(`PublishLink`) 분리
 - [ ] 미디어 스토리지(S3/R2) 전환
-- [ ] InvitationVersion 도입
+- [ ] `InvitationVersion` 도입
 
 ---
 

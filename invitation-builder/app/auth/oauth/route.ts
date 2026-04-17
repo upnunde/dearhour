@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { getSupabaseEnv } from "@/lib/supabase/env";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-const ALLOWED_PROVIDERS = new Set(["google", "kakao", "apple"]);
+const ALLOWED_PROVIDERS = new Set(["google", "kakao"]);
 
 function getBaseUrl(request: NextRequest) {
   if (process.env.NEXT_PUBLIC_APP_URL) {
@@ -20,19 +19,25 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/login?error=provider", request.url));
   }
 
-  let env: ReturnType<typeof getSupabaseEnv>;
+  // PKCE verifier 쿠키 저장을 위해 반드시 SSR 클라이언트 사용.
+  // bare createClient를 쓰면 verifier가 저장되지 않아 콜백에서 exchangeCodeForSession이 실패함.
+  let supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>;
   try {
-    env = getSupabaseEnv();
+    supabase = await createSupabaseServerClient();
   } catch {
     return NextResponse.redirect(new URL("/login?error=missing_env", request.url));
   }
-  const supabase = createClient(env.url, env.anonKey);
 
   const callbackUrl = `${getBaseUrl(request)}/auth/callback?next=${encodeURIComponent(next)}`;
   const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: provider as "google" | "kakao" | "apple",
+    provider: provider as "google" | "kakao",
     options: {
       redirectTo: callbackUrl,
+      // 구글은 refresh token을 강제로 받기 위해 prompt=consent + access_type=offline 필요
+      queryParams:
+        provider === "google"
+          ? { access_type: "offline", prompt: "consent" }
+          : undefined,
     },
   });
 

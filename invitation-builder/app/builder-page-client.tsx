@@ -3,9 +3,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { Palette, Music, Image as ImageIcon, Users, MessageSquare, MessageCircle, Phone, CalendarHeart, MapPin, Bell, Images, Wallet, BookOpen, Youtube, Share2, Shield, CheckCircle2, GripVertical, Play, Pause, VolumeX, Volume2, X, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, RotateCw, RefreshCcw, Move, ArrowUpDown, ClipboardCheck, Calendar, Settings, Bus, Train, Car, ParkingCircle, Route, AlertCircle } from 'lucide-react';
+import { Palette, Music, Image as ImageIcon, Users, UserRound, MessageSquare, MessageCircle, Phone, CalendarHeart, MapPin, Bell, Images, Wallet, BookOpen, Youtube, Share2, Shield, CheckCircle2, GripVertical, Play, Pause, VolumeX, Volume2, X, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, RotateCw, RefreshCcw, Move, ArrowUpDown, ClipboardCheck, Calendar, Settings, Bus, Train, Car, ParkingCircle, Route, AlertCircle } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
-import type { CardData, EventInfo } from "../store/useCardStore";
+import type { CardData, EventInfo, IntroProfile } from "../store/useCardStore";
 import { DEFAULT_MAIN_PRESET_URL, MAIN_IMAGE_PRESETS } from "@/lib/main-image-presets";
 import { searchWeddingVenues, type WeddingVenue } from "@/lib/wedding-venues";
 import { getDefaultTransitGuides } from "@/lib/default-transit-guides";
@@ -78,6 +78,13 @@ const NOTICE_HEADING_OPTIONS = [
   "예식 안내",
   "함께해 주셔서 감사합니다",
   "소중한 분들께 전하는 안내",
+] as const;
+
+const INTRO_HEADING_OPTIONS = [
+  "저희를 소개합니다",
+  "두 사람을 소개합니다",
+  "신랑 & 신부 이야기",
+  "함께 걸어갈 두 사람",
 ] as const;
 
 const TRANSPORT_MODE_OPTIONS = [
@@ -217,6 +224,252 @@ function MainFrameSwatch({ variant }: { variant: MainImageFrameId }) {
       )}
       {variant === 'arch' && (
         <span className={cn('h-[76%] w-[68%] rounded-t-[999px]', g)} />
+      )}
+    </span>
+  );
+}
+
+type IntroTypeValue = 'A' | 'B' | 'E' | 'F' | 'G' | 'H' | 'I';
+
+/** 인트로 디자인 타입 미니 스왓치 — 3:4 비율로 카드 상단부 구조를 추상화 */
+function IntroTypeSwatch({ variant }: { variant: IntroTypeValue }) {
+  const line = 'bg-[#bdbdbd]';
+  const lineDark = 'bg-[#8a8a8a]';
+  const photo = 'bg-[#dadada]';
+  const faint = { opacity: 0.55 } as const;
+  const faintest = { opacity: 0.4 } as const;
+
+  return (
+    <span
+      className="flex h-[84px] w-[60px] shrink-0 flex-col items-stretch overflow-hidden rounded-md border border-border bg-white"
+      aria-hidden
+    >
+      {/* 타입 A — 사진 상단 + 이름 ♥ 이름 */}
+      {variant === 'A' && (
+        <>
+          <span className={cn('block h-[46px] w-full', photo)} />
+          <span className="flex flex-1 w-full flex-col items-center justify-center gap-[4px] px-1.5">
+            <span className="flex items-center gap-[2px]">
+              <span className={cn('h-[2px] w-[10px] rounded-[1px]', line)} />
+              <span className="text-[6px] leading-none text-[#bdbdbd]">♥</span>
+              <span className={cn('h-[2px] w-[10px] rounded-[1px]', line)} />
+            </span>
+            <span className={cn('h-[1.5px] w-[32px] rounded-[1px]', line)} style={faint} />
+            <span className={cn('h-[1.5px] w-[24px] rounded-[1px]', line)} style={faint} />
+          </span>
+        </>
+      )}
+
+      {/* 타입 B — 날짜(YY|MM|DD) 상단 → 사진 → 이름 */}
+      {variant === 'B' && (
+        <>
+          <span className="flex w-full flex-col items-center gap-[2px] pt-[9px] pb-[5px] px-1">
+            <span className="flex items-center gap-[2px]">
+              <span className={cn('h-[6px] w-[8px] rounded-[1px]', lineDark)} />
+              <span className="h-[6px] w-px bg-[#d0d0d0]" />
+              <span className={cn('h-[6px] w-[8px] rounded-[1px]', lineDark)} />
+              <span className="h-[6px] w-px bg-[#d0d0d0]" />
+              <span className={cn('h-[6px] w-[8px] rounded-[1px]', lineDark)} />
+            </span>
+            <span className={cn('h-[1px] w-[20px] rounded-[1px]', line)} style={faintest} />
+          </span>
+          <span className={cn('block h-[28px] w-full', photo)} />
+          <span className="flex flex-1 w-full flex-col items-center justify-center gap-[3px] px-1.5">
+            <span className={cn('h-[1.5px] w-[24px] rounded-[1px]', line)} style={faint} />
+            <span className={cn('h-[1.5px] w-[18px] rounded-[1px]', line)} style={faint} />
+          </span>
+        </>
+      )}
+
+      {/* 타입 C (value E) — 전체 테두리 박스 + 꽃 장식 */}
+      {variant === 'E' && (
+        <span className="flex h-full w-full flex-col items-stretch p-[3px]">
+          <span className="flex h-full w-full flex-col items-center overflow-hidden border border-[#c8c8c8] p-[2px]">
+            <span className="mt-[2px] text-[8px] leading-none text-[#bdbdbd]">✿</span>
+            <span className={cn('mt-[3px] h-[2px] w-[24px] rounded-[1px]', lineDark)} />
+            <span className={cn('mt-[3px] block h-[24px] w-full', photo)} />
+            <span className="mt-[3px] flex flex-col items-center gap-[2px] w-full">
+              <span className={cn('h-[1.5px] w-[22px] rounded-[1px]', line)} style={faint} />
+              <span className={cn('h-[1.5px] w-[16px] rounded-[1px]', line)} style={faint} />
+            </span>
+          </span>
+        </span>
+      )}
+
+      {/* 타입 D (value F) — 이름/and/이름 세로 스택 */}
+      {variant === 'F' && (
+        <>
+          <span className="flex w-full flex-col items-center gap-[3px] pt-[10px] pb-[5px]">
+            <span className={cn('h-[3px] w-[26px] rounded-[1px]', lineDark)} />
+            <span className="text-[7px] italic leading-none text-[#bdbdbd]" style={{ fontFamily: 'serif' }}>and</span>
+            <span className={cn('h-[3px] w-[26px] rounded-[1px]', lineDark)} />
+          </span>
+          <span className={cn('block h-[26px] w-full', photo)} />
+          <span className="flex flex-1 w-full flex-col items-center justify-center gap-[3px] px-1.5">
+            <span className={cn('h-[1.5px] w-[26px] rounded-[1px]', line)} style={faint} />
+            <span className={cn('h-[1.5px] w-[18px] rounded-[1px]', line)} style={faint} />
+          </span>
+        </>
+      )}
+
+      {/* 타입 E (value G) — 이름 그리고 이름 + "결혼합니다" 강조 */}
+      {variant === 'G' && (
+        <>
+          <span className="flex w-full flex-col items-center gap-[4px] pt-[11px] pb-[5px]">
+            <span className="flex items-center gap-[3px]">
+              <span className={cn('h-[3px] w-[10px] rounded-[1px]', lineDark)} />
+              <span className="text-[5px] leading-none text-[#b0b0b0]">그리고</span>
+              <span className={cn('h-[3px] w-[10px] rounded-[1px]', lineDark)} />
+            </span>
+            <span className={cn('h-[4px] w-[30px] rounded-[1px]', lineDark)} style={{ opacity: 0.9 }} />
+          </span>
+          <span className={cn('block h-[26px] w-full', photo)} />
+          <span className="flex flex-1 w-full flex-col items-center justify-center gap-[3px] px-1.5">
+            <span className={cn('h-[1.5px] w-[24px] rounded-[1px]', line)} style={faint} />
+            <span className={cn('h-[1.5px] w-[18px] rounded-[1px]', line)} style={faint} />
+          </span>
+        </>
+      )}
+
+      {/* 타입 F (value H) — 큰 DD 날짜 + MONTH/TIME */}
+      {variant === 'H' && (
+        <>
+          <span className="flex w-full flex-col items-center gap-[3px] pt-[7px] pb-[4px]">
+            <span className={cn('h-[14px] w-[22px] rounded-[1px]', lineDark)} />
+            <span className={cn('h-[1px] w-[28px] rounded-[1px]', line)} style={faint} />
+            <span className={cn('h-[2px] w-[16px] rounded-[1px]', line)} style={faint} />
+          </span>
+          <span className={cn('block h-[26px] w-full', photo)} />
+          <span className="flex flex-1 w-full flex-col items-center justify-center gap-[2px] px-1.5">
+            <span className={cn('h-[2px] w-[22px] rounded-[1px]', line)} style={faint} />
+            <span className={cn('h-[1.5px] w-[16px] rounded-[1px]', line)} style={faint} />
+          </span>
+        </>
+      )}
+
+      {/* 타입 G (value I) — 이름 좌 | 우 양측 분할 */}
+      {variant === 'I' && (
+        <>
+          <span className="flex w-full items-end justify-center pt-[10px] pb-[5px] px-[5px]">
+            <span className="flex flex-1 flex-col items-center gap-[2px]">
+              <span className={cn('h-[1px] w-[10px] rounded-[1px]', line)} style={faintest} />
+              <span className={cn('h-[3px] w-[14px] rounded-[1px]', lineDark)} />
+            </span>
+            <span className="mx-[3px] w-px h-[16px] bg-[#cfcfcf]" />
+            <span className="flex flex-1 flex-col items-center gap-[2px]">
+              <span className={cn('h-[1px] w-[10px] rounded-[1px]', line)} style={faintest} />
+              <span className={cn('h-[3px] w-[14px] rounded-[1px]', lineDark)} />
+            </span>
+          </span>
+          <span className={cn('block h-[28px] w-full', photo)} />
+          <span className="flex flex-1 w-full flex-col items-center justify-center gap-[2px] px-1.5">
+            <span className={cn('h-[1.5px] w-[22px] rounded-[1px]', line)} style={faint} />
+            <span className={cn('h-[1.5px] w-[16px] rounded-[1px]', line)} style={faint} />
+          </span>
+        </>
+      )}
+    </span>
+  );
+}
+
+type IntroLayoutValue = 'A' | 'B' | 'C' | 'D';
+
+/**
+ * 소개 섹션 레이아웃 타입 스왓치 — 두 명의 프로필 구조를 미니어처로 시각화.
+ * 높이를 조금 키워서 상·하 두 프로필의 패턴이 구분되도록 함.
+ */
+function IntroLayoutSwatch({ variant }: { variant: IntroLayoutValue }) {
+  const line = 'bg-[#bdbdbd]';
+  const lineDark = 'bg-[#6a6a6a]';
+  const photo = 'bg-[#dadada]';
+  const faint = { opacity: 0.55 } as const;
+  const faintest = { opacity: 0.35 } as const;
+
+  return (
+    <span
+      className="flex h-[100px] w-[64px] shrink-0 flex-col items-stretch overflow-hidden rounded-md border border-border bg-white"
+      aria-hidden
+    >
+      {/* Type A — Gallery Grid: 정사각 사진 2개 나란히 */}
+      {variant === 'A' && (
+        <span className="flex h-full w-full flex-row gap-[3px] px-[4px] py-[5px]">
+          {[0, 1].map((i) => (
+            <span key={i} className="flex flex-1 flex-col gap-[2px]">
+              <span className={cn('aspect-square w-full', photo)} />
+              <span className={cn('mt-[2px] h-[1px] w-[10px] rounded-[1px]', line)} style={faintest} />
+              <span className={cn('h-[2px] w-[18px] rounded-[1px]', lineDark)} />
+              <span className={cn('h-[1px] w-[16px] rounded-[1px]', line)} style={faint} />
+              <span className={cn('h-[1px] w-[14px] rounded-[1px]', line)} style={faint} />
+            </span>
+          ))}
+        </span>
+      )}
+
+      {/* Type B — Editorial Portrait: 세로사진 + 옆 텍스트, 좌우 교차 */}
+      {variant === 'B' && (
+        <span className="flex h-full w-full flex-col gap-[6px] px-[4px] py-[5px]">
+          {/* 상단: 사진 좌, 텍스트 우 */}
+          <span className="flex items-stretch gap-[4px]">
+            <span className={cn('h-[36px] w-[22px] flex-shrink-0', photo)} />
+            <span className="flex flex-1 flex-col justify-center gap-[2px]">
+              <span className={cn('h-[1px] w-[12px] rounded-[1px]', line)} style={faintest} />
+              <span className={cn('h-[2px] w-[20px] rounded-[1px]', lineDark)} />
+              <span className={cn('h-[1px] w-[8px] rounded-[1px]', line)} />
+              <span className={cn('h-[1px] w-[18px] rounded-[1px]', line)} style={faint} />
+            </span>
+          </span>
+          {/* 하단: 텍스트 좌, 사진 우 (미러) */}
+          <span className="flex items-stretch gap-[4px] flex-row-reverse">
+            <span className={cn('h-[36px] w-[22px] flex-shrink-0', photo)} />
+            <span className="flex flex-1 flex-col items-end justify-center gap-[2px]">
+              <span className={cn('h-[1px] w-[12px] rounded-[1px]', line)} style={faintest} />
+              <span className={cn('h-[2px] w-[20px] rounded-[1px]', lineDark)} />
+              <span className={cn('h-[1px] w-[8px] rounded-[1px]', line)} />
+              <span className={cn('h-[1px] w-[18px] rounded-[1px]', line)} style={faint} />
+            </span>
+          </span>
+        </span>
+      )}
+
+      {/* Type C — Centered Focus: 세로 포트레이트 중앙정렬 */}
+      {variant === 'C' && (
+        <span className="flex h-full w-full flex-col items-center justify-center gap-[3px] px-[4px] py-[4px]">
+          <span className={cn('h-[22px] w-[18px]', photo)} />
+          <span className={cn('mt-[1px] h-[1px] w-[10px] rounded-[1px]', line)} style={faintest} />
+          <span className={cn('h-[2px] w-[20px] rounded-[1px]', lineDark)} />
+          <span className={cn('h-[1px] w-[8px] rounded-[1px]', line)} />
+          <span className="my-[2px] h-px w-[20px] bg-[#d6d6d6]" />
+          <span className={cn('h-[22px] w-[18px]', photo)} />
+          <span className={cn('mt-[1px] h-[1px] w-[10px] rounded-[1px]', line)} style={faintest} />
+          <span className={cn('h-[2px] w-[20px] rounded-[1px]', lineDark)} />
+          <span className={cn('h-[1px] w-[8px] rounded-[1px]', line)} />
+        </span>
+      )}
+
+      {/* Type D — Full-Bleed Portrait: 풀폭 세로 사진 + 아래 역할·이름·메타 */}
+      {variant === 'D' && (
+        <span className="flex h-full w-full flex-col gap-[6px] px-[4px] py-[5px]">
+          <span className="flex flex-col gap-[2px]">
+            <span className={cn('h-[30px] w-full', photo)} />
+            <span className="flex items-end justify-between gap-[3px]">
+              <span className="flex flex-col gap-[1px]">
+                <span className={cn('h-[1px] w-[10px] rounded-[1px]', line)} style={faintest} />
+                <span className={cn('h-[2px] w-[20px] rounded-[1px]', lineDark)} />
+              </span>
+              <span className={cn('h-[1px] w-[10px] rounded-[1px]', line)} style={faint} />
+            </span>
+          </span>
+          <span className="flex flex-col gap-[2px]">
+            <span className={cn('h-[30px] w-full', photo)} />
+            <span className="flex items-end justify-between gap-[3px]">
+              <span className="flex flex-col gap-[1px]">
+                <span className={cn('h-[1px] w-[10px] rounded-[1px]', line)} style={faintest} />
+                <span className={cn('h-[2px] w-[20px] rounded-[1px]', lineDark)} />
+              </span>
+              <span className={cn('h-[1px] w-[10px] rounded-[1px]', line)} style={faint} />
+            </span>
+          </span>
+        </span>
       )}
     </span>
   );
@@ -754,6 +1007,182 @@ function Input(props: React.ComponentProps<typeof RawInput>) {
   );
 }
 
+/**
+ * 웨딩홀 검색 입력 필드 (재사용 컴포넌트)
+ * - 각 인스턴스가 자체 드롭다운과 로컬 상태를 관리 → 모바일에서 엉뚱한 위치에 떠오르는 문제 해결
+ * - `mode='realtime'`: 타이핑마다 부모에 커밋 (예식정보 섹션 기본 동작 유지)
+ * - `mode='deferred'`: 타이핑은 로컬 드래프트만 업데이트, blur 시 커밋 (오시는 길 섹션)
+ * - 드롭다운은 input wrapper 기준 absolute 포지셔닝을 사용 → viewport/키보드 이슈 회피
+ */
+function VenueSearchField({
+  value,
+  mode,
+  onChangeLive,
+  onCommit,
+  onPickSuggestion,
+  placeholder,
+}: {
+  value: string;
+  mode: 'realtime' | 'deferred';
+  onChangeLive?: (v: string) => void;
+  onCommit?: (v: string) => void;
+  onPickSuggestion: (venue: WeddingVenue & { phone?: string; mapImages?: string[] }) => void | Promise<void>;
+  placeholder?: string;
+}) {
+  const [draft, setDraft] = useState(value);
+  const [focused, setFocused] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [remote, setRemote] = useState<(WeddingVenue & { phone?: string; mapImages?: string[] })[]>([]);
+  const autoAppliedKeyRef = useRef<string>("");
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const listRef = useRef<HTMLDivElement | null>(null);
+
+  // 외부 value 변경을 draft에 반영 (사용자가 편집 중이 아닐 때만)
+  useEffect(() => {
+    if (!focused) setDraft(value);
+  }, [value, focused]);
+
+  const currentValue = mode === 'realtime' ? value : draft;
+  const trimmed = currentValue.trim();
+  const hasQuery = trimmed.length > 0;
+
+  // 원격 검색 (debounced)
+  useEffect(() => {
+    if (trimmed.length < 2) {
+      setRemote([]);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/weddinghall-search?q=${encodeURIComponent(trimmed)}&limit=8`);
+        if (!res.ok) return;
+        const json = (await res.json()) as { results?: (WeddingVenue & { phone?: string; mapImages?: string[] })[] };
+        if (cancelled) return;
+        setRemote(Array.isArray(json.results) ? json.results : []);
+      } catch {
+        if (!cancelled) setRemote([]);
+      }
+    }, 220);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [trimmed]);
+
+  const localSuggestions = useMemo(() => searchWeddingVenues(currentValue, 8), [currentValue]);
+  const suggestions = useMemo(() => {
+    const map = new Map<string, WeddingVenue & { phone?: string; mapImages?: string[] }>();
+    for (const venue of [...remote, ...localSuggestions]) {
+      const key = venue.name.replace(/\s+/g, "").toLowerCase();
+      if (!key) continue;
+      if (!map.has(key)) map.set(key, venue);
+    }
+    return Array.from(map.values()).slice(0, 8);
+  }, [localSuggestions, remote]);
+
+  // realtime 모드에서만: 사용자가 정확히 일치하는 값을 입력하면 자동 적용 (기존 예식정보 UX 유지)
+  useEffect(() => {
+    if (mode !== 'realtime') return;
+    const normalized = currentValue.replace(/\s+/g, "").toLowerCase();
+    if (!normalized || normalized === autoAppliedKeyRef.current) return;
+    const exact = suggestions.find(
+      (venue) => venue.name.replace(/\s+/g, "").toLowerCase() === normalized,
+    );
+    if (!exact) return;
+    autoAppliedKeyRef.current = normalized;
+    void onPickSuggestion(exact);
+  }, [mode, currentValue, suggestions, onPickSuggestion]);
+
+  // 외부 클릭으로 드롭다운 닫기
+  useEffect(() => {
+    if (!open) return;
+    const handler = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (wrapRef.current?.contains(target)) return;
+      if (listRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const handlePick = (venue: WeddingVenue & { phone?: string; mapImages?: string[] }) => {
+    setOpen(false);
+    autoAppliedKeyRef.current = venue.name.replace(/\s+/g, "").toLowerCase();
+    if (mode === 'deferred') {
+      setDraft(venue.name);
+    }
+    void onPickSuggestion(venue);
+  };
+
+  return (
+    <div ref={wrapRef} className="relative w-full">
+      <Input
+        placeholder={placeholder}
+        value={currentValue}
+        onFocus={() => {
+          setFocused(true);
+          if (hasQuery) setOpen(true);
+        }}
+        onBlur={() => {
+          setFocused(false);
+          if (mode === 'deferred' && onCommit) {
+            if (draft !== value) onCommit(draft);
+          }
+        }}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (mode === 'realtime') {
+            onChangeLive?.(v);
+          } else {
+            setDraft(v);
+          }
+          setOpen(v.trim().length > 0);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            setOpen(false);
+          } else if (e.key === 'Enter' && suggestions.length > 0 && hasQuery) {
+            e.preventDefault();
+            handlePick(suggestions[0]);
+          }
+        }}
+        className="shadow-none flex-1"
+      />
+      {open && hasQuery && (
+        <div
+          ref={listRef}
+          className="absolute left-0 right-0 top-full mt-1 z-40 overflow-hidden rounded-lg border border-border bg-white shadow-sm"
+        >
+          {suggestions.length > 0 ? (
+            <ul className="max-h-56 overflow-y-auto py-1">
+              {suggestions.map((venue) => (
+                <li key={`${venue.name}-${venue.address}`}>
+                  <button
+                    type="button"
+                    className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left hover:bg-slate-50 active:bg-slate-100"
+                    onMouseDown={(e) => e.preventDefault() /* blur 전 click 유지 */}
+                    onClick={() => handlePick(venue)}
+                  >
+                    <span className="text-[13px] text-on-surface-10">{venue.name}</span>
+                    <span className="text-[11px] text-on-surface-30">{venue.area}</span>
+                    <span className="text-[11px] text-on-surface-30/80">{venue.address}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="px-3 py-2 text-[12px] text-on-surface-30">
+              일치하는 예식장이 없습니다.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** 하단 '옵션' 그룹(콘텐츠 순서/미리보기 본문에 포함하지 않음) */
 const OTHER_OPTION_IDS = ['share', 'protect', 'publish', 'i18n'] as const;
 
@@ -770,14 +1199,15 @@ const SIDEBAR_NAV_SECTIONS: { navGroup: SidebarNavGroup; title: string }[] = [
 // Sidebar: navGroup 1-5; optionalOrder applies to reorderable optional sections only.
 const sidebarItems = [
   { id: 'hosts', icon: Users, label: '기본정보', category: '필수', navGroup: 1 as SidebarNavGroup },
-  { id: 'eventInfo', icon: CalendarHeart, label: '예식정보', category: '필수', navGroup: 1 as SidebarNavGroup },
+  { id: 'eventInfo', icon: CalendarHeart, label: '예식정보', category: '필수', navGroup: 1 as SidebarNavGroup, hasSwitch: true },
   { id: 'theme', icon: Palette, label: '테마', category: '필수', navGroup: 2 as SidebarNavGroup },
   { id: 'main', icon: ImageIcon, label: '메인', category: '필수', navGroup: 2 as SidebarNavGroup },
   { id: 'bgm', icon: Music, label: '배경음악', category: '필수', navGroup: 2 as SidebarNavGroup, hasSwitch: true },
   { id: 'greeting', icon: MessageSquare, label: '인사말', category: '필수', navGroup: 3 as SidebarNavGroup },
+  { id: 'intro', icon: UserRound, label: '소개', category: '필수', navGroup: 3 as SidebarNavGroup, hasSwitch: true },
   { id: 'contact', icon: Phone, label: '연락처', category: '필수', navGroup: 3 as SidebarNavGroup, hasSwitch: true },
-  { id: 'eventDate', icon: Calendar, label: 'D-Day', category: '필수', navGroup: 3 as SidebarNavGroup },
-  { id: 'location', icon: MapPin, label: '오시는 길', category: '필수', navGroup: 3 as SidebarNavGroup },
+  { id: 'eventDate', icon: Calendar, label: 'D-Day', category: '필수', navGroup: 3 as SidebarNavGroup, hasSwitch: true },
+  { id: 'location', icon: MapPin, label: '오시는 길', category: '필수', navGroup: 3 as SidebarNavGroup, hasSwitch: true },
   { id: 'notice', icon: Bell, label: '안내사항', category: '선택', navGroup: 4 as SidebarNavGroup, hasSwitch: true },
   { id: 'gallery', icon: Images, label: '갤러리', category: '선택', navGroup: 4 as SidebarNavGroup, hasSwitch: true },
   { id: 'account', icon: Wallet, label: '계좌정보', category: '선택', navGroup: 4 as SidebarNavGroup, hasSwitch: true },
@@ -869,29 +1299,260 @@ function BankLogo({ name }: { name: (typeof BANK_OPTIONS)[number] }) {
 
 function FormItem({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex min-w-0 items-start gap-3">
+    <div className="flex min-w-0 items-start gap-2 sm:gap-3">
       <AppLabel
-        className={`w-[90px] flex-shrink-0 text-[13px] font-medium text-on-surface-30 leading-tight ${
+        className={`w-[64px] sm:w-[90px] flex-shrink-0 text-[13px] font-medium text-on-surface-30 leading-tight ${
           label ? 'pt-1' : ''
         }`}
       >
         {label}
       </AppLabel>
-      <div className="flex min-w-0 flex-1 gap-2 items-center">
+      <div className="flex min-w-0 flex-1 flex-wrap gap-2 items-center">
         {children}
       </div>
     </div>
   );
 }
 
-/** Location editor: single-line venue from event info (detail omitted if already in name). */
-function eventVenueReadonlyDisplay(eventInfo: EventInfo): string {
-  const venueName = String(eventInfo.venueName ?? "").trim();
-  const venueDetail = String(eventInfo.venueDetail ?? "").trim();
-  if (venueName && venueDetail && !venueName.includes(venueDetail)) {
-    return `${venueName} ${venueDetail}`;
-  }
-  return venueName || venueDetail;
+/**
+ * 4개 프리셋 + '직접입력' 모드를 가진 제목 선택기.
+ * - 현재 값이 프리셋 중 하나면 해당 칩이 활성
+ * - '직접입력' 클릭 시 Input 노출 (기존 프리셋 값은 비움)
+ * - 현재 값이 프리셋에 없으면 자동으로 직접입력 모드로 초기화됨
+ */
+function HeadingChipPicker({
+  value,
+  options,
+  onChange,
+  placeholder = '제목을 직접 입력해 주세요',
+  maxLength = 30,
+}: {
+  value: string;
+  options: readonly string[];
+  onChange: (next: string) => void;
+  placeholder?: string;
+  maxLength?: number;
+}) {
+  const trimmed = value.trim();
+  const isPreset = (options as readonly string[]).includes(trimmed);
+  const [customMode, setCustomMode] = useState<boolean>(trimmed !== '' && !isPreset);
+
+  return (
+    <div className="flex min-w-0 flex-1 flex-col gap-2">
+      <div className="flex flex-wrap gap-2 w-full">
+        {options.map((opt) => {
+          const active =
+            !customMode && (trimmed === opt || (!trimmed && opt === options[0]));
+          return (
+            <OptionChip
+              key={opt}
+              label={opt}
+              active={active}
+              onClick={() => {
+                setCustomMode(false);
+                onChange(opt);
+              }}
+            />
+          );
+        })}
+        <OptionChip
+          label="직접입력"
+          active={customMode}
+          onClick={() => {
+            setCustomMode(true);
+            if ((options as readonly string[]).includes(trimmed)) onChange('');
+          }}
+        />
+      </div>
+      {customMode && (
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="shadow-none"
+          maxLength={maxLength}
+        />
+      )}
+    </div>
+  );
+}
+
+/** 소개(About Us) 편집 영역: 신랑/신부 프로필 이미지·생년월일·MBTI·취미·특징 */
+function IntroEditor({
+  data,
+  updateData,
+  isEnabled,
+}: {
+  data: CardData;
+  updateData: (path: string, value: any) => void;
+  isEnabled: boolean;
+}) {
+  const intro = (data as any).intro ?? {};
+  const sectionHeading = String(intro.sectionHeading ?? '');
+  const groom: IntroProfile = intro.groom ?? { image: '', birthDate: '', mbti: '', hobbies: '', traits: '' };
+  const bride: IntroProfile = intro.bride ?? { image: '', birthDate: '', mbti: '', hobbies: '', traits: '' };
+
+  const groomInputRef = useRef<HTMLInputElement>(null);
+  const brideInputRef = useRef<HTMLInputElement>(null);
+  const groomUrlRef = useRef<string | null>(null);
+  const brideUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (groomUrlRef.current) URL.revokeObjectURL(groomUrlRef.current);
+      if (brideUrlRef.current) URL.revokeObjectURL(brideUrlRef.current);
+    };
+  }, []);
+
+  const handleImage = (
+    role: 'groom' | 'bride',
+    file: File,
+  ) => {
+    const urlRef = role === 'groom' ? groomUrlRef : brideUrlRef;
+    if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+    const url = URL.createObjectURL(file);
+    urlRef.current = url;
+    updateData(`intro.${role}.image`, url);
+  };
+
+  const renderProfileSection = (
+    role: 'groom' | 'bride',
+    label: '신랑' | '신부',
+    profile: IntroProfile,
+    inputRef: React.RefObject<HTMLInputElement | null>,
+  ) => {
+    const hasImage = !!(profile.image ?? '').trim();
+    return (
+      <div className="flex flex-col gap-5">
+        <FormItem label={`${label} 사진`}>
+          <div className="flex items-center gap-3">
+            <div className="w-[84px] h-[112px] rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden flex items-center justify-center flex-shrink-0">
+              {hasImage ? (
+                <img
+                  src={profile.image}
+                  alt={`${label} 프로필`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <UserRound className="w-8 h-8 text-[color:var(--on-surface-disabled)]" strokeWidth={1.25} aria-hidden />
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
+                onClick={() => inputRef.current?.click()}
+              >
+                {hasImage ? '사진 변경' : '사진 업로드'}
+              </button>
+              {hasImage && (
+                <button
+                  type="button"
+                  className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-30 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
+                  onClick={() => updateData(`intro.${role}.image`, '')}
+                >
+                  사진 제거
+                </button>
+              )}
+              <input
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  handleImage(role, file);
+                  e.currentTarget.value = '';
+                }}
+              />
+            </div>
+          </div>
+        </FormItem>
+        <FormItem label="생년월일">
+          <Input
+            value={profile.birthDate ?? ''}
+            onChange={(e) => updateData(`intro.${role}.birthDate`, e.target.value)}
+            placeholder="예: 1990.12.10"
+            className="shadow-none flex-1"
+          />
+        </FormItem>
+        <FormItem label="MBTI">
+          <Input
+            value={profile.mbti ?? ''}
+            onChange={(e) => {
+              const v = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+              updateData(`intro.${role}.mbti`, v);
+            }}
+            placeholder="예: ISTP"
+            className="shadow-none flex-1 tracking-[0.1em]"
+            maxLength={4}
+          />
+        </FormItem>
+        <FormItem label="한줄 소개">
+          <Textarea
+            rows={3}
+            value={profile.traits ?? ''}
+            onChange={(e) => updateData(`intro.${role}.traits`, e.target.value)}
+            placeholder={`${label}의 성격·특징을 한 줄로 소개해 주세요.`}
+            className="resize-none shadow-none flex-1"
+          />
+        </FormItem>
+      </div>
+    );
+  };
+
+  const layoutType = (intro.layoutType ?? 'A') as IntroLayoutValue;
+  const layoutOptions = [
+    { value: 'A' as const, label: 'A' },
+    { value: 'B' as const, label: 'B' },
+    { value: 'C' as const, label: 'C' },
+    { value: 'D' as const, label: 'D' },
+  ];
+
+  return (
+    <div className={isEnabled ? '' : 'opacity-60 pointer-events-none select-none'}>
+      <div className="flex flex-col gap-5">
+        <FormItem label="제목">
+          <HeadingChipPicker
+            value={sectionHeading}
+            options={INTRO_HEADING_OPTIONS}
+            onChange={(v) => updateData('intro.sectionHeading', v)}
+          />
+        </FormItem>
+        <FormItem label="타입">
+          <div className="flex flex-wrap gap-3">
+            {layoutOptions.map((opt) => {
+              const active = layoutType === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => updateData('intro.layoutType', opt.value)}
+                  className={cn(
+                    'flex flex-col items-center gap-1.5 rounded-lg p-1.5 transition-[color,background-color,outline-color,outline-offset]',
+                    active
+                      ? 'bg-slate-50 outline outline-1 outline-offset-2 outline-[color:var(--on-surface-10)]'
+                      : 'outline-none ring-1 ring-transparent hover:bg-slate-50',
+                  )}
+                  title={`타입 ${opt.label}`}
+                >
+                  <IntroLayoutSwatch variant={opt.value} />
+                  <span className="text-[11px] font-medium text-on-surface-20">
+                    타입 {opt.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </FormItem>
+      </div>
+      <div className="border-t border-dashed border-[color:var(--border-20)] my-4" />
+      {renderProfileSection('groom', '신랑', groom, groomInputRef)}
+      <div className="border-t border-dashed border-[color:var(--border-20)] my-4" />
+      {renderProfileSection('bride', '신부', bride, brideInputRef)}
+    </div>
+  );
 }
 
 const BRIDE_RELATION_OPTIONS = ['딸', '장녀', '차녀', '삼녀', '사녀', '오녀', '육녀', '독녀', '막내', '조카', '손녀', '동생', '외동'] as const;
@@ -1541,9 +2202,21 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   }, [autoShareTitle, data.share?.title, updateData]);
 
   /** Preview order: calendar / D-Day (`eventInfo`) sits directly above location. */
-  const baseLayoutOrder = ['hosts', 'main', 'greeting', 'contact', 'eventInfo', 'location'];
+  const baseLayoutOrder = ['hosts', 'main', 'greeting', 'intro', 'contact', 'eventInfo', 'location'];
   const sectionEnabled = data.sectionEnabled ?? {};
-  const isSectionEnabled = (id: string) => sectionEnabled[id] ?? (id === 'bgm' || id === 'contact');
+  /**
+   * 섹션 기본값. sectionEnabled에 값이 없을 때(=기존 저장 카드) 이 표에 따라 기본 노출 여부 결정.
+   * 기존 카드는 예식정보·D-Day·오시는 길을 당연히 보여주던 상태이므로 backward-compat을 위해 true.
+   */
+  const SECTION_DEFAULT_ENABLED: Record<string, boolean> = {
+    bgm: true,
+    contact: true,
+    eventInfo: true,
+    eventDate: true,
+    location: true,
+  };
+  const isSectionEnabled = (id: string) =>
+    sectionEnabled[id] ?? (SECTION_DEFAULT_ENABLED[id] ?? false);
   const isBgmEnabled = isSectionEnabled('bgm');
   const setSectionEnabled = (updater: Record<string, boolean> | ((prev: Record<string, boolean>) => Record<string, boolean>)) => {
     const next = typeof updater === 'function' ? updater(sectionEnabled) : updater;
@@ -1578,7 +2251,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   }, []);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(max-width: 1024px)');
+    const mediaQuery = window.matchMedia('(max-width: 799px)');
     const handleViewportChange = () => setIsTabletViewport(mediaQuery.matches);
     handleViewportChange();
     if (typeof mediaQuery.addEventListener === 'function') {
@@ -1652,54 +2325,9 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const [locationPreviewCoords, setLocationPreviewCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [locationPreviewLoading, setLocationPreviewLoading] = useState(false);
   const [naverPreviewFailed, setNaverPreviewFailed] = useState(false);
-  const [venueSuggestOpen, setVenueSuggestOpen] = useState(false);
-  const [venueDropdownStyle, setVenueDropdownStyle] = useState<{ top: number; left: number; width: number } | null>(null);
-  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
   const [previewVisibleSections, setPreviewVisibleSections] = useState<Record<string, boolean>>({});
-  const venueInputWrapRef = useRef<HTMLDivElement | null>(null);
-  const venueDropdownRef = useRef<HTMLDivElement | null>(null);
-  const autoAppliedVenueRef = useRef<string>("");
-  const venueInputValue = String((data.eventInfo as any)?.venueName ?? "");
-  const hasVenueQuery = venueInputValue.trim().length > 0;
-  const [remoteVenueSuggestions, setRemoteVenueSuggestions] = useState<VenueSuggestion[]>([]);
-  const localVenueSuggestions = useMemo(() => searchWeddingVenues(venueInputValue, 8), [venueInputValue]);
-  const venueSuggestions = useMemo(() => {
-    const map = new Map<string, VenueSuggestion>();
-    for (const venue of [...remoteVenueSuggestions, ...localVenueSuggestions]) {
-      const key = venue.name.replace(/\s+/g, "").toLowerCase();
-      if (!key) continue;
-      if (!map.has(key)) map.set(key, venue);
-    }
-    return Array.from(map.values()).slice(0, 8);
-  }, [localVenueSuggestions, remoteVenueSuggestions]);
-
-  useEffect(() => {
-    const q = venueInputValue.trim();
-    if (q.length < 2) {
-      setRemoteVenueSuggestions([]);
-      return;
-    }
-    let cancelled = false;
-    const t = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/weddinghall-search?q=${encodeURIComponent(q)}&limit=8`);
-        if (!res.ok) return;
-        const json = (await res.json()) as { results?: VenueSuggestion[] };
-        if (cancelled) return;
-        setRemoteVenueSuggestions(Array.isArray(json.results) ? json.results : []);
-      } catch {
-        if (!cancelled) setRemoteVenueSuggestions([]);
-      }
-    }, 220);
-    return () => {
-      cancelled = true;
-      clearTimeout(t);
-    };
-  }, [venueInputValue]);
 
   const applyVenueSuggestion = async (venue: VenueSuggestion) => {
-    setVenueSuggestOpen(false);
-    autoAppliedVenueRef.current = venue.name.replace(/\s+/g, "").toLowerCase();
     updateData('eventInfo.venueName', venue.name);
     updateData('location.address', venue.address);
     setLocationAddressKeyword(venue.address);
@@ -1737,55 +2365,9 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   };
 
   useEffect(() => {
-    const normalized = venueInputValue.replace(/\s+/g, "").toLowerCase();
-    if (!normalized || normalized === autoAppliedVenueRef.current) return;
-    const exact = venueSuggestions.find(
-      (venue) => venue.name.replace(/\s+/g, "").toLowerCase() === normalized
-    );
-    if (!exact) return;
-    void applyVenueSuggestion(exact);
-  }, [venueInputValue, venueSuggestions]);
-
-  useEffect(() => {
     if (locationSearchOpen) return;
     setLocationAddressKeyword((data.location as any)?.address ?? '');
   }, [data.location, locationSearchOpen]);
-
-  useEffect(() => {
-    setPortalRoot(document.body);
-  }, []);
-
-  useEffect(() => {
-    if (!venueSuggestOpen) return;
-    const handleDocumentMouseDown = (event: MouseEvent) => {
-      const targetNode = event.target as Node;
-      if (venueInputWrapRef.current?.contains(targetNode)) return;
-      if (venueDropdownRef.current?.contains(targetNode)) return;
-      setVenueSuggestOpen(false);
-    };
-    document.addEventListener('mousedown', handleDocumentMouseDown);
-    return () => document.removeEventListener('mousedown', handleDocumentMouseDown);
-  }, [venueSuggestOpen]);
-
-  useEffect(() => {
-    if (!venueSuggestOpen || !hasVenueQuery) return;
-    const updateDropdownPosition = () => {
-      const rect = venueInputWrapRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      setVenueDropdownStyle({
-        top: rect.bottom + 4,
-        left: rect.left,
-        width: rect.width,
-      });
-    };
-    updateDropdownPosition();
-    window.addEventListener('resize', updateDropdownPosition);
-    document.addEventListener('scroll', updateDropdownPosition, true);
-    return () => {
-      window.removeEventListener('resize', updateDropdownPosition);
-      document.removeEventListener('scroll', updateDropdownPosition, true);
-    };
-  }, [venueSuggestOpen, hasVenueQuery]);
 
   const [sharePreviewOpen, setSharePreviewOpen] = useState(false);
   const [shareThumbnailPickerOpen, setShareThumbnailPickerOpen] = useState(false);
@@ -2949,7 +3531,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     setMainPreviewIndex((i) => (i >= images.length ? 0 : i));
 
     const selected = normalizeTransitionEffect((data.main as any).transitionEffect ?? '없음');
-    const durationMs = 650;
+    const durationMs = 1400;
     const randomPool = [
       '크로스페이드',
       '디졸브',
@@ -3039,7 +3621,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const orderedItems = [
     ...(["hosts", "eventInfo"] as const).map((id) => itemById[id]),
     ...(["theme", "main", "bgm"] as const).map((id) => itemById[id]),
-    ...(["greeting", "contact", "eventDate", "location"] as const).map((id) => itemById[id]),
+    ...(["greeting", "intro", "contact", "eventDate", "location"] as const).map((id) => itemById[id]),
     ...orderedContentOptionalItems,
     ...otherOptionItems,
   ];
@@ -3076,7 +3658,25 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     container.scrollTo({ top: nextTop, behavior: 'smooth' });
   };
 
+  /** 사이드바/탭에서 항목을 선택할 때: 토글 섹션이 꺼져 있으면 자동으로 켠 뒤 스크롤 */
+  const handleSidebarSelect = (id: string) => {
+    const target = sidebarItems.find((i) => i.id === id);
+    const willAutoEnable = !!(target?.hasSwitch && !isSectionEnabled(id));
+    if (willAutoEnable) {
+      setSectionEnabled((prev) => ({ ...prev, [id]: true }));
+      // 폼 영역이 펼쳐진 뒤 스크롤해야 위치가 정확함
+      requestAnimationFrame(() => requestAnimationFrame(() => scrollToSection(id)));
+      return;
+    }
+    scrollToSection(id);
+  };
+
   const handleMobileTabSelect = (id: string) => {
+    const target = sidebarItems.find((i) => i.id === id);
+    const willAutoEnable = !!(target?.hasSwitch && !isSectionEnabled(id));
+    if (willAutoEnable) {
+      setSectionEnabled((prev) => ({ ...prev, [id]: true }));
+    }
     if (!isTabletViewport || mobilePanel === 'editor') {
       scrollToSection(id);
       return;
@@ -3253,28 +3853,40 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         const animClassForCurrent = (() => {
           switch (transitionEffect) {
             case '크로스페이드':
-              return 'animate-[preview-fade-in_650ms_ease-out_forwards]';
+              return 'animate-[preview-fade-in_1400ms_ease-out_forwards]';
             case '디졸브':
-              return 'animate-[preview-dissolve-in_650ms_ease-out_forwards]';
+              return 'animate-[preview-dissolve-in_1400ms_ease-out_forwards]';
             case '슬라이드(왼→오)':
-              return 'animate-[preview-slide-in-right_650ms_cubic-bezier(0.2,0.8,0.2,1)_forwards]';
+              return 'animate-[preview-slide-in-right_1400ms_cubic-bezier(0.2,0.8,0.2,1)_forwards]';
             case '슬라이드(오→왼)':
-              return 'animate-[preview-slide-in-left_650ms_cubic-bezier(0.2,0.8,0.2,1)_forwards]';
+              return 'animate-[preview-slide-in-left_1400ms_cubic-bezier(0.2,0.8,0.2,1)_forwards]';
             case '켄번즈(줌 인)':
-              return 'animate-[preview-kenburns-in_650ms_ease-out_forwards]';
+              return 'animate-[preview-kenburns-in_1400ms_ease-out_forwards]';
             case '켄번즈(줌 아웃)':
-              return 'animate-[preview-kenburns-out_650ms_ease-out_forwards]';
+              return 'animate-[preview-kenburns-out_1400ms_ease-out_forwards]';
             default:
               return '';
           }
         })();
 
-        const animClassForPrev =
-          transitionEffect === '디졸브'
-            ? 'animate-[preview-dissolve-out_650ms_ease-out_forwards]'
-            : transitionEffect === '크로스페이드'
-              ? 'animate-[preview-fade-out_650ms_ease-out_forwards]'
-              : '';
+        const animClassForPrev = (() => {
+          switch (transitionEffect) {
+            case '크로스페이드':
+              return 'animate-[preview-fade-out_1400ms_ease-out_forwards]';
+            case '디졸브':
+              return 'animate-[preview-dissolve-out_1400ms_ease-out_forwards]';
+            case '슬라이드(왼→오)':
+              return 'animate-[preview-slide-out-left_1400ms_cubic-bezier(0.2,0.8,0.2,1)_forwards]';
+            case '슬라이드(오→왼)':
+              return 'animate-[preview-slide-out-right_1400ms_cubic-bezier(0.2,0.8,0.2,1)_forwards]';
+            case '켄번즈(줌 인)':
+              return 'animate-[preview-kenburns-in-prev-out_1400ms_ease-out_forwards]';
+            case '켄번즈(줌 아웃)':
+              return 'animate-[preview-kenburns-out-prev-out_1400ms_ease-out_forwards]';
+            default:
+              return '';
+          }
+        })();
 
         return (
           <MainHeroFrameShell frame={frame} aspectClass="aspect-[3/4]">
@@ -3301,10 +3913,11 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               </>
             ) : (
               <>
-                {/* 이전 이미지(아래, 고정) */}
+                {/* 이전 이미지(아래) — 전환 중에는 반대 방향으로 함께 빠져나감 */}
                 {prevUrl ? (
                   <div
-                    className="absolute inset-0 bg-center bg-cover"
+                    key={`prev-${mainPreviewAnimKey}`}
+                    className={`absolute inset-0 bg-center bg-cover ${transitionEffect === '없음' ? '' : animClassForPrev}`}
                     style={{ backgroundImage: `url(${prevUrl})`, ...mainImageFilterStyle }}
                   />
                 ) : (
@@ -3351,6 +3964,274 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 </div>
               ))}
             </div>
+          </div>
+        );
+      }
+      case 'intro': {
+        const introData = (data as any).intro ?? {};
+        const introHeading = String(introData.sectionHeading ?? '').trim() || '저희를 소개합니다';
+        const groomName = (data.hosts.groom.name ?? '').trim() || '신랑';
+        const brideName = (data.hosts.bride.name ?? '').trim() || '신부';
+        const brideFirst = !!((data as any).i18n?.brideFirstInfo ?? false);
+        const layoutType = (introData.layoutType ?? 'A') as 'A' | 'B' | 'C' | 'D';
+
+        /** 공통 사진 박스 (사이즈·모양은 레이아웃별로 override) */
+        const renderPhoto = (
+          image: string,
+          role: '신랑' | '신부',
+          sizeClass: string,
+        ) => {
+          const hasImage = !!image.trim();
+          return (
+            <div
+              className={[
+                sizeClass,
+                'overflow-hidden flex-shrink-0 bg-[color:var(--surface-20)]',
+                hasImage ? '' : 'flex items-center justify-center',
+              ].join(' ')}
+            >
+              {hasImage ? (
+                <img src={image} alt={`${role} 소개 사진`} className="w-full h-full object-cover" />
+              ) : (
+                <UserRound className="w-9 h-9 text-[color:var(--on-surface-disabled)]" strokeWidth={1.25} aria-hidden />
+              )}
+            </div>
+          );
+        };
+
+        /** Layout A — Gallery Grid (참고 이미지1 스타일 · 정사각 사진 2열 나란히) */
+        const renderCardA = (
+          _role: '신랑' | '신부',
+          _index: number,
+          name: string,
+          profile: IntroProfile | undefined,
+          roleLabelEn: string,
+        ) => {
+          const p = profile ?? { image: '', birthDate: '', mbti: '', hobbies: '', traits: '' };
+          const birthDate = String(p.birthDate ?? '').trim();
+          const mbti = String(p.mbti ?? '').trim();
+          const traits = String(p.traits ?? '').trim();
+          return (
+            <article className="w-full flex flex-col text-left">
+              {renderPhoto(p.image, _role, 'w-full aspect-square')}
+              <div className="mt-4 text-[10px] tracking-[0.28em] uppercase text-on-surface-30 font-medium">
+                {roleLabelEn}
+              </div>
+              <div className="mt-1.5 text-[18px] leading-[1.2] font-semibold text-on-surface-10 tracking-[0.02em] break-keep">
+                {name}
+              </div>
+              {(birthDate || mbti) && (
+                <div className="mt-2 text-[11px] leading-[16px] text-on-surface-20 tabular-nums">
+                  {birthDate}
+                  {birthDate && mbti && <span className="mx-1 text-on-surface-30">·</span>}
+                  <span className="tracking-[0.1em]">{mbti}</span>
+                </div>
+              )}
+              {traits && (
+                <p className="mt-1.5 text-[11px] leading-[16px] text-on-surface-30 break-keep">
+                  {traits}
+                </p>
+              )}
+            </article>
+          );
+        };
+
+        /** Layout B — Editorial Portrait (참고 이미지2 스타일 · 세로사진 + 이름 옆 배치, 좌우 교차) */
+        const renderCardB = (
+          _role: '신랑' | '신부',
+          _index: number,
+          name: string,
+          profile: IntroProfile | undefined,
+          roleLabelEn: string,
+          imageSide: 'left' | 'right',
+        ) => {
+          const p = profile ?? { image: '', birthDate: '', mbti: '', hobbies: '', traits: '' };
+          const birthDate = String(p.birthDate ?? '').trim();
+          const mbti = String(p.mbti ?? '').trim();
+          const traits = String(p.traits ?? '').trim();
+          const textAlign = imageSide === 'left' ? 'items-start text-left' : 'items-end text-right';
+          return (
+            <article className="w-full">
+              <div className={`flex items-stretch gap-4 ${imageSide === 'right' ? 'flex-row-reverse' : ''}`}>
+                <div className="w-[160px] flex-shrink-0">
+                  {renderPhoto(p.image, _role, 'w-[160px] aspect-[3/4]')}
+                </div>
+                <div className={`flex-1 min-w-0 flex flex-col justify-center ${textAlign}`}>
+                  <div className="text-[10px] tracking-[0.28em] uppercase text-on-surface-30 font-medium">
+                    {roleLabelEn}
+                  </div>
+                  <div className="mt-2.5 text-[20px] leading-[1.2] font-medium text-on-surface-10 tracking-[0.03em] break-keep">
+                    {name}
+                  </div>
+                  <div className="mt-3 h-px w-7 bg-[color:var(--on-surface-30)] opacity-50" aria-hidden />
+                  {traits && (
+                    <p className="mt-3 text-[11.5px] leading-[17px] text-on-surface-20 italic break-keep">
+                      « {traits} »
+                    </p>
+                  )}
+                  {(birthDate || mbti) && (
+                    <p className="mt-2.5 text-[10.5px] leading-[15px] text-on-surface-30 tabular-nums tracking-[0.04em]">
+                      {[birthDate, mbti].filter(Boolean).join(' · ')}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </article>
+          );
+        };
+
+        /** Layout C — Centered Focus (세로 포트레이트 중앙 정렬 · 여유 타이포) */
+        const renderCardC = (
+          _role: '신랑' | '신부',
+          _index: number,
+          name: string,
+          profile: IntroProfile | undefined,
+          roleLabelEn: string,
+        ) => {
+          const p = profile ?? { image: '', birthDate: '', mbti: '', hobbies: '', traits: '' };
+          const birthDate = String(p.birthDate ?? '').trim();
+          const mbti = String(p.mbti ?? '').trim();
+          const traits = String(p.traits ?? '').trim();
+          return (
+            <article className="w-full flex flex-col items-center text-center">
+              <div className="w-[58%]">
+                {renderPhoto(p.image, _role, 'w-full aspect-[4/5]')}
+              </div>
+              <div className="mt-5 text-[10px] tracking-[0.32em] uppercase text-on-surface-30 font-medium">
+                {roleLabelEn}
+              </div>
+              <div className="mt-2 text-[24px] leading-[1.1] font-medium text-on-surface-10 tracking-[0.06em] break-keep">
+                {name}
+              </div>
+              <div className="mt-3 h-px w-6 bg-[color:var(--on-surface-30)] opacity-50" aria-hidden />
+              {(birthDate || mbti) && (
+                <div className="mt-3 text-[11.5px] leading-[16px] text-on-surface-30 tabular-nums tracking-[0.04em]">
+                  {[birthDate, mbti].filter(Boolean).join(' · ')}
+                </div>
+              )}
+              {traits && (
+                <p className="mt-3 text-[12.5px] leading-[19px] text-on-surface-20 max-w-[260px] break-keep">
+                  {traits}
+                </p>
+              )}
+            </article>
+          );
+        };
+
+        /** Layout D — Full-Bleed Portrait (풀폭 세로 사진 + 이름 위 역할 라벨 + 우측 메타) */
+        const renderCardD = (
+          _role: '신랑' | '신부',
+          _index: number,
+          name: string,
+          profile: IntroProfile | undefined,
+          roleLabelEn: string,
+        ) => {
+          const p = profile ?? { image: '', birthDate: '', mbti: '', hobbies: '', traits: '' };
+          const birthDate = String(p.birthDate ?? '').trim();
+          const mbti = String(p.mbti ?? '').trim();
+          const traits = String(p.traits ?? '').trim();
+          return (
+            <article className="w-full flex flex-col">
+              {renderPhoto(p.image, _role, 'w-full aspect-[4/5]')}
+              <div className="mt-4 flex items-end justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="text-[10px] tracking-[0.28em] uppercase text-on-surface-30 font-medium">
+                    {roleLabelEn}
+                  </div>
+                  <div className="mt-1.5 text-[24px] leading-[1.1] font-medium text-on-surface-10 tracking-[0.04em] break-keep">
+                    {name}
+                  </div>
+                </div>
+                {(birthDate || mbti) && (
+                  <div className="flex-shrink-0 text-right text-[10.5px] leading-[15px] text-on-surface-30 tabular-nums tracking-[0.04em]">
+                    {birthDate && <div>{birthDate}</div>}
+                    {mbti && <div className="tracking-[0.16em] mt-0.5">{mbti}</div>}
+                  </div>
+                )}
+              </div>
+              {traits && (
+                <p className="mt-3 text-[12.5px] leading-[19px] text-on-surface-20 break-keep">
+                  {traits}
+                </p>
+              )}
+            </article>
+          );
+        };
+
+        const profiles = brideFirst
+          ? [
+              { role: '신부' as const, name: brideName, data: introData.bride, side: 'right' as const },
+              { role: '신랑' as const, name: groomName, data: introData.groom, side: 'left' as const },
+            ]
+          : [
+              { role: '신랑' as const, name: groomName, data: introData.groom, side: 'left' as const },
+              { role: '신부' as const, name: brideName, data: introData.bride, side: 'right' as const },
+            ];
+
+        const cards = profiles.map((p, idx) => {
+          const index = idx + 1;
+          const roleLabelEn = p.role === '신랑' ? 'GROOM' : 'BRIDE';
+          // Layout B 이미지 좌/우 교차: 첫번째=left, 두번째=right (brideFirst면 자동으로 좌우 교차 유지됨)
+          const imageSide: 'left' | 'right' = idx === 0 ? 'left' : 'right';
+          switch (layoutType) {
+            case 'B':
+              return renderCardB(p.role, index, p.name, p.data, roleLabelEn, imageSide);
+            case 'C':
+              return renderCardC(p.role, index, p.name, p.data, roleLabelEn);
+            case 'D':
+              return renderCardD(p.role, index, p.name, p.data, roleLabelEn);
+            case 'A':
+            default:
+              return renderCardA(p.role, index, p.name, p.data, roleLabelEn);
+          }
+        });
+
+        // 레이아웃별 래퍼 컨테이너
+        // A: 2열 그리드 (정사각 사진 나란히)
+        // B: 세로 스택 (좌/우 교차 내부 처리)
+        // C: 여유 간격 센터 정렬
+        // D: 간격 넓은 세로 스택
+        let wrapperEl: React.ReactNode;
+        if (layoutType === 'A') {
+          wrapperEl = (
+            <div className="grid grid-cols-2 gap-5">
+              {cards[0]}
+              {cards[1]}
+            </div>
+          );
+        } else if (layoutType === 'B') {
+          wrapperEl = (
+            <div className="flex flex-col gap-10">
+              {cards[0]}
+              {cards[1]}
+            </div>
+          );
+        } else if (layoutType === 'C') {
+          wrapperEl = (
+            <div className="flex flex-col gap-12 items-center">
+              {cards[0]}
+              <div className="w-10 h-px bg-[color:var(--border-10)]" aria-hidden />
+              {cards[1]}
+            </div>
+          );
+        } else {
+          wrapperEl = (
+            <div className="flex flex-col gap-10">
+              {cards[0]}
+              {cards[1]}
+            </div>
+          );
+        }
+
+        return (
+          <div className="max-w-full mx-auto w-full">
+            <div className="w-full px-0 text-[0.8125em] text-on-surface-20 text-center pb-[30px]">
+              <p className="text-[22px] font-medium text-on-surface-10 mb-1">{introHeading}</p>
+              <p className="text-[13px] font-normal text-on-surface-30 opacity-70 [font-stretch:120%] mb-0">
+                About Us
+              </p>
+            </div>
+            {wrapperEl}
           </div>
         );
       }
@@ -3516,7 +4397,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         }
 
         return (
-          <div className="mx-auto w-full px-10 space-y-5">
+          <div className="mx-auto w-full px-5 space-y-5">
             {contactEnabled && useContactThumbnail && !!(data.share?.thumbnail ?? '').trim() && (
               <div className="w-full aspect-[10/4] bg-[color:var(--surface-20)] overflow-hidden mb-[40px] rounded-[8px]">
                 <img
@@ -3554,7 +4435,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
             )}
 
             {contactEnabled && (
-              <div className="w-[320px] mx-auto rounded-2xl border border-border bg-white/85 pt-0 pb-0 px-0 shadow-[0_1px_2px_rgba(0,0,0,0.03)] overflow-hidden">
+              <div className="w-full rounded-2xl border border-border bg-white/85 pt-0 pb-0 px-0 shadow-[0_1px_2px_rgba(0,0,0,0.03)] overflow-hidden">
                 <button
                   type="button"
                   onClick={() => setContactPreviewExpanded((prev) => !prev)}
@@ -3626,7 +4507,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         const dateText = (data.eventInfo.date ?? "").trim();
         const eventDate = parseEventDateLocal(dateText);
         const isValidEventDate = eventDate !== null;
-        const showDday = (data.eventInfo as any)?.showDday !== false;
+        const showDday = (data.eventInfo as any)?.showDday !== false && isSectionEnabled('eventDate');
         const calendarDisplayType = normalizeCalendarDisplayType((data.eventInfo as any)?.calendarDisplayType);
         const calendarUseThemeColor = true;
         const timeTrimmed = (data.eventInfo.time ?? "").trim();
@@ -4850,9 +5731,9 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 ? (["hosts", "eventInfo"] as const).map((id) => itemById[id])
                 : navGroup === 2
                   ? (["theme", "main", "bgm"] as const).map((id) => itemById[id])
-                  : navGroup === 3
-                    ? (["greeting", "contact", "eventDate", "location"] as const).map((id) => itemById[id])
-                    : navGroup === 4
+                    : navGroup === 3
+                      ? (["greeting", "intro", "contact", "eventDate", "location"] as const).map((id) => itemById[id])
+                      : navGroup === 4
                       ? orderedContentOptionalItems
                       : otherOptionItems;
             return (
@@ -4878,7 +5759,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           }`}
                           {...handleProps}
                           onClick={() => {
-                            if (!isDragging) scrollToSection(item.id);
+                            if (!isDragging) handleSidebarSelect(item.id);
                           }}
                         >
                           <span className="absolute top-1 right-1 pointer-events-none text-[color:var(--on-surface-disabled)]">
@@ -4899,7 +5780,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                     return (
                       <div
                         key={item.id}
-                        onClick={() => scrollToSection(item.id)}
+                        onClick={() => handleSidebarSelect(item.id)}
                         data-sidebar-item-id={item.id}
                         className={`flex flex-col items-center justify-center gap-y-1 w-[80px] min-h-[64px] py-1 rounded-lg cursor-pointer transition-colors shadow-none ${
                           isDisabled
@@ -5094,7 +5975,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   </div>
 
                   {isInitiallyExpanded && (!item.hasSwitch || isSectionEnabled(item.id)) && (
-                    <div className="p-6 bg-white flex flex-col gap-4 border-t border-border">
+                    <div className="p-4 sm:p-6 bg-white flex flex-col gap-4 border-t border-border">
                       {/* 테마 섹션 */}
                       {item.id === 'theme' && (
                         <>
@@ -5195,7 +6076,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       {item.id === 'main' && (
                         <>
                           <FormItem label="인트로 디자인">
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap gap-3">
                               {([
                                 { value: 'A' as const, label: 'A' },
                                 { value: 'B' as const, label: 'B' },
@@ -5204,14 +6085,28 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 { value: 'G' as const, label: 'E' },
                                 { value: 'H' as const, label: 'F' },
                                 { value: 'I' as const, label: 'G' },
-                              ] as const).map((opt) => (
-                                <OptionChip
-                                  key={opt.value}
-                                  label={`타입 ${opt.label}`}
-                                  active={(data.main as any).introType === opt.value}
-                                  onClick={() => updateData('main.introType', opt.value)}
-                                />
-                              ))}
+                              ] as const).map((opt) => {
+                                const active = (data.main as any).introType === opt.value;
+                                return (
+                                  <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => updateData('main.introType', opt.value)}
+                                    className={cn(
+                                      'flex flex-col items-center gap-1.5 rounded-lg p-1.5 transition-[color,background-color,outline-color,outline-offset]',
+                                      active
+                                        ? 'bg-slate-50 outline outline-1 outline-offset-2 outline-[color:var(--on-surface-10)]'
+                                        : 'outline-none ring-1 ring-transparent hover:bg-slate-50',
+                                    )}
+                                    title={`타입 ${opt.label}`}
+                                  >
+                                    <IntroTypeSwatch variant={opt.value} />
+                                    <span className="text-[11px] font-medium text-on-surface-20">
+                                      타입 {opt.label}
+                                    </span>
+                                  </button>
+                                );
+                              })}
                             </div>
                           </FormItem>
 
@@ -6123,61 +7018,13 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             })()}
                           </FormItem>
                           <FormItem label="웨딩홀">
-                            <div ref={venueInputWrapRef} className="relative w-full">
-                              <Input
-                                placeholder="예: 더 신라 서울"
-                                value={data.eventInfo.venueName}
-                                onFocus={() => {
-                                  if (hasVenueQuery) setVenueSuggestOpen(true);
-                                }}
-                                onChange={(e) => {
-                                  updateData('eventInfo.venueName', e.target.value);
-                                  setVenueSuggestOpen(e.target.value.trim().length > 0);
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Escape') setVenueSuggestOpen(false);
-                                  if (e.key === 'Enter' && venueSuggestions.length > 0 && venueInputValue.trim().length > 0) {
-                                    e.preventDefault();
-                                    void applyVenueSuggestion(venueSuggestions[0]);
-                                  }
-                                }}
-                                className="shadow-none flex-1"
-                              />
-                            </div>
-                            {venueSuggestOpen && hasVenueQuery && venueDropdownStyle && portalRoot && createPortal(
-                              <div
-                                ref={venueDropdownRef}
-                                className="fixed z-[200] overflow-hidden rounded-lg border border-border bg-white shadow-sm"
-                                style={{
-                                  top: venueDropdownStyle.top,
-                                  left: venueDropdownStyle.left,
-                                  width: venueDropdownStyle.width,
-                                }}
-                              >
-                                {venueSuggestions.length > 0 ? (
-                                  <ul className="max-h-56 overflow-y-auto py-1">
-                                    {venueSuggestions.map((venue) => (
-                                      <li key={`${venue.name}-${venue.address}`}>
-                                        <button
-                                          type="button"
-                                          className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left hover:bg-slate-50"
-                                          onClick={() => void applyVenueSuggestion(venue)}
-                                        >
-                                          <span className="text-[13px] text-on-surface-10">{venue.name}</span>
-                                          <span className="text-[11px] text-on-surface-30">{venue.area}</span>
-                                          <span className="text-[11px] text-on-surface-30/80">{venue.address}</span>
-                                        </button>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                ) : (
-                                  <p className="px-3 py-2 text-[12px] text-on-surface-30">
-                                    일치하는 예식장이 없습니다.
-                                  </p>
-                                )}
-                              </div>,
-                              portalRoot
-                            )}
+                            <VenueSearchField
+                              mode="realtime"
+                              value={data.eventInfo.venueName ?? ''}
+                              onChangeLive={(v) => updateData('eventInfo.venueName', v)}
+                              onPickSuggestion={applyVenueSuggestion}
+                              placeholder="예: 더 신라 서울"
+                            />
                           </FormItem>
                           <FormItem label="웨딩홀 상세">
                             <Input
@@ -6522,6 +7369,15 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                         </>
                       )}
 
+                      {/* 소개(About Us) 섹션 */}
+                      {item.id === 'intro' && (
+                        <IntroEditor
+                          data={data}
+                          updateData={updateData}
+                          isEnabled={isSectionEnabled('intro')}
+                        />
+                      )}
+
                       {/* 오시는 길 섹션 */}
                       {item.id === 'location' && (
                         <>
@@ -6545,12 +7401,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               </div>
                             </FormItem>
                             <FormItem label="웨딩홀">
-                              <Input
-                                disabled
-                                readOnly
-                                value={eventVenueReadonlyDisplay(data.eventInfo)}
-                                placeholder="예식정보에서 웨딩홀을 입력하세요"
-                                className="shadow-none flex-1"
+                              <VenueSearchField
+                                mode="deferred"
+                                value={data.eventInfo.venueName ?? ''}
+                                onCommit={(v) => updateData('eventInfo.venueName', v)}
+                                onPickSuggestion={applyVenueSuggestion}
+                                placeholder="예: 더 신라 서울"
                               />
                             </FormItem>
                             <FormItem label="주소">
@@ -7052,22 +7908,11 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                         <>
                           <div className="flex flex-col gap-5">
                             <FormItem label="제목">
-                              <div className="flex flex-wrap gap-2 w-full">
-                                {NOTICE_HEADING_OPTIONS.map((opt) => {
-                                  const current = String((data.notice as any)?.sectionHeading ?? "").trim();
-                                  const active =
-                                    current === opt ||
-                                    (!current && opt === NOTICE_HEADING_OPTIONS[0]);
-                                  return (
-                                    <OptionChip
-                                      key={opt}
-                                      label={opt}
-                                      active={active}
-                                      onClick={() => updateData("notice.sectionHeading", opt)}
-                                    />
-                                  );
-                                })}
-                              </div>
+                              <HeadingChipPicker
+                                value={String((data.notice as any)?.sectionHeading ?? "")}
+                                options={NOTICE_HEADING_OPTIONS}
+                                onChange={(v) => updateData("notice.sectionHeading", v)}
+                              />
                             </FormItem>
                           </div>
                           {noticeSections.map((section, idx) => (
@@ -8214,6 +9059,9 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   .filter((sectionId) => {
                     if (sectionId === "main" || sectionId === "hosts") return false;
                     if (sectionId === "rsvp" && isRsvpPreviewExpired) return false;
+                    if (sectionId === "intro" && !isSectionEnabled("intro")) return false;
+                    if (sectionId === "eventInfo" && !isSectionEnabled("eventInfo")) return false;
+                    if (sectionId === "location" && !isSectionEnabled("location")) return false;
                     return true;
                   })
                   .map((sectionId) => {
@@ -8255,20 +9103,29 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   ].join(" ")}
                   aria-label={isPlaying ? "배경음악 끄기" : "배경음악 켜기"}
                 >
-                  <span
-                    className="w-5 h-5 shrink-0 bg-current"
-                    style={{
-                      WebkitMaskImage: `url(${isPlaying ? "/music-note.svg" : "/music-off.svg"})`,
-                      maskImage: `url(${isPlaying ? "/music-note.svg" : "/music-off.svg"})`,
-                      WebkitMaskRepeat: "no-repeat",
-                      maskRepeat: "no-repeat",
-                      WebkitMaskPosition: "center",
-                      maskPosition: "center",
-                      WebkitMaskSize: "contain",
-                      maskSize: "contain",
-                    } as React.CSSProperties}
-                    aria-hidden
-                  />
+                  {isPlaying ? (
+                    <span className="bgm-eq-bars" aria-hidden>
+                      <span />
+                      <span />
+                      <span />
+                      <span />
+                    </span>
+                  ) : (
+                    <span
+                      className="w-5 h-5 shrink-0 bg-current"
+                      style={{
+                        WebkitMaskImage: "url(/music-off.svg)",
+                        maskImage: "url(/music-off.svg)",
+                        WebkitMaskRepeat: "no-repeat",
+                        maskRepeat: "no-repeat",
+                        WebkitMaskPosition: "center",
+                        maskPosition: "center",
+                        WebkitMaskSize: "contain",
+                        maskSize: "contain",
+                      } as React.CSSProperties}
+                      aria-hidden
+                    />
+                  )}
                 </button>
               )}
               {galleryDetailOpen && galleryDetailImages.length > 0 && (

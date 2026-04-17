@@ -38,19 +38,19 @@ export default function HomePage() {
       <AppHeader />
       <main className="min-h-[calc(100vh-64px)] bg-white text-[#111]">
         <section className="relative w-full bg-[url('/hero-bg-rings.png')] bg-cover bg-center bg-no-repeat">
-          <div className="absolute inset-0 bg-white/30" aria-hidden="true" />
-          <div className="relative z-10 mx-auto w-full max-w-7xl px-6 py-24 md:py-32">
-            <p className="text-sm font-semibold text-[#6b7280]">dearhour · 모바일 초대장 서비스</p>
-            <h1 className="mt-4 text-4xl font-extrabold tracking-tight md:text-6xl">
+          <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
+          <div className="relative z-10 mx-auto w-full max-w-7xl px-6 py-24 text-center text-white md:py-32">
+            <p className="text-sm font-semibold text-white/80">dearhour · 모바일 초대장 서비스</p>
+            <h1 className="mt-4 text-4xl font-extrabold tracking-tight leading-[80px] md:text-6xl md:leading-[80px]">
               소중한 날을 특별하게,
               <br />
               모바일 초대장을 쉽고 빠르게
             </h1>
-            <p className="mt-6 max-w-3xl text-base leading-relaxed text-[#4b5563] md:text-lg">
+            <p className="mx-auto mt-6 max-w-3xl text-base leading-relaxed text-white/90 md:text-lg">
               청첩장, 부고장, 돌잔치 초대장까지.
               템플릿 선택 후 정보만 입력하면 누구나 손쉽게 완성도 높은 모바일 초대장을 만들 수 있습니다.
             </p>
-            <div className="mt-10 flex flex-wrap gap-3">
+            <div className="mt-10 flex flex-wrap justify-center gap-3">
               <Link
                 href="/editor"
                 className="inline-flex h-11 items-center rounded-lg bg-[#111] px-5 text-sm font-semibold text-white hover:bg-black"
