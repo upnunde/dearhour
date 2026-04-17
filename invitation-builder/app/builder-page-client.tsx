@@ -7,6 +7,7 @@ import { Palette, Music, Image as ImageIcon, Users, UserRound, MessageSquare, Me
 import AppHeader from '@/components/AppHeader';
 import type { CardData, EventInfo, IntroProfile } from "../store/useCardStore";
 import { DEFAULT_MAIN_PRESET_URL, MAIN_IMAGE_PRESETS } from "@/lib/main-image-presets";
+import { isServiceProvidedThumbnailUrl } from "@/lib/service-provided-image-url";
 import { searchWeddingVenues, type WeddingVenue } from "@/lib/wedding-venues";
 import { getDefaultTransitGuides } from "@/lib/default-transit-guides";
 import { HostsIntroPreview } from "./hosts-intro-preview";
@@ -1334,7 +1335,7 @@ function IntroEditor({
               >
                 {hasImage ? '사진 변경' : '사진 업로드'}
               </button>
-              {hasImage && (
+              {hasImage && !isServiceProvidedThumbnailUrl(String(profile.image ?? '')) && (
                 <button
                   type="button"
                   className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
@@ -1343,7 +1344,7 @@ function IntroEditor({
                   이미지 편집
                 </button>
               )}
-              {hasImage && (
+              {hasImage && !isServiceProvidedThumbnailUrl(String(profile.image ?? '')) && (
                 <button
                   type="button"
                   className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-30 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
@@ -1861,24 +1862,28 @@ function MultiImageGrid({
             >
               {hasImg ? '' : '+'}
             </button>
-            {hasImg && (
+            {hasImg && (allowReorder || !isServiceProvidedThumbnailUrl(slot.src)) && (
               <div className={cn("absolute right-1 top-1 flex flex-col gap-1 transition-opacity", touchMode ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
-                <button
-                  type="button"
-                  className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white"
-                  aria-label="이미지 수정"
-                  onClick={(e) => { e.stopPropagation(); onEdit(realIndex, slot.src); }}
-                >
-                  <Pencil className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white"
-                  aria-label="이미지 삭제"
-                  onClick={(e) => { e.stopPropagation(); onDelete(realIndex); }}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {!isServiceProvidedThumbnailUrl(slot.src) && (
+                  <>
+                    <button
+                      type="button"
+                      className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white"
+                      aria-label="이미지 수정"
+                      onClick={(e) => { e.stopPropagation(); onEdit(realIndex, slot.src); }}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white"
+                      aria-label="이미지 삭제"
+                      onClick={(e) => { e.stopPropagation(); onDelete(realIndex); }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
                 {allowReorder && (
                   <button
                     type="button"
@@ -1963,48 +1968,54 @@ function GalleryImageGrid({
                   }}
                   aria-label={`갤러리 이미지 ${i + 1} 수정`}
                 />
-                <div className={cn("absolute right-1 top-1 flex flex-col gap-1 transition-opacity", touchMode ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
-                  <button
-                    type="button"
-                    className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white"
-                    aria-label="이미지 수정"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (onEdit && slot.src) {
-                        onEdit(i, slot.src);
-                        return;
-                      }
-                      const el = document.getElementById(`gallery-image-${i}`) as HTMLInputElement | null;
-                      el?.click();
-                    }}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white"
-                    aria-label="이미지 삭제"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const next = [...normalized];
-                      next.splice(i, 1);
-                      onChange(next);
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                  {allowReorder && (
-                    <button
-                      type="button"
-                      {...handleProps}
-                      className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white cursor-grab active:cursor-grabbing"
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label="이미지 이동"
-                    >
-                      <Move className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
+                {!!slot.src && (allowReorder || !isServiceProvidedThumbnailUrl(slot.src)) && (
+                  <div className={cn("absolute right-1 top-1 flex flex-col gap-1 transition-opacity", touchMode ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
+                    {!isServiceProvidedThumbnailUrl(slot.src) && (
+                      <>
+                        <button
+                          type="button"
+                          className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white"
+                          aria-label="이미지 수정"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onEdit && slot.src) {
+                              onEdit(i, slot.src);
+                              return;
+                            }
+                            const el = document.getElementById(`gallery-image-${i}`) as HTMLInputElement | null;
+                            el?.click();
+                          }}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white"
+                          aria-label="이미지 삭제"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const next = [...normalized];
+                            next.splice(i, 1);
+                            onChange(next);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                    {allowReorder && (
+                      <button
+                        type="button"
+                        {...handleProps}
+                        className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white cursor-grab active:cursor-grabbing"
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label="이미지 이동"
+                      >
+                        <Move className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -6109,7 +6120,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                           >
                                             {hasMainImage ? '사진 변경' : '사진 업로드'}
                                           </button>
-                                          {hasMainImage && (
+                                          {hasMainImage && !isServiceProvidedThumbnailUrl(String(data.main.image ?? '')) && (
                                             <>
                                               <button
                                                 type="button"
@@ -6731,7 +6742,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                     >
                                       이미지 고르기
                                     </button>
-                                    {data.share?.thumbnail && (
+                                    {data.share?.thumbnail && !isServiceProvidedThumbnailUrl(String(data.share.thumbnail)) && (
                                       <div className="flex items-center gap-2">
                                         <button
                                           type="button"
@@ -7056,15 +7067,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                       >
                                         이미지 고르기
                                       </button>
-                                      {!!(data.greeting as any)?.thumbnail && (
-                                        <button
-                                          type="button"
-                                          className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit self-start whitespace-nowrap leading-none flex-shrink-0"
-                                          onClick={() => updateData('greeting.thumbnail', '')}
-                                        >
-                                          삭제
-                                        </button>
-                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -8699,7 +8701,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                     >
                                       이미지 고르기
                                     </button>
-                                    {data.share?.thumbnail && (
+                                    {data.share?.thumbnail && !isServiceProvidedThumbnailUrl(String(data.share.thumbnail)) && (
                                       <button
                                         type="button"
                                         className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit self-start whitespace-nowrap leading-none flex-shrink-0"
