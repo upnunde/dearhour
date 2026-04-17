@@ -6719,7 +6719,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                       )}
                                     </div>
                                   </div>
-                                  <div className="flex min-w-0 w-full flex-row flex-wrap gap-2 sm:flex-1 sm:max-w-[min(100%,200px)] sm:flex-col sm:flex-nowrap">
+                                  <div className="flex min-w-0 w-full flex-col items-start gap-2 sm:flex-1 sm:max-w-[min(100%,200px)] sm:flex-nowrap">
                                     <label className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit max-w-full whitespace-nowrap leading-none flex-shrink-0">
                                       사진 업로드
                                       <input
