@@ -6720,46 +6720,56 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                     </div>
                                   </div>
                                   <div className="flex min-w-0 w-full flex-row flex-wrap gap-2 sm:flex-1 sm:max-w-[min(100%,200px)] sm:flex-col sm:flex-nowrap">
-                                    <label className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit max-w-full whitespace-nowrap leading-none flex-shrink-0">
-                                      사진 업로드
-                                      <input
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={(e) => {
-                                          const file = e.target.files?.[0];
-                                          if (!file) return;
-                                          const url = URL.createObjectURL(file);
-                                          updateData('share.thumbnail', url);
-                                          e.currentTarget.value = '';
-                                        }}
-                                      />
-                                    </label>
-                                    <button
-                                      type="button"
-                                      className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none flex-shrink-0 w-fit max-w-full"
-                                      onClick={() => setShareThumbnailPickerOpen(true)}
-                                    >
-                                      이미지 고르기
-                                    </button>
-                                    {data.share?.thumbnail && !isServiceProvidedThumbnailUrl(String(data.share.thumbnail)) && (
-                                      <div className="flex items-center gap-2">
-                                        <button
-                                          type="button"
-                                          className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit max-w-full whitespace-nowrap leading-none flex-shrink-0"
-                                          onClick={() => openImageEditor({ kind: 'shareThumbnail' }, data.share.thumbnail)}
-                                        >
-                                          편집
-                                        </button>
-                                        <button
-                                          type="button"
-                                          className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit max-w-full whitespace-nowrap leading-none flex-shrink-0"
-                                          onClick={() => updateData('share.thumbnail', '')}
-                                        >
-                                          삭제
-                                        </button>
-                                      </div>
-                                    )}
+                                    {(() => {
+                                      const thumb = String(data.share?.thumbnail ?? '').trim();
+                                      const userUploaded = !!thumb && !isServiceProvidedThumbnailUrl(thumb);
+                                      return (
+                                        <>
+                                          <label className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit max-w-full whitespace-nowrap leading-none flex-shrink-0">
+                                            사진 업로드
+                                            <input
+                                              type="file"
+                                              accept="image/*"
+                                              className="hidden"
+                                              onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+                                                const url = URL.createObjectURL(file);
+                                                updateData('share.thumbnail', url);
+                                                e.currentTarget.value = '';
+                                              }}
+                                            />
+                                          </label>
+                                          {!userUploaded && (
+                                            <button
+                                              type="button"
+                                              className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none flex-shrink-0 w-fit max-w-full"
+                                              onClick={() => setShareThumbnailPickerOpen(true)}
+                                            >
+                                              이미지 고르기
+                                            </button>
+                                          )}
+                                          {userUploaded && (
+                                            <div className="flex items-center gap-2">
+                                              <button
+                                                type="button"
+                                                className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit max-w-full whitespace-nowrap leading-none flex-shrink-0"
+                                                onClick={() => openImageEditor({ kind: 'shareThumbnail' }, data.share.thumbnail)}
+                                              >
+                                                편집
+                                              </button>
+                                              <button
+                                                type="button"
+                                                className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit max-w-full whitespace-nowrap leading-none flex-shrink-0"
+                                                onClick={() => updateData('share.thumbnail', '')}
+                                              >
+                                                삭제
+                                              </button>
+                                            </div>
+                                          )}
+                                        </>
+                                      );
+                                    })()}
                                   </div>
                                 </div>
                               </div>
@@ -8679,37 +8689,56 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                     )}
                                   </div>
                                   <div className="flex w-full flex-wrap items-center gap-2 sm:h-full sm:w-auto sm:flex-col sm:items-start sm:justify-start">
-                                    <label className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit self-start whitespace-nowrap leading-none flex-shrink-0">
-                                      사진 업로드
-                                      <input
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={(e) => {
-                                          const file = e.target.files?.[0];
-                                          if (!file) return;
-                                          const url = URL.createObjectURL(file);
-                                          updateData('share.thumbnail', url);
-                                          e.currentTarget.value = '';
-                                        }}
-                                      />
-                                    </label>
-                                    <button
-                                      type="button"
-                                      className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none flex-shrink-0 w-fit self-start"
-                                      onClick={() => setShareThumbnailPickerOpen(true)}
-                                    >
-                                      이미지 고르기
-                                    </button>
-                                    {data.share?.thumbnail && !isServiceProvidedThumbnailUrl(String(data.share.thumbnail)) && (
-                                      <button
-                                        type="button"
-                                        className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit self-start whitespace-nowrap leading-none flex-shrink-0"
-                                        onClick={() => updateData('share.thumbnail', '')}
-                                      >
-                                        삭제
-                                      </button>
-                                    )}
+                                    {(() => {
+                                      const thumb = String(data.share?.thumbnail ?? '').trim();
+                                      const userUploaded = !!thumb && !isServiceProvidedThumbnailUrl(thumb);
+                                      return (
+                                        <>
+                                          <label className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit self-start whitespace-nowrap leading-none flex-shrink-0">
+                                            사진 업로드
+                                            <input
+                                              type="file"
+                                              accept="image/*"
+                                              className="hidden"
+                                              onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+                                                const url = URL.createObjectURL(file);
+                                                updateData('share.thumbnail', url);
+                                                e.currentTarget.value = '';
+                                              }}
+                                            />
+                                          </label>
+                                          {!userUploaded && (
+                                            <button
+                                              type="button"
+                                              className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none flex-shrink-0 w-fit self-start"
+                                              onClick={() => setShareThumbnailPickerOpen(true)}
+                                            >
+                                              이미지 고르기
+                                            </button>
+                                          )}
+                                          {userUploaded && (
+                                            <>
+                                              <button
+                                                type="button"
+                                                className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit self-start whitespace-nowrap leading-none flex-shrink-0"
+                                                onClick={() => openImageEditor({ kind: 'shareThumbnail' }, data.share.thumbnail)}
+                                              >
+                                                편집
+                                              </button>
+                                              <button
+                                                type="button"
+                                                className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit self-start whitespace-nowrap leading-none flex-shrink-0"
+                                                onClick={() => updateData('share.thumbnail', '')}
+                                              >
+                                                삭제
+                                              </button>
+                                            </>
+                                          )}
+                                        </>
+                                      );
+                                    })()}
                                   </div>
                                 </div>
                               </div>
