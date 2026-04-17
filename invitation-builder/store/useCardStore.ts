@@ -179,6 +179,14 @@ export interface CardData {
     enableCopy: boolean;
     enableKakao: boolean;
   };
+  /**
+   * 연락처 섹션 상단 배너 — 공유(OG) 썸네일과 별도 필드 (동기화하지 않음).
+   * 구버전 저장 데이터에는 없을 수 있으며, 로드 시 `ensureContactBlock`으로 한 번 보정합니다.
+   */
+  contact: {
+    useThumbnail: boolean;
+    thumbnail: string;
+  };
   protect: { preventCapture: boolean; preventZoom: boolean; preventDownload: boolean };
   /** 참석 여부(RSVP) — 섹션 ON/OFF는 `sectionEnabled.rsvp` */
   rsvp: {
@@ -196,6 +204,30 @@ export interface CardData {
   /** 결제·저장 메타(마이페이지·워터마크 등과 연동 예정) */
   billing: { isPaid: boolean; savedAt?: string };
   sectionEnabled: Record<string, boolean>;
+}
+
+/** 구버전(card에 `contact` 없음)만 share 값으로 채웁니다. 이후에는 각각 독립적으로 편집됩니다. */
+export function ensureContactBlock(data: CardData): CardData {
+  const c = data.contact;
+  if (c != null && typeof c === 'object') {
+    const hasUse = typeof c.useThumbnail === 'boolean';
+    const hasThumb = typeof c.thumbnail === 'string';
+    if (hasUse && hasThumb) return data;
+  }
+  const partial = c && typeof c === 'object' ? c : null;
+  return {
+    ...data,
+    contact: {
+      useThumbnail:
+        partial && typeof partial.useThumbnail === 'boolean'
+          ? partial.useThumbnail
+          : (data.share?.useThumbnail ?? true),
+      thumbnail:
+        partial && typeof partial.thumbnail === 'string'
+          ? partial.thumbnail
+          : (data.share?.thumbnail ?? ''),
+    },
+  };
 }
 
 // --- 3. 스토어 인터페이스 ---
@@ -341,6 +373,10 @@ export const useCardStore = create<CardStore>((set) => ({
       enableCopy: true,
       enableKakao: true,
     },
+    contact: {
+      useThumbnail: true,
+      thumbnail: '',
+    },
     protect: { preventCapture: false, preventZoom: false, preventDownload: false },
     rsvp: {
       title: '참석 여부',
@@ -365,7 +401,7 @@ export const useCardStore = create<CardStore>((set) => ({
   updateEventInfo: (newInfo) => set((state) => ({ data: { ...state.data, eventInfo: { ...state.data.eventInfo, ...newInfo } } })),
   updateGreeting: (newGreeting) => set((state) => ({ data: { ...state.data, greeting: { ...state.data.greeting, ...newGreeting } } })),
   updateLocation: (newLocation) => set((state) => ({ data: { ...state.data, location: { ...state.data.location, ...newLocation } } })),
-  setData: (nextData) => set(() => ({ data: nextData })),
+  setData: (nextData) => set(() => ({ data: ensureContactBlock(nextData) })),
   
   // 문자열 경로를 받아 중첩된 객체를 안전하게 업데이트하는 로직
   updateData: (path, value) => set((state) => {

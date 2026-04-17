@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Palette, Music, Image as ImageIcon, Users, UserRound, MessageSquare, MessageCircle, Phone, CalendarHeart, MapPin, Bell, Images, Wallet, BookOpen, Youtube, Share2, Shield, CheckCircle2, GripVertical, Play, Pause, VolumeX, Volume2, X, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, RotateCw, RefreshCcw, Move, ArrowUpDown, ClipboardCheck, Calendar, Settings, Bus, Train, Car, ParkingCircle, Route, AlertCircle } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
-import type { CardData, EventInfo, IntroProfile } from "../store/useCardStore";
+import { ensureContactBlock, type CardData, type EventInfo, type IntroProfile } from "../store/useCardStore";
 import { DEFAULT_MAIN_PRESET_URL, MAIN_IMAGE_PRESETS } from "@/lib/main-image-presets";
 import { isServiceProvidedThumbnailUrl } from "@/lib/service-provided-image-url";
 import { searchWeddingVenues, type WeddingVenue } from "@/lib/wedding-venues";
@@ -2076,11 +2076,13 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const [activeSection, setActiveSection] = useState(sidebarItems[0].id);
   const { data, updateData, setData, updateLocation } = useCardStore();
   const cloneCardData = (source: CardData): CardData => {
+    let cloned: CardData;
     try {
-      return structuredClone(source);
+      cloned = structuredClone(source);
     } catch {
-      return JSON.parse(JSON.stringify(source));
+      cloned = JSON.parse(JSON.stringify(source));
     }
+    return ensureContactBlock(cloned);
   };
   const [invitationTabs, setInvitationTabs] = useState<Array<{ id: string; label: string; data: CardData }>>([]);
   const [activeInvitationTabId, setActiveInvitationTabId] = useState<string>("");
@@ -2279,7 +2281,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   }, [data.location, locationSearchOpen]);
 
   const [sharePreviewOpen, setSharePreviewOpen] = useState(false);
-  const [shareThumbnailPickerOpen, setShareThumbnailPickerOpen] = useState(false);
+  /** 공유·연락처 각각 독립 프리셋 선택(null이면 닫힘) */
+  const [shareThumbPresetPickerFor, setShareThumbPresetPickerFor] = useState<null | 'share' | 'contact'>(null);
   const [greetingThumbnailPickerOpen, setGreetingThumbnailPickerOpen] = useState(false);
   const [mainPresetPickerOpen, setMainPresetPickerOpen] = useState(false);
   const [rsvpPreviewModalOpen, setRsvpPreviewModalOpen] = useState(false);
@@ -2691,6 +2694,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     | { kind: 'multi'; index: number }
     | { kind: 'gallery'; index: number }
     | { kind: 'shareThumbnail' }
+    | { kind: 'contactThumbnail' }
     | { kind: 'intro'; role: 'groom' | 'bride' }
     | null
   >(null);
@@ -3603,6 +3607,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       | { kind: 'multi'; index: number }
       | { kind: 'gallery'; index: number }
       | { kind: 'shareThumbnail' }
+      | { kind: 'contactThumbnail' }
       | { kind: 'intro'; role: 'groom' | 'bride' },
     src: string,
   ) => {
@@ -3616,7 +3621,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     if (target.kind === 'gallery') {
       const ratio = ((data.gallery as any)?.imageRatio ?? 'portrait') as string;
       setImageEditorAspect(ratio === 'square' ? 'square' : 'portrait');
-    } else if (target.kind === 'shareThumbnail') {
+    } else if (target.kind === 'shareThumbnail' || target.kind === 'contactThumbnail') {
       setImageEditorAspect('landscape10x4');
     } else {
       setImageEditorAspect('portrait');
@@ -3680,6 +3685,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         try { URL.revokeObjectURL(prevUrl); } catch {}
       }
       updateData('share.thumbnail', url);
+    } else if (imageEditorTarget.kind === 'contactThumbnail') {
+      const prevUrl = String((data.contact as any)?.thumbnail ?? '');
+      if (prevUrl.startsWith('blob:')) {
+        try { URL.revokeObjectURL(prevUrl); } catch {}
+      }
+      updateData('contact.thumbnail', url);
     } else if (imageEditorTarget.kind === 'intro') {
       const prevIntroUrl = String(((data as any).intro?.[imageEditorTarget.role]?.image ?? ''));
       if (prevIntroUrl.startsWith('blob:')) {
@@ -4218,7 +4229,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       }
       case 'contact': {
         const contactEnabled = isSectionEnabled('contact');
-        const useContactThumbnail = (data.share as any)?.useThumbnail ?? true;
+        const useContactThumbnail = (data.contact as any)?.useThumbnail ?? true;
         const brideFirstInfo = !!((data as any).i18n?.brideFirstInfo ?? false);
         const groomName = (data.hosts.groom.name ?? '').trim() || '신랑';
         const brideName = (data.hosts.bride.name ?? '').trim() || '신부';
@@ -4319,10 +4330,10 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
         return (
           <div className="mx-auto w-full px-5 space-y-5">
-            {contactEnabled && useContactThumbnail && !!(data.share?.thumbnail ?? '').trim() && (
+            {contactEnabled && useContactThumbnail && !!(data.contact?.thumbnail ?? '').trim() && (
               <div className="w-full aspect-[10/4] bg-[color:var(--surface-20)] overflow-hidden mb-[40px] rounded-[8px]">
                 <img
-                  src={(data.share?.thumbnail ?? '').trim()}
+                  src={(data.contact?.thumbnail ?? '').trim()}
                   alt="혼주 섹션 이미지"
                   className="w-full h-full object-cover"
                 />
@@ -6685,31 +6696,31 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 role="button"
                                 tabIndex={0}
                                 className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
-                                onClick={() => updateData('share.useThumbnail', !((data.share as any)?.useThumbnail ?? true))}
+                                onClick={() => updateData('contact.useThumbnail', !((data.contact as any)?.useThumbnail ?? true))}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter' || e.key === ' ') {
-                                    updateData('share.useThumbnail', !((data.share as any)?.useThumbnail ?? true));
+                                    updateData('contact.useThumbnail', !((data.contact as any)?.useThumbnail ?? true));
                                   }
                                 }}
                               >
                                 <CircleCheckbox
-                                  checked={!!((data.share as any)?.useThumbnail ?? true)}
-                                  onChange={(e) => updateData('share.useThumbnail', e.target.checked)}
+                                  checked={!!((data.contact as any)?.useThumbnail ?? true)}
+                                  onChange={(e) => updateData('contact.useThumbnail', e.target.checked)}
                                 />
                                 이미지
                               </span>
                             </div>
                           </FormItem>
-                          {((data.share as any)?.useThumbnail ?? true) && (
+                          {((data.contact as any)?.useThumbnail ?? true) && (
                             <FormItem label="썸네일">
                               <div className="flex min-w-0 flex-1 flex-col gap-2">
                                 <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:gap-3">
                                   <div className="flex w-full min-w-0 justify-start sm:flex-1 sm:justify-start">
                                     <div className="aspect-[10/4] w-full max-w-[200px] rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden">
-                                      {data.share?.thumbnail ? (
+                                      {data.contact?.thumbnail ? (
                                         <img
-                                          src={data.share.thumbnail}
-                                          alt="공유 썸네일 미리보기"
+                                          src={data.contact.thumbnail}
+                                          alt="연락처 썸네일 미리보기"
                                           className="h-full w-full object-cover"
                                         />
                                       ) : (
@@ -6730,35 +6741,35 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                           const file = e.target.files?.[0];
                                           if (!file) return;
                                           const url = URL.createObjectURL(file);
-                                          updateData('share.thumbnail', url);
+                                          updateData('contact.thumbnail', url);
                                           e.currentTarget.value = '';
                                         }}
                                       />
                                     </label>
-                                    {(!String(data.share?.thumbnail ?? '').trim() ||
-                                      isServiceProvidedThumbnailUrl(String(data.share.thumbnail))) && (
+                                    {(!String(data.contact?.thumbnail ?? '').trim() ||
+                                      isServiceProvidedThumbnailUrl(String(data.contact.thumbnail))) && (
                                       <button
                                         type="button"
                                         className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none flex-shrink-0 w-fit max-w-full"
-                                        onClick={() => setShareThumbnailPickerOpen(true)}
+                                        onClick={() => setShareThumbPresetPickerFor('contact')}
                                       >
                                         이미지 고르기
                                       </button>
                                     )}
-                                    {!!String(data.share?.thumbnail ?? '').trim() &&
-                                      !isServiceProvidedThumbnailUrl(String(data.share.thumbnail)) && (
+                                    {!!String(data.contact?.thumbnail ?? '').trim() &&
+                                      !isServiceProvidedThumbnailUrl(String(data.contact.thumbnail)) && (
                                       <div className="flex items-center gap-2">
                                         <button
                                           type="button"
                                           className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit max-w-full whitespace-nowrap leading-none flex-shrink-0"
-                                          onClick={() => openImageEditor({ kind: 'shareThumbnail' }, data.share.thumbnail)}
+                                          onClick={() => openImageEditor({ kind: 'contactThumbnail' }, data.contact.thumbnail)}
                                         >
                                           편집
                                         </button>
                                         <button
                                           type="button"
                                           className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit max-w-full whitespace-nowrap leading-none flex-shrink-0"
-                                          onClick={() => updateData('share.thumbnail', '')}
+                                          onClick={() => updateData('contact.thumbnail', '')}
                                         >
                                           삭제
                                         </button>
@@ -8703,7 +8714,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                       <button
                                         type="button"
                                         className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none flex-shrink-0 w-fit self-start"
-                                        onClick={() => setShareThumbnailPickerOpen(true)}
+                                        onClick={() => setShareThumbPresetPickerFor('share')}
                                       >
                                         이미지 고르기
                                       </button>
@@ -9377,20 +9388,31 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         </DialogContent>
       </Dialog>
 
-      <Dialog open={shareThumbnailPickerOpen} onOpenChange={setShareThumbnailPickerOpen}>
+      <Dialog
+        open={shareThumbPresetPickerFor !== null}
+        onOpenChange={(open) => {
+          if (!open) setShareThumbPresetPickerFor(null);
+        }}
+      >
         <DialogContent className="w-[680px] max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-16px)] rounded-2xl border border-border p-0 overflow-hidden flex flex-col">
           <div className="p-5 border-b border-border bg-white">
             <DialogTitle className="text-[16px] font-semibold text-on-surface-10">
               기본 일러스트 썸네일 선택
             </DialogTitle>
             <div className="text-[12px] text-on-surface-30 mt-1">
-              원하는 썸네일을 클릭하면 공유 썸네일로 적용됩니다.
+              {shareThumbPresetPickerFor === 'contact'
+                ? '원하는 썸네일을 클릭하면 연락처 섹션 상단 배너로 적용됩니다.'
+                : '원하는 썸네일을 클릭하면 공유(미리보기) 썸네일로 적용됩니다.'}
             </div>
           </div>
           <div className="p-4 sm:p-5 bg-[color:var(--surface-10)] flex-1 min-h-0 overflow-y-auto">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {shareThumbnailPresets.map((t) => {
-                const selected = data.share?.thumbnail === t.url;
+                const activeThumb =
+                  shareThumbPresetPickerFor === 'contact'
+                    ? data.contact?.thumbnail
+                    : data.share?.thumbnail;
+                const selected = activeThumb === t.url;
                 return (
                   <button
                     key={t.id}
@@ -9399,8 +9421,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       selected ? 'border-[color:var(--key)]' : 'border-border'
                     } hover:border-[color:var(--key)]/50`}
                     onClick={() => {
-                      updateData('share.thumbnail', t.url);
-                      setShareThumbnailPickerOpen(false);
+                      if (shareThumbPresetPickerFor === 'contact') {
+                        updateData('contact.thumbnail', t.url);
+                      } else {
+                        updateData('share.thumbnail', t.url);
+                      }
+                      setShareThumbPresetPickerFor(null);
                     }}
                   >
                     <img
@@ -9418,7 +9444,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               type="button"
               variant="outline"
               className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
-              onClick={() => setShareThumbnailPickerOpen(false)}
+              onClick={() => setShareThumbPresetPickerFor(null)}
             >
               닫기
             </Button>
