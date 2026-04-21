@@ -6593,18 +6593,9 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
 
                           </div>
 
-                          {greetingSampleOpen && createPortal(
-                            <div
-                              className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-2 sm:p-4"
-                              onClick={() => setGreetingSampleOpen(false)}
-                            >
-                              <div
-                                className="w-full max-w-md rounded-2xl bg-white border border-[color:var(--border-10)] p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <h3 className="text-[15px] font-semibold text-on-surface-10">샘플 문구</h3>
-                                </div>
+                          <Dialog open={greetingSampleOpen} onOpenChange={setGreetingSampleOpen}>
+                            <DialogContent className="w-[calc(100%-1rem)] max-w-md p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden">
+                              <DialogTitle>샘플 문구</DialogTitle>
 
                                 <div className="relative">
                                   <div className="grid grid-cols-3 border-b border-[color:var(--border-10)]">
@@ -6695,42 +6686,38 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                   </div>
                                 </div>
 
-                                <div className="pt-0 flex justify-end gap-2">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="w-fit h-10 px-5 rounded-lg text-[14px] font-semibold border-[color:var(--border-30)] bg-white text-on-surface-20 hover:bg-slate-50 hover:text-on-surface-10"
-                                    onClick={() => {
-                                      setGreetingSelectedSample(null);
-                                      setGreetingSampleOpen(false);
-                                    }}
-                                  >
-                                    취소
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    className="w-fit h-10 px-5 rounded-lg text-[14px] font-semibold"
-                                    disabled={!greetingSelectedSample}
-                                    onClick={() => {
-                                      if (!greetingSelectedSample) return;
-                                      const next = [...greetingEntries];
-                                      const targetIndex = Math.max(0, Math.min(greetingEditorIndex, next.length - 1));
-                                      if (!next[targetIndex]) next[targetIndex] = { title: '', content: '' };
-                                      next[targetIndex] = {
-                                        title: String(greetingSelectedSample.title),
-                                        content: String(greetingSelectedSample.content).replace(/\r\n?/g, '\n'),
-                                      };
-                                      setGreetingEntries(next);
-                                      setGreetingSampleOpen(false);
-                                    }}
-                                  >
-                                    적용하기
-                                  </Button>
-                                </div>
+                              <div className="pt-0 flex justify-end gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setGreetingSelectedSample(null);
+                                    setGreetingSampleOpen(false);
+                                  }}
+                                >
+                                  취소
+                                </Button>
+                                <Button
+                                  type="button"
+                                  disabled={!greetingSelectedSample}
+                                  onClick={() => {
+                                    if (!greetingSelectedSample) return;
+                                    const next = [...greetingEntries];
+                                    const targetIndex = Math.max(0, Math.min(greetingEditorIndex, next.length - 1));
+                                    if (!next[targetIndex]) next[targetIndex] = { title: '', content: '' };
+                                    next[targetIndex] = {
+                                      title: String(greetingSelectedSample.title),
+                                      content: String(greetingSelectedSample.content).replace(/\r\n?/g, '\n'),
+                                    };
+                                    setGreetingEntries(next);
+                                    setGreetingSampleOpen(false);
+                                  }}
+                                >
+                                  적용하기
+                                </Button>
                               </div>
-                            </div>,
-                            document.body
-                          )}
+                            </DialogContent>
+                          </Dialog>
                         </>
                       )}
 
@@ -7358,18 +7345,9 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                             </React.Fragment>
                           ))}
 
-                          {noticeSampleOpen && createPortal(
-                            <div
-                              className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-2 sm:p-4"
-                              onClick={() => setNoticeSampleOpen(false)}
-                            >
-                              <div
-                                className="w-full max-w-md rounded-2xl bg-white border border-[color:var(--border-10)] p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <h3 className="text-[15px] font-semibold text-on-surface-10">샘플 문구</h3>
-                                </div>
+                          <Dialog open={noticeSampleOpen} onOpenChange={setNoticeSampleOpen}>
+                            <DialogContent className="w-[calc(100%-1rem)] max-w-md p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden">
+                              <DialogTitle>샘플 문구</DialogTitle>
 
                                 <div className="relative">
                                   <div className="grid grid-cols-3 border-b border-[color:var(--border-10)]">
@@ -7460,45 +7438,41 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                   </div>
                                 </div>
 
-                                <div className="pt-0 flex justify-end gap-2">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="w-fit h-10 px-5 rounded-lg text-[14px] font-semibold border-[color:var(--border-30)] bg-white text-on-surface-20 hover:bg-slate-50 hover:text-on-surface-10"
-                                    onClick={() => {
-                                      setNoticeSelectedSample(null);
-                                      setNoticeSampleOpen(false);
-                                    }}
-                                  >
-                                    취소
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    className="w-fit h-10 px-5 rounded-lg text-[14px] font-semibold"
-                                    disabled={!noticeSelectedSample}
-                                    onClick={() => {
-                                      if (!noticeSelectedSample) return;
-                                      const targetIndex = Math.min(noticeEditorTabIndex, noticeSections.length - 1);
-                                      const nextSections = noticeSections.map((section, idx) =>
-                                        idx === targetIndex
-                                          ? {
-                                              ...section,
-                                              title: String(noticeSelectedSample.title),
-                                              content: String(noticeSelectedSample.content).replace(/\r\n?/g, '\n'),
-                                            }
-                                          : section,
-                                      );
-                                      updateNoticeSections(nextSections);
-                                      setNoticeSampleOpen(false);
-                                    }}
-                                  >
-                                    적용하기
-                                  </Button>
-                                </div>
+                              <div className="pt-0 flex justify-end gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setNoticeSelectedSample(null);
+                                    setNoticeSampleOpen(false);
+                                  }}
+                                >
+                                  취소
+                                </Button>
+                                <Button
+                                  type="button"
+                                  disabled={!noticeSelectedSample}
+                                  onClick={() => {
+                                    if (!noticeSelectedSample) return;
+                                    const targetIndex = Math.min(noticeEditorTabIndex, noticeSections.length - 1);
+                                    const nextSections = noticeSections.map((section, idx) =>
+                                      idx === targetIndex
+                                        ? {
+                                            ...section,
+                                            title: String(noticeSelectedSample.title),
+                                            content: String(noticeSelectedSample.content).replace(/\r\n?/g, '\n'),
+                                          }
+                                        : section,
+                                    );
+                                    updateNoticeSections(nextSections);
+                                    setNoticeSampleOpen(false);
+                                  }}
+                                >
+                                  적용하기
+                                </Button>
                               </div>
-                            </div>,
-                            document.body
-                          )}
+                            </DialogContent>
+                          </Dialog>
                           {noticeSections.length < 3 && (
                             <div className="pt-0 flex justify-center">
                               <Button
@@ -7793,18 +7767,9 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                               </div>
                             </div>
                           </FormItem>
-                          {rsvpSampleOpen && createPortal(
-                            <div
-                              className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-2 sm:p-4"
-                              onClick={() => setRsvpSampleOpen(false)}
-                            >
-                              <div
-                                className="w-full max-w-md rounded-2xl bg-white border border-[color:var(--border-10)] p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <h3 className="text-[15px] font-semibold text-on-surface-10">샘플 문구</h3>
-                                </div>
+                          <Dialog open={rsvpSampleOpen} onOpenChange={setRsvpSampleOpen}>
+                            <DialogContent className="w-[calc(100%-1rem)] max-w-md p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden">
+                              <DialogTitle>샘플 문구</DialogTitle>
 
                                 <div className="relative">
                                   <div className="grid grid-cols-3 border-b border-[color:var(--border-10)]">
@@ -7892,35 +7857,31 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                   </div>
                                 </div>
 
-                                <div className="pt-0 flex justify-end gap-2">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="w-fit h-10 px-5 rounded-lg text-[14px] font-semibold border-[color:var(--border-30)] bg-white text-on-surface-20 hover:bg-slate-50 hover:text-on-surface-10"
-                                    onClick={() => {
-                                      setRsvpSelectedSample(null);
-                                      setRsvpSampleOpen(false);
-                                    }}
-                                  >
-                                    취소
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    className="w-fit h-10 px-5 rounded-lg text-[14px] font-semibold"
-                                    disabled={!rsvpSelectedSample}
-                                    onClick={() => {
-                                      if (!rsvpSelectedSample) return;
-                                      updateData('rsvp.description', String(rsvpSelectedSample.content).replace(/\r\n?/g, '\n'));
-                                      setRsvpSampleOpen(false);
-                                    }}
-                                  >
-                                    적용하기
-                                  </Button>
-                                </div>
+                              <div className="pt-0 flex justify-end gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setRsvpSelectedSample(null);
+                                    setRsvpSampleOpen(false);
+                                  }}
+                                >
+                                  취소
+                                </Button>
+                                <Button
+                                  type="button"
+                                  disabled={!rsvpSelectedSample}
+                                  onClick={() => {
+                                    if (!rsvpSelectedSample) return;
+                                    updateData('rsvp.description', String(rsvpSelectedSample.content).replace(/\r\n?/g, '\n'));
+                                    setRsvpSampleOpen(false);
+                                  }}
+                                >
+                                  적용하기
+                                </Button>
                               </div>
-                            </div>,
-                            document.body
-                          )}
+                            </DialogContent>
+                          </Dialog>
                         </>
                       )}
 
@@ -8008,18 +7969,9 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                               기본 제공 용량(2GB)을 초과하는 업로드 용량을 이용할 경우 추가 결제가 발생할 수 있습니다.
                             </p>
                           </div>
-                          {guestUploadSampleOpen && createPortal(
-                            <div
-                              className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-2 sm:p-4"
-                              onClick={() => setGuestUploadSampleOpen(false)}
-                            >
-                              <div
-                                className="w-full max-w-md rounded-2xl bg-white border border-[color:var(--border-10)] p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <h3 className="text-[15px] font-semibold text-on-surface-10">샘플 문구</h3>
-                                </div>
+                          <Dialog open={guestUploadSampleOpen} onOpenChange={setGuestUploadSampleOpen}>
+                            <DialogContent className="w-[calc(100%-1rem)] max-w-md p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden">
+                              <DialogTitle>샘플 문구</DialogTitle>
 
                                 <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
                                   <div className="flex flex-col gap-3">
@@ -8047,35 +7999,31 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                   </div>
                                 </div>
 
-                                <div className="pt-0 flex justify-end gap-2">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="w-fit h-10 px-5 rounded-lg text-[14px] font-semibold border-[color:var(--border-30)] bg-white text-on-surface-20 hover:bg-slate-50 hover:text-on-surface-10"
-                                    onClick={() => {
-                                      setGuestUploadSelectedSample(null);
-                                      setGuestUploadSampleOpen(false);
-                                    }}
-                                  >
-                                    취소
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    className="w-fit h-10 px-5 rounded-lg text-[14px] font-semibold"
-                                    disabled={!guestUploadSelectedSample}
-                                    onClick={() => {
-                                      if (!guestUploadSelectedSample) return;
-                                      updateData('guestUpload.description', String(guestUploadSelectedSample).replace(/\r\n?/g, '\n'));
-                                      setGuestUploadSampleOpen(false);
-                                    }}
-                                  >
-                                    적용하기
-                                  </Button>
-                                </div>
+                              <div className="pt-0 flex justify-end gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setGuestUploadSelectedSample(null);
+                                    setGuestUploadSampleOpen(false);
+                                  }}
+                                >
+                                  취소
+                                </Button>
+                                <Button
+                                  type="button"
+                                  disabled={!guestUploadSelectedSample}
+                                  onClick={() => {
+                                    if (!guestUploadSelectedSample) return;
+                                    updateData('guestUpload.description', String(guestUploadSelectedSample).replace(/\r\n?/g, '\n'));
+                                    setGuestUploadSampleOpen(false);
+                                  }}
+                                >
+                                  적용하기
+                                </Button>
                               </div>
-                            </div>,
-                            document.body
-                          )}
+                            </DialogContent>
+                          </Dialog>
                         </>
                       )}
 
