@@ -38,8 +38,8 @@
   --text-heading-section--line-height: var(--ds-lh-heading-section);
   --text-heading-page: var(--ds-text-heading-page);
   --text-heading-page--line-height: var(--ds-lh-heading-page);
-  --text-input: var(--ds-text-input);
-  --text-input--line-height: var(--ds-lh-input);
+  --text-field: var(--ds-text-input);
+  --text-field--line-height: var(--ds-lh-input);
 
   /* Font weight 토큰 */
   --font-weight-regular: 400;
@@ -357,10 +357,16 @@
 }
 
 @layer base {
+  /*
+    그림자 유틸리티(shadow-sm/md/lg…)는 무력화하되,
+    포커스 링/사용자 정의 box-shadow는 동작해야 하므로
+    box-shadow 자체를 강제로 none으로 막지 않는다.
+    Tailwind의 shadow-* 유틸리티는 --tw-shadow 변수를 통해 적용되므로
+    해당 변수만 0으로 강제하면 그림자 유틸리티만 무효화된다.
+  */
   *,
   *::before,
   *::after {
-    box-shadow: none !important;
     --tw-shadow: 0 0 #0000 !important;
     --tw-shadow-colored: 0 0 #0000 !important;
   }
@@ -383,7 +389,7 @@
   select:focus-visible {
     outline: none;
     border-color: var(--key) !important;
-    box-shadow: 0 0 0 1px var(--key);
+    box-shadow: 0 0 0 1px var(--key) !important;
   }
   /* 플레이스홀더 톤: 한 단계 더 연하게 */
   [data-slot="input"]::placeholder,
