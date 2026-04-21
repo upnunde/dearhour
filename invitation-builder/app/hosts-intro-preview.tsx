@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import type { CardData } from "../store/useCardStore";
+import type { CardData } from "@/features/invitation-builder/model/types";
 import { parseEventDateLocal } from "@/lib/designer-calendar";
 
 /** 인트로 미리보기 공통 파생 값 (타입별 컴포넌트에만 전달) */

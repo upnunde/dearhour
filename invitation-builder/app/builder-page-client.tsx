@@ -2,10 +2,35 @@
 
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import NextImage from "next/image";
 import { useRouter } from 'next/navigation';
-import { Palette, Music, Image as ImageIcon, Users, UserRound, MessageSquare, MessageCircle, Phone, CalendarHeart, MapPin, Bell, Images, Wallet, BookOpen, Youtube, Share2, Shield, CheckCircle2, GripVertical, Play, Pause, VolumeX, Volume2, X, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, RotateCw, RefreshCcw, Move, ArrowUpDown, ClipboardCheck, Calendar, Settings, Bus, Train, Car, ParkingCircle, Route, AlertCircle } from 'lucide-react';
+import { Palette, Music, Image as ImageIcon, Users, UserRound, MessageSquare, MessageCircle, Phone, CalendarHeart, MapPin, Bell, Images, Wallet, BookOpen, Youtube, Share2, Shield, CheckCircle2, GripVertical, Play, VolumeX, Volume2, X, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, RotateCw, RefreshCcw, ArrowUpDown, ClipboardCheck, Calendar, Settings, Bus, Train, Car, ParkingCircle, Route, AlertCircle } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
-import { ensureContactBlock, type CardData, type EventInfo, type IntroProfile } from "../store/useCardStore";
+import {
+  ensureContactBlock,
+  type AccountItem,
+  type CardData,
+  type GreetingEntry,
+  type IntroProfile,
+  type NoticeSection,
+} from "@/features/invitation-builder/model/types";
+import {
+  ACCOUNT_TITLE_OPTIONS,
+  BANK_LOGO_DOMAIN,
+  BANK_OPTIONS,
+  BRIDE_RELATION_OPTIONS,
+  GROOM_RELATION_OPTIONS,
+  GUEST_UPLOAD_TITLE_OPTIONS,
+  GUESTBOOK_TITLE_OPTIONS,
+  INTRO_HEADING_OPTIONS,
+  LOCATION_TITLE_OPTIONS,
+  MAIN_IMAGE_FRAME_OPTIONS,
+  NOTICE_HEADING_OPTIONS,
+  RSVP_TITLE_OPTIONS,
+  TRANSPORT_MODE_OPTIONS,
+  type MainImageFrameId,
+  YOUTUBE_TITLE_OPTIONS,
+} from "@/features/invitation-builder/model/section-config";
 import { DEFAULT_MAIN_PRESET_URL, MAIN_IMAGE_PRESETS } from "@/lib/main-image-presets";
 import { isServiceProvidedThumbnailUrl } from "@/lib/service-provided-image-url";
 import { searchWeddingVenues, type WeddingVenue } from "@/lib/wedding-venues";
@@ -15,14 +40,39 @@ import { cn } from "@/lib/utils";
 import {
   buildDesignerCalendarCells,
   parseEventDateLocal,
-  type DesignerCalendarCell,
 } from "@/lib/designer-calendar";
+import {
+  DesignerCalendarPreview,
+  normalizeCalendarDisplayType,
+} from "@/features/invitation-builder/preview/sections/calendar-preview";
+import {
+  GalleryImageGrid,
+  MultiImageGrid,
+} from "@/features/invitation-builder/preview/sections/image-grids";
+import { HeadingChipPicker } from "@/features/invitation-builder/panels/shared/heading-chip-picker";
+import {
+  fetchWeddingHallTransit,
+  geocodeAddress,
+  saveInvitationDraft,
+  searchWeddingHallSuggestions,
+} from "@/features/invitation-builder/services/client-api";
 
 const DEFAULT_LOCATION_PREVIEW_COORDS = { lat: 37.579617, lon: 126.977041 }; // 경복궁
 
 type VenueSuggestion = WeddingVenue & {
   phone?: string;
   mapImages?: string[];
+};
+
+type BuilderSearchParams = Record<string, string | string[] | undefined>;
+
+type GuestbookEntry = {
+  id?: string;
+  name?: string;
+  message?: string;
+  password?: string;
+  isSecret?: boolean;
+  createdAt?: string;
 };
 
 type KeyColorPreset = {
@@ -49,79 +99,6 @@ const PREVIEW_TYPOGRAPHY_GUIDE = {
   subtitle2: "text-[13px] font-normal text-on-surface-30 opacity-70 [font-stretch:120%]",
 } as const;
 
-/** 방명록 섹션 제목 — 에디터에서 프리셋만 선택 */
-const GUESTBOOK_TITLE_OPTIONS = [
-  "축하해 주세요",
-  "방명록",
-  "축하 메시지",
-  "축하 인사 남기기",
-] as const;
-
-/** 참석 여부(RSVP) 섹션 제목 — 에디터에서 프리셋만 선택 */
-const RSVP_TITLE_OPTIONS = [
-  "참석 여부",
-  "함께해 주실 마음을 알려주세요",
-  "소중한 날 함께해 주세요",
-  "마음을 전해 주세요",
-] as const;
-
-/** 오시는 길 섹션 제목 — 에디터에서 프리셋만 선택 */
-const LOCATION_TITLE_OPTIONS = [
-  "오시는 길",
-  "위치 안내",
-  "찾아오시는 길",
-  "교통 안내",
-] as const;
-
-/** 안내사항 미리보기 상단 큰 제목(기존 고정 '안내' 대체) */
-const NOTICE_HEADING_OPTIONS = [
-  "안내사항",
-  "예식 안내",
-  "함께해 주셔서 감사합니다",
-  "소중한 분들께 전하는 안내",
-] as const;
-
-const INTRO_HEADING_OPTIONS = [
-  "저희를 소개합니다",
-  "두 사람을 소개합니다",
-  "신랑 & 신부 이야기",
-  "함께 걸어갈 두 사람",
-] as const;
-
-const TRANSPORT_MODE_OPTIONS = [
-  "버스",
-  "지하철",
-  "주차장",
-  "대중교통",
-  "셔틀버스",
-  "대절버스",
-  "기차(KTX,SRT)",
-  "자가용",
-] as const;
-
-/** 유튜브 섹션 제목 — 에디터에서 프리셋만 선택 */
-const YOUTUBE_TITLE_OPTIONS = [
-  "영상으로 전하는 마음",
-  "우리의 이야기",
-  "식전 영상",
-  "추억을 담아",
-] as const;
-
-/** 계좌정보 섹션 제목 — 에디터에서 프리셋만 선택 */
-const ACCOUNT_TITLE_OPTIONS = [
-  "마음 전하실 곳",
-  "축의금 안내",
-  "계좌 안내",
-  "신랑·신부에게",
-] as const;
-
-/** 하객 사진 업로드 섹션 제목 — 에디터에서 프리셋만 선택 */
-const GUEST_UPLOAD_TITLE_OPTIONS = [
-  "추억을 공유해 주세요",
-  "하객 사진 올리기",
-  "예식 사진 나눔",
-  "소중한 순간을 남겨 주세요",
-] as const;
 
 function upperCaseFirst(value: string) {
   const trimmed = value.trim();
@@ -185,15 +162,6 @@ function normalizeMainImageMode(m: unknown): 'single' | 'multi' | 'default' {
   return 'default';
 }
 
-type MainImageFrameId = 'full' | 'border' | 'oval' | 'ellipse' | 'arch';
-
-const MAIN_IMAGE_FRAME_OPTIONS: { id: MainImageFrameId; label: string }[] = [
-  { id: 'full', label: '기본' },
-  { id: 'border', label: '테두리' },
-  { id: 'oval', label: '타원형' },
-  { id: 'ellipse', label: '세로 타원' },
-  { id: 'arch', label: '아치형' },
-];
 
 function normalizeMainImageFrame(raw: unknown): MainImageFrameId {
   const v = String(raw ?? 'full');
@@ -642,32 +610,6 @@ function CircleCheckbox(props: React.InputHTMLAttributes<HTMLInputElement>) {
   );
 }
 
-// 원형 라디오 버튼 컴포넌트 (기본 20x20)
-function CircleRadio(props: Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'>) {
-  const { className = '', ...rest } = props;
-  return (
-    <label
-      className="relative inline-flex items-center pointer-events-none select-none"
-    >
-      <input
-        type="radio"
-        className={`sr-only peer ${className}`}
-        {...rest}
-      />
-      <span
-        className="
-          w-5 h-5 rounded-full border border-black/20 bg-transparent
-          flex items-center justify-center relative
-          peer-checked:border-black
-          after:content-[''] after:w-2.5 after:h-2.5 after:rounded-full after:bg-slate-700
-          after:opacity-0 peer-checked:after:opacity-100
-          transition-all
-        "
-      />
-    </label>
-  );
-}
-
 // 파티클/옵션 선택용 칩 컴포넌트 (원본 스타일 유지)
 function OptionChip({
   label,
@@ -764,34 +706,44 @@ function getYoutubeVideoId(rawUrl: string) {
   return null;
 }
 
-function normalizeTransitionEffect(raw: unknown) {
-  const v = typeof raw === 'string' ? raw : '없음';
+type NormalizedTransitionEffect =
+  | "없음"
+  | "랜덤"
+  | "크로스페이드"
+  | "디졸브"
+  | "슬라이드(왼→오)"
+  | "슬라이드(오→왼)"
+  | "켄번즈(줌 인)"
+  | "켄번즈(줌 아웃)";
+
+function normalizeTransitionEffect(raw: unknown): NormalizedTransitionEffect {
+  const v = typeof raw === "string" ? raw : "없음";
   switch (v) {
-    case '없음':
-      return '없음' as const;
-    case '랜덤':
-      return '랜덤' as const;
+    case "없음":
+      return "없음";
+    case "랜덤":
+      return "랜덤";
     // 기존 옵션 → 신규 추천 옵션 매핑(하위호환)
-    case '페이드 인':
-      return '크로스페이드' as const;
-    case '페이드 아웃':
-      return '디졸브' as const;
-    case '슬라이드':
-      return '슬라이드(오→왼)' as const;
-    case '줌 인':
-      return '켄번즈(줌 인)' as const;
-    case '줌 아웃':
-      return '켄번즈(줌 아웃)' as const;
+    case "페이드 인":
+      return "크로스페이드";
+    case "페이드 아웃":
+      return "디졸브";
+    case "슬라이드":
+      return "슬라이드(오→왼)";
+    case "줌 인":
+      return "켄번즈(줌 인)";
+    case "줌 아웃":
+      return "켄번즈(줌 아웃)";
     // 신규 추천 옵션
-    case '크로스페이드':
-    case '디졸브':
-    case '슬라이드(왼→오)':
-    case '슬라이드(오→왼)':
-    case '켄번즈(줌 인)':
-    case '켄번즈(줌 아웃)':
-      return v as any;
+    case "크로스페이드":
+    case "디졸브":
+    case "슬라이드(왼→오)":
+    case "슬라이드(오→왼)":
+    case "켄번즈(줌 인)":
+    case "켄번즈(줌 아웃)":
+      return v;
     default:
-      return '크로스페이드' as const;
+      return "크로스페이드";
   }
 }
 import { Input as RawInput } from "@/components/ui/input";
@@ -812,6 +764,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import GuestPhotoUploadForm from "@/components/GuestPhotoUploadForm";
 import AddressSearchDialog from "@/components/AddressSearchDialog";
 import ParticleCanvasOverlay from "@/components/ParticleCanvasOverlay";
+import { useBuilderUiStore } from "@/store/useBuilderUiStore";
 
 /** 네이버 정적 지도 API 실패 시 안내 (미리보기는 서버 `/api/naver-map-preview` 사용) */
 function NaverMapPreviewFallbackHint({ visible }: { visible: boolean }) {
@@ -828,7 +781,7 @@ function NaverMapPreviewFallbackHint({ visible }: { visible: boolean }) {
 }
 
 function Input(props: React.ComponentProps<typeof RawInput>) {
-  const { className, type, value, onChange, disabled, readOnly, ...rest } = props as any;
+  const { className, type, value, onChange, disabled, readOnly, ...rest } = props;
 
   const isTextLike =
     !type ||
@@ -886,7 +839,12 @@ function Input(props: React.ComponentProps<typeof RawInput>) {
         ].join(" ")}
         aria-label="내용 지우기"
         onClick={() => {
-          onChange({ target: { value: "" } } as any);
+          if (typeof onChange !== "function") return;
+          const synthetic = {
+            target: { value: "" },
+            currentTarget: { value: "" },
+          } as React.ChangeEvent<HTMLInputElement>;
+          onChange(synthetic);
         }}
       >
         <X className="w-4 h-4" />
@@ -925,29 +883,20 @@ function VenueSearchField({
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
 
-  // 외부 value 변경을 draft에 반영 (사용자가 편집 중이 아닐 때만)
-  useEffect(() => {
-    if (!focused) setDraft(value);
-  }, [value, focused]);
-
-  const currentValue = mode === 'realtime' ? value : draft;
+  // deferred 모드에서는 포커스 중 draft, 비포커스 시 외부 value를 우선 노출
+  const currentValue = mode === 'realtime' ? value : focused ? draft : value;
   const trimmed = currentValue.trim();
   const hasQuery = trimmed.length > 0;
 
   // 원격 검색 (debounced)
   useEffect(() => {
-    if (trimmed.length < 2) {
-      setRemote([]);
-      return;
-    }
+    if (trimmed.length < 2) return;
     let cancelled = false;
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/weddinghall-search?q=${encodeURIComponent(trimmed)}&limit=8`);
-        if (!res.ok) return;
-        const json = (await res.json()) as { results?: (WeddingVenue & { phone?: string; mapImages?: string[] })[] };
+        const json = await searchWeddingHallSuggestions(trimmed, 8);
         if (cancelled) return;
-        setRemote(Array.isArray(json.results) ? json.results : []);
+        setRemote(json);
       } catch {
         if (!cancelled) setRemote([]);
       }
@@ -959,15 +908,19 @@ function VenueSearchField({
   }, [trimmed]);
 
   const localSuggestions = useMemo(() => searchWeddingVenues(currentValue, 8), [currentValue]);
+  const remoteSuggestions = useMemo(
+    () => (trimmed.length < 2 ? [] : remote),
+    [trimmed, remote],
+  );
   const suggestions = useMemo(() => {
     const map = new Map<string, WeddingVenue & { phone?: string; mapImages?: string[] }>();
-    for (const venue of [...remote, ...localSuggestions]) {
+    for (const venue of [...remoteSuggestions, ...localSuggestions]) {
       const key = venue.name.replace(/\s+/g, "").toLowerCase();
       if (!key) continue;
       if (!map.has(key)) map.set(key, venue);
     }
     return Array.from(map.values()).slice(0, 8);
-  }, [localSuggestions, remote]);
+  }, [localSuggestions, remoteSuggestions]);
 
   // realtime 모드에서만: 사용자가 정확히 일치하는 값을 입력하면 자동 적용 (기존 예식정보 UX 유지)
   useEffect(() => {
@@ -1011,6 +964,7 @@ function VenueSearchField({
         value={currentValue}
         onFocus={() => {
           setFocused(true);
+          if (mode === 'deferred') setDraft(value);
           if (hasQuery) setOpen(true);
         }}
         onBlur={() => {
@@ -1073,6 +1027,7 @@ function VenueSearchField({
 
 /** 하단 '옵션' 그룹(콘텐츠 순서/미리보기 본문에 포함하지 않음) */
 const OTHER_OPTION_IDS = ['share', 'protect', 'publish', 'i18n'] as const;
+const OTHER_OPTION_IDS_AS_STRINGS = OTHER_OPTION_IDS as readonly string[];
 
 type SidebarNavGroup = 1 | 2 | 3 | 4 | 5;
 const SIDEBAR_NAV_SECTIONS: { navGroup: SidebarNavGroup; title: string }[] = [
@@ -1120,48 +1075,6 @@ const builtInTracks = [
   { id: 'lofi-1', label: '로파이 (감성)' , url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3' },
 ] as const;
 
-const BANK_OPTIONS = [
-  '카카오뱅크',
-  '국민은행',
-  '기업은행',
-  '농협은행',
-  '신한은행',
-  '산업은행',
-  '우리은행',
-  '한국씨티은행',
-  '하나은행',
-  'SC제일은행',
-  '경남은행',
-  '광주은행',
-  '대구은행',
-  '도이치은행',
-  '뱅크오브아메리카',
-  '부산은행',
-  '산림조합중앙회',
-  '저축은행',
-] as const;
-
-const BANK_LOGO_DOMAIN: Record<(typeof BANK_OPTIONS)[number], string | null> = {
-  카카오뱅크: 'kakaobank.com',
-  국민은행: 'kbstar.com',
-  기업은행: 'ibk.co.kr',
-  농협은행: 'nhbank.com',
-  신한은행: 'shinhan.com',
-  산업은행: 'kdb.co.kr',
-  우리은행: 'wooribank.com',
-  한국씨티은행: 'citi.com',
-  하나은행: 'kebhana.com',
-  SC제일은행: 'standardchartered.co.kr',
-  경남은행: 'knbank.co.kr',
-  광주은행: 'kjbank.com',
-  대구은행: 'dgb.co.kr',
-  도이치은행: 'db.com',
-  뱅크오브아메리카: 'bankofamerica.com',
-  부산은행: 'busanbank.co.kr',
-  산림조합중앙회: 'nfcf.or.kr',
-  저축은행: 'fsb.or.kr',
-};
-
 function BankLogo({ name }: { name: (typeof BANK_OPTIONS)[number] }) {
   const [imgOk, setImgOk] = React.useState(true);
   const domain = BANK_LOGO_DOMAIN[name];
@@ -1170,13 +1083,16 @@ function BankLogo({ name }: { name: (typeof BANK_OPTIONS)[number] }) {
   return (
     <div className="w-7 h-7 rounded-full bg-[color:var(--surface-20)] flex items-center justify-center overflow-hidden flex-shrink-0">
       {src && imgOk ? (
-        <img
+        <NextImage
           src={src}
           alt=""
+          width={28}
+          height={28}
           className="w-7 h-7 object-contain bg-white"
           loading="lazy"
           onError={() => setImgOk(false)}
           referrerPolicy="no-referrer"
+          unoptimized
         />
       ) : (
         <span className="text-[11px] font-semibold text-on-surface-20">{name.charAt(0)}</span>
@@ -1202,69 +1118,6 @@ function FormItem({ label, children }: { label: string; children: React.ReactNod
   );
 }
 
-/**
- * 4개 프리셋 + '직접입력' 모드를 가진 제목 선택기.
- * - 현재 값이 프리셋 중 하나면 해당 칩이 활성
- * - '직접입력' 클릭 시 Input 노출 (기존 프리셋 값은 비움)
- * - 현재 값이 프리셋에 없으면 자동으로 직접입력 모드로 초기화됨
- */
-function HeadingChipPicker({
-  value,
-  options,
-  onChange,
-  placeholder = '제목을 직접 입력해 주세요',
-  maxLength = 30,
-}: {
-  value: string;
-  options: readonly string[];
-  onChange: (next: string) => void;
-  placeholder?: string;
-  maxLength?: number;
-}) {
-  const trimmed = value.trim();
-  const isPreset = (options as readonly string[]).includes(trimmed);
-  const [customMode, setCustomMode] = useState<boolean>(trimmed !== '' && !isPreset);
-
-  return (
-    <div className="flex min-w-0 flex-1 flex-col gap-2">
-      <div className="flex flex-wrap gap-2 w-full">
-        {options.map((opt) => {
-          const active =
-            !customMode && (trimmed === opt || (!trimmed && opt === options[0]));
-          return (
-            <OptionChip
-              key={opt}
-              label={opt}
-              active={active}
-              onClick={() => {
-                setCustomMode(false);
-                onChange(opt);
-              }}
-            />
-          );
-        })}
-        <OptionChip
-          label="직접입력"
-          active={customMode}
-          onClick={() => {
-            setCustomMode(true);
-            if ((options as readonly string[]).includes(trimmed)) onChange('');
-          }}
-        />
-      </div>
-      {customMode && (
-        <Input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="shadow-none"
-          maxLength={maxLength}
-        />
-      )}
-    </div>
-  );
-}
-
 /** 소개(About Us) 편집 영역: 신랑/신부 프로필 이미지·생년월일·MBTI·취미·특징 */
 function IntroEditor({
   data,
@@ -1273,11 +1126,11 @@ function IntroEditor({
   onEditImage,
 }: {
   data: CardData;
-  updateData: (path: string, value: any) => void;
+  updateData: (path: string, value: unknown) => void;
   isEnabled: boolean;
   onEditImage: (role: 'groom' | 'bride', src: string) => void;
 }) {
-  const intro = (data as any).intro ?? {};
+  const intro = data.intro ?? {};
   const sectionHeading = String(intro.sectionHeading ?? '');
   const groom: IntroProfile = intro.groom ?? { image: '', birthDate: '', mbti: '', hobbies: '', traits: '' };
   const bride: IntroProfile = intro.bride ?? { image: '', birthDate: '', mbti: '', hobbies: '', traits: '' };
@@ -1288,9 +1141,11 @@ function IntroEditor({
   const brideUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
+    const groomUrl = groomUrlRef.current;
+    const brideUrl = brideUrlRef.current;
     return () => {
-      if (groomUrlRef.current) URL.revokeObjectURL(groomUrlRef.current);
-      if (brideUrlRef.current) URL.revokeObjectURL(brideUrlRef.current);
+      if (groomUrl) URL.revokeObjectURL(groomUrl);
+      if (brideUrl) URL.revokeObjectURL(brideUrl);
     };
   }, []);
 
@@ -1316,12 +1171,15 @@ function IntroEditor({
       <div className="flex flex-col gap-5">
         <FormItem label={`${label} 사진`}>
           <div className="w-full min-h-[120px] flex items-start gap-3">
-            <div className="w-[120px] aspect-[3/4] rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden flex items-center justify-center flex-shrink-0">
+            <div className="relative w-[120px] aspect-[3/4] rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden flex items-center justify-center flex-shrink-0">
               {hasImage ? (
-                <img
+                <NextImage
                   src={profile.image}
                   alt={`${label} 프로필`}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="120px"
+                  unoptimized
                 />
               ) : (
                 <ImageIcon className="w-8 h-8 text-[color:var(--on-surface-disabled)]" strokeWidth={1.25} aria-hidden />
@@ -1453,9 +1311,6 @@ function IntroEditor({
     </div>
   );
 }
-
-const BRIDE_RELATION_OPTIONS = ['딸', '장녀', '차녀', '삼녀', '사녀', '오녀', '육녀', '독녀', '막내', '조카', '손녀', '동생', '외동'] as const;
-const GROOM_RELATION_OPTIONS = ['아들', '장남', '차남', '삼남', '사남', '오남', '육남', '독남', '막내', '조카', '손자', '동생', '외동'] as const;
 
 function formatKoreanPhone(value: string) {
   const digits = (value || '').replace(/\D/g, '').slice(0, 11);
@@ -1592,489 +1447,23 @@ function ContactPhoneField({
   );
 }
 
-function parseKoreanTime(value: string | undefined | null) {
-  const fallback = { period: '오후', hour: 2, minute: '00' } as { period: '오전' | '오후'; hour: number; minute: string };
-  if (!value) return fallback;
-  const m = value.match(/^(오전|오후)\s*(\d{1,2}):(\d{2})$/);
-  if (!m) return fallback;
-  const period: '오전' | '오후' = m[1] === '오전' ? '오전' : '오후';
-  const hourNum = Number(m[2]);
-  const hour = Number.isFinite(hourNum) && hourNum >= 1 && hourNum <= 12 ? hourNum : fallback.hour;
-  const minute = m[3];
-  return { period, hour, minute };
-}
 
-/** e.g. 오후 1:30 → 오후 1시 30분 */
-function formatKoreanTimeSpaced(value: string | undefined | null): string {
-  const v = (value ?? "").trim();
-  if (!v) return "";
-  const { period, hour, minute } = parseKoreanTime(v);
-  const mm = Number(minute);
-  if (Number.isFinite(mm) && mm > 0) return `${period} ${hour}시 ${minute}분`;
-  return `${period} ${hour}시`;
-}
 
-function formatTimeEnglish12h(value: string | undefined | null): string {
-  const { period, hour, minute } = parseKoreanTime(value);
-  let h24 = period === "오전" ? (hour === 12 ? 0 : hour) : hour === 12 ? 12 : hour + 12;
-  const ampm = h24 >= 12 ? "PM" : "AM";
-  let h12 = h24 % 12;
-  if (h12 === 0) h12 = 12;
-  return `${String(h12).padStart(2, "0")}:${minute} ${ampm}`;
-}
 
-function formatMonthEnglishUpper(d: Date): string {
-  return new Intl.DateTimeFormat("en-US", { month: "long" }).format(d).toUpperCase();
-}
 
-const WEEKDAY_EN_SHORT = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"] as const;
-const WEEKDAY_LETTERS_EN = ["S", "M", "T", "W", "T", "F", "S"] as const;
-const WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"] as const;
-
-function normalizeCalendarDisplayType(raw: unknown): 'A' | 'B' | 'C' {
-  return raw === 'B' || raw === 'C' ? raw : 'A';
-}
-
-/** Calendar layouts A/B/C: presentation only. Month grid uses `cells`; header uses `eventDate`. */
-function DesignerCalendarPreview({
-  layout,
-  cells,
-  eventDate,
-  timeRaw,
-  useThemeColor = false,
-}: {
-  layout: 'A' | 'B' | 'C';
-  cells: DesignerCalendarCell[];
-  eventDate: Date;
-  timeRaw: string;
-  useThemeColor?: boolean;
-}) {
-  const y = eventDate.getFullYear();
-  const mo = eventDate.getMonth() + 1;
-  const d = eventDate.getDate();
-  const dow = eventDate.getDay();
-  const dotYmd = `${y}.${mo}.${d}`;
-  const yyMmDd = `${String(y).slice(-2)}.${String(mo).padStart(2, "0")}.${String(d).padStart(2, "0")}`;
-  const weekdayLongKo = `${WEEKDAY_KO[dow]}요일`;
-  const timeKo = formatKoreanTimeSpaced(timeRaw);
-  const sublineA =
-    timeKo.length > 0 ? `${weekdayLongKo} ${timeKo}` : weekdayLongKo;
-  const timeEn = formatTimeEnglish12h(timeRaw);
-  const monthEn = formatMonthEnglishUpper(eventDate);
-  const weekLabels = layout === "A" ? WEEKDAY_LETTERS_EN : WEEKDAY_KO;
-
-  const eventDay = cells.find((c) => c.isEvent)?.day ?? d;
-
-  const cellText = useThemeColor ? "text-[#413830]" : "text-neutral-700";
-  const prevRing = useThemeColor ? "ring-[#413830]/20" : "ring-black/15";
-  const eventDayBg = useThemeColor ? "bg-[color:var(--key)]" : "bg-neutral-600";
-
-  const cellShell = (cell: DesignerCalendarCell) => {
-    const base =
-      "w-10 h-10 shrink-0 rounded-[999px] p-2.5 inline-flex flex-col items-center justify-center text-center text-sm font-normal font-sans";
-    if (!cell.day) {
-      return <div key={cell.key} className={`${base}`} aria-hidden />;
-    }
-    const isPrev = cell.day === eventDay - 1 && eventDay > 1;
-    const isEvent = cell.isEvent;
-    if (isEvent) {
-      return (
-        <div key={cell.key} className={`${base} ${eventDayBg} text-white`}>
-          <span>{cell.day}</span>
-        </div>
-      );
-    }
-    if (isPrev) {
-      return (
-        <div
-          key={cell.key}
-          className={`${base} ${cellText} ring-1 ${prevRing} bg-transparent`}
-        >
-          <span>{cell.day}</span>
-        </div>
-      );
-    }
-    return (
-      <div key={cell.key} className={`${base} ${cellText}`}>
-        <span>{cell.day}</span>
-      </div>
-    );
-  };
-
-  const weekRow = weekLabels.map((label, i) => (
-    <div
-      key={`w-${i}-${label}`}
-      className={`w-10 h-10 shrink-0 rounded-[999px] p-2.5 inline-flex flex-col items-center justify-center text-center text-sm font-normal font-sans ${cellText}`}
-    >
-      <span>{label}</span>
-    </div>
-  ));
-
-  const grid = (
-    <div className="grid w-full grid-cols-7 gap-1 justify-items-center">
-      {weekRow}
-      {cells.map((c) => cellShell(c))}
-    </div>
-  );
-
-  const topGap = layout === "B" ? "gap-10" : layout === "A" ? "gap-5" : "gap-3";
-  const subMuted = useThemeColor ? "text-[#413830]/60" : "text-neutral-500";
-  const headStrong = useThemeColor ? "text-[#413830]" : "text-neutral-900";
-  const dividerClass = useThemeColor ? "bg-[#413830]/10" : "bg-black/10";
-  const pipeClass = useThemeColor ? "bg-[#413830]/25" : "bg-zinc-300";
-
-  let header: React.ReactNode = null;
-  if (layout === "A") {
-    header = (
-      <div className="flex w-44 max-w-[11rem] flex-col items-center gap-1">
-        <div className={`w-full text-center text-2xl font-bold ${headStrong}`}>{dotYmd}</div>
-        <div className={`w-full text-center text-base font-light ${subMuted}`}>{sublineA}</div>
-      </div>
-    );
-  } else if (layout === "B") {
-    header = (
-      <div className="flex flex-col items-center gap-3">
-        <div className={`text-center text-3xl font-bold ${headStrong}`}>{monthEn}</div>
-        <div className={`inline-flex items-center justify-center gap-2 text-base font-light ${subMuted}`}>
-          <span>{yyMmDd}</span>
-          <span className={`h-4 w-px ${pipeClass}`} aria-hidden />
-          <span>{WEEKDAY_EN_SHORT[dow]}</span>
-          {timeRaw.trim() ? (
-            <>
-              <span className={`h-4 w-px ${pipeClass}`} aria-hidden />
-              <span>{timeEn}</span>
-            </>
-          ) : null}
-        </div>
-      </div>
-    );
-  } else {
-    header = (
-      <div className="flex flex-col items-center gap-3">
-        <div className={`inline-flex items-center justify-center gap-4 text-3xl font-bold ${headStrong}`}>
-          <span>{String(y).slice(-2)}</span>
-          <span className={`h-6 w-px ${pipeClass}`} aria-hidden />
-          <span>{String(mo).padStart(2, "0")}</span>
-          <span className={`h-6 w-px ${pipeClass}`} aria-hidden />
-          <span>{String(d).padStart(2, "0")}</span>
-        </div>
-        <div className={`w-full text-center text-base font-light ${subMuted}`}>
-          {timeKo ? `${weekdayLongKo} ${timeKo}` : weekdayLongKo}
-        </div>
-      </div>
-    );
-  }
-
-  const placeHeaderOutsideBody = layout === "C";
-  const body = (
-    <div className={`mx-auto flex w-full flex-col items-center py-0 px-0 ${topGap}`}>
-      {layout !== "A" && !placeHeaderOutsideBody ? header : null}
-      <div className={`h-px w-full ${dividerClass}`} aria-hidden />
-      {grid}
-      <div className={`h-px w-full ${dividerClass}`} aria-hidden />
-    </div>
-  );
-  const previewWrapperClass =
-    "relative mx-auto flex h-fit w-full max-w-[384px] flex-col items-center justify-start gap-10";
-
-  if (layout === "A") {
-    return (
-      <>
-        {header}
-        <div className={previewWrapperClass}>{body}</div>
-      </>
-    );
-  }
-
-  return (
-    <div className={previewWrapperClass}>
-      {placeHeaderOutsideBody ? header : null}
-      {body}
-    </div>
-  );
-}
-
-function MultiImageGrid({
-  images,
-  onReorder,
-  onSlotClick,
-  onEdit,
-  onDelete,
-  touchMode = false,
-}: {
-  images: string[];
-  onReorder: (next: string[]) => void;
-  onSlotClick: (index: number, hasImg: boolean) => void;
-  onEdit: (index: number, src: string) => void;
-  onDelete: (index: number) => void;
-  touchMode?: boolean;
-}) {
-  const normalized = Array.from({ length: 4 }, (_, i) => images[i] || "");
-  const slots = normalized.map((src, i) => ({
-    id: src ? `img-${src}` : `empty-${i}`,
-    src,
-  }));
-
-  const sortable = useSortable({
-    items: slots,
-    onReorder: (reordered) => {
-      const next = reordered.map((s) => s.src);
-      onReorder(next);
-    },
-  });
-  const allowReorder = !touchMode;
-
-  return (
-    <div className="flex gap-2 flex-wrap w-full bg-[color:var(--surface-20)] p-4 rounded-lg">
-      {slots.map((slot, realIndex) => {
-        const hasImg = !!slot.src;
-        const sortableProps = allowReorder
-          ? sortable.getItemProps(slot.id)
-          : {
-              handleProps: {
-                onPointerDown: () => {},
-                style: {},
-                "aria-label": "이미지 이동 비활성화",
-              },
-              wrapperProps: {
-                onPointerEnter: () => {},
-                style: {},
-                className: "",
-                ref: () => {},
-              },
-            };
-        const { handleProps, wrapperProps } = sortableProps;
-        return (
-          <div
-            key={slot.id}
-            {...wrapperProps}
-            className={`${wrapperProps.className} relative w-[100px] min-w-[80px] aspect-[3/4] group`}
-          >
-            <button
-              type="button"
-              className={[
-                "w-full h-full rounded-lg border bg-white flex items-center justify-center text-3xl text-on-surface-30 bg-center bg-cover bg-clip-border bg-origin-border",
-                hasImg ? "border-transparent" : "border-dashed border-border hover:bg-slate-50",
-              ].join(" ")}
-              style={hasImg ? { backgroundImage: `url(${slot.src})` } : undefined}
-              onClick={() => onSlotClick(realIndex, hasImg)}
-              aria-label={`이미지 ${realIndex + 1} 추가`}
-            >
-              {hasImg ? '' : '+'}
-            </button>
-            {hasImg && (allowReorder || !isServiceProvidedThumbnailUrl(slot.src)) && (
-              <div className={cn("absolute right-1 top-1 flex flex-col gap-1 transition-opacity", touchMode ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
-                {!isServiceProvidedThumbnailUrl(slot.src) && (
-                  <>
-                    <button
-                      type="button"
-                      className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white"
-                      aria-label="이미지 수정"
-                      onClick={(e) => { e.stopPropagation(); onEdit(realIndex, slot.src); }}
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white"
-                      aria-label="이미지 삭제"
-                      onClick={(e) => { e.stopPropagation(); onDelete(realIndex); }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </>
-                )}
-                {allowReorder && (
-                  <button
-                    type="button"
-                    {...handleProps}
-                    className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white cursor-grab active:cursor-grabbing"
-                    aria-label="이미지 이동"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Move className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function GalleryImageGrid({
-  images,
-  onChange,
-  onEdit,
-  imageRatio,
-  max = 50,
-  touchMode = false,
-}: {
-  images: string[];
-  onChange: (next: string[]) => void;
-  onEdit?: (index: number, src: string) => void;
-  imageRatio?: "square" | "portrait";
-  max?: number;
-  touchMode?: boolean;
-}) {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const normalized = images.slice(0, max);
-  const slots = normalized.map((src, i) => ({ id: src ? `g-${src}` : `empty-${i}`, src }));
-
-  const sortable = useSortable({
-    items: slots,
-    onReorder: (reordered) => onChange(reordered.map((x) => x.src)),
-  });
-  const allowReorder = !touchMode;
-  const thumbAspectClass = imageRatio === "square" ? "aspect-square" : "aspect-[3/4]";
-  const thumbMinWidthClass = imageRatio === "square" ? "" : "min-w-[80px]";
-
-  return (
-    <div className="w-full flex flex-col gap-2">
-      <div className="pr-1">
-        <div className="flex gap-2 flex-wrap w-full bg-[color:var(--surface-20)] p-4 rounded-lg max-h-[420px] overflow-y-auto">
-          {slots.map((slot, i) => {
-            const sortableProps = allowReorder
-              ? sortable.getItemProps(slot.id)
-              : {
-                  handleProps: {
-                    onPointerDown: () => {},
-                    style: {},
-                    "aria-label": "이미지 이동 비활성화",
-                  },
-                  wrapperProps: {
-                    onPointerEnter: () => {},
-                    style: {},
-                    className: "",
-                    ref: () => {},
-                  },
-                };
-            const { handleProps, wrapperProps } = sortableProps;
-            return (
-              <div
-                key={`${slot.id}-${i}`}
-                {...wrapperProps}
-                className={`${wrapperProps.className} relative w-[100px] ${thumbMinWidthClass} ${thumbAspectClass} group`}
-              >
-                <button
-                  type="button"
-                  className="w-full h-full rounded-lg border border-transparent bg-center bg-cover bg-clip-border bg-origin-border"
-                  style={{ backgroundImage: `url(${slot.src})` }}
-                  onClick={() => {
-                    const el = document.getElementById(`gallery-image-${i}`) as HTMLInputElement | null;
-                    el?.click();
-                  }}
-                  aria-label={`갤러리 이미지 ${i + 1} 수정`}
-                />
-                {!!slot.src && (allowReorder || !isServiceProvidedThumbnailUrl(slot.src)) && (
-                  <div className={cn("absolute right-1 top-1 flex flex-col gap-1 transition-opacity", touchMode ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
-                    {!isServiceProvidedThumbnailUrl(slot.src) && (
-                      <>
-                        <button
-                          type="button"
-                          className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white"
-                          aria-label="이미지 수정"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (onEdit && slot.src) {
-                              onEdit(i, slot.src);
-                              return;
-                            }
-                            const el = document.getElementById(`gallery-image-${i}`) as HTMLInputElement | null;
-                            el?.click();
-                          }}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white"
-                          aria-label="이미지 삭제"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const next = [...normalized];
-                            next.splice(i, 1);
-                            onChange(next);
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
-                    {allowReorder && (
-                      <button
-                        type="button"
-                        {...handleProps}
-                        className="w-7 h-7 rounded-lg bg-white/95 border border-border shadow-sm flex items-center justify-center text-on-surface-20 hover:bg-white cursor-grab active:cursor-grabbing"
-                        onClick={(e) => e.stopPropagation()}
-                        aria-label="이미지 이동"
-                      >
-                        <Move className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          {normalized.length < max && (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className={`relative w-[100px] ${thumbMinWidthClass} ${thumbAspectClass} rounded-lg border border-dashed border-border bg-white hover:bg-slate-50 active:bg-slate-50 flex items-center justify-center text-3xl text-on-surface-30 bg-center bg-cover bg-clip-border bg-origin-border`}
-              aria-label="갤러리 이미지 추가"
-            >
-              +
-            </button>
-          )}
-        </div>
-      </div>
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        className="hidden"
-        onChange={(e) => {
-          const files = Array.from(e.target.files ?? []);
-          if (!files.length) return;
-          const next = [...normalized];
-          const remain = Math.max(0, max - next.length);
-          files.slice(0, remain).forEach((f) => next.push(URL.createObjectURL(f)));
-          onChange(next);
-          e.currentTarget.value = "";
-        }}
-      />
-
-      {slots.map((_, i) => (
-        <input
-          key={`gallery-image-input-${i}`}
-          id={`gallery-image-${i}`}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (!file) return;
-            const next = [...normalized];
-            next[i] = URL.createObjectURL(file);
-            onChange(next);
-            e.currentTarget.value = "";
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-export default function BuilderPageClient({ initialParams, initialSearchParams }: any) {
+export default function BuilderPageClient({ initialSearchParams }: { initialSearchParams?: BuilderSearchParams }) {
   const router = useRouter();
-  const [activeSection, setActiveSection] = useState(sidebarItems[0].id);
   const { data, updateData, setData, updateLocation } = useCardStore();
+  const {
+    activeSection,
+    setActiveSection,
+    editorWidth,
+    setEditorWidth,
+    mobilePanel,
+    setMobilePanel,
+    previewVisibleSections,
+    setPreviewVisibleSections,
+  } = useBuilderUiStore();
   const cloneCardData = (source: CardData): CardData => {
     let cloned: CardData;
     try {
@@ -2091,15 +1480,15 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const isSwitchingInvitationRef = useRef(false);
   const onboardingAppliedRef = useRef(false);
   const shareTitleManuallyEditedRef = useRef(false);
+  const isBrideFirstInfo = !!(data.i18n?.brideFirstInfo ?? false);
 
   const autoShareTitle = useMemo(() => {
-    const brideFirst = !!((data as any).i18n?.brideFirstInfo ?? false);
     const groom = (data.hosts.groom.name ?? "").trim();
     const bride = (data.hosts.bride.name ?? "").trim();
-    const firstDisplayName = brideFirst ? (bride || "신부") : (groom || "신랑");
-    const secondDisplayName = brideFirst ? (groom || "신랑") : (bride || "신부");
+    const firstDisplayName = isBrideFirstInfo ? (bride || "신부") : (groom || "신랑");
+    const secondDisplayName = isBrideFirstInfo ? (groom || "신랑") : (bride || "신부");
     return `${firstDisplayName} ♥ ${secondDisplayName} 결혼식`;
-  }, [data.hosts.groom.name, data.hosts.bride.name, (data as any).i18n?.brideFirstInfo]);
+  }, [data.hosts.groom.name, data.hosts.bride.name, isBrideFirstInfo]);
 
   useEffect(() => {
     shareTitleManuallyEditedRef.current = false;
@@ -2133,9 +1522,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     const next = typeof updater === 'function' ? updater(sectionEnabled) : updater;
     updateData('sectionEnabled', next);
   };
-  const [editorWidth, setEditorWidth] = useState(560);
   const [isTabletViewport, setIsTabletViewport] = useState(false);
-  const [mobilePanel, setMobilePanel] = useState<'editor' | 'preview'>('editor');
   const [viewportHeightPx, setViewportHeightPx] = useState<number | null>(null);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const isResizingEditorRef = useRef(false);
@@ -2145,14 +1532,14 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   // 선택사항 목록 순서 (드래그로 변경)
   const [optionalOrder, setOptionalOrder] = useState<string[]>(() =>
     sidebarItems
-      .filter((i) => i.category === '선택' && !OTHER_OPTION_IDS.includes(i.id as any))
+      .filter((i) => i.category === '선택' && !OTHER_OPTION_IDS_AS_STRINGS.includes(i.id))
       .map((i) => i.id)
   );
   useEffect(() => {
     // 새 선택 섹션이 추가되면 기존 순서 상태에 자동 편입
     setOptionalOrder((prev) => {
       const currentIds = sidebarItems
-        .filter((i) => i.category === '선택' && !OTHER_OPTION_IDS.includes(i.id as any))
+        .filter((i) => i.category === '선택' && !OTHER_OPTION_IDS_AS_STRINGS.includes(i.id))
         .map((i) => i.id);
       const normalizedPrev = prev.filter((id) => currentIds.includes(id));
       const missing = currentIds.filter((id) => !normalizedPrev.includes(id));
@@ -2175,7 +1562,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
   useEffect(() => {
     if (!isTabletViewport) setMobilePanel('editor');
-  }, [isTabletViewport]);
+  }, [isTabletViewport, setMobilePanel]);
 
   useEffect(() => {
     if (!isTabletViewport || mobilePanel !== 'editor') return;
@@ -2236,7 +1623,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const [locationPreviewCoords, setLocationPreviewCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [locationPreviewLoading, setLocationPreviewLoading] = useState(false);
   const [naverPreviewFailed, setNaverPreviewFailed] = useState(false);
-  const [previewVisibleSections, setPreviewVisibleSections] = useState<Record<string, boolean>>({});
 
   const applyVenueSuggestion = async (venue: VenueSuggestion) => {
     updateData('eventInfo.venueName', venue.name);
@@ -2245,11 +1631,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     let guides = Array.isArray(venue.transportGuides) ? venue.transportGuides.slice(0, 3) : [];
     if (guides.length === 0) {
       try {
-        const transitRes = await fetch(`/api/weddinghall-transit?address=${encodeURIComponent(venue.address)}`);
-        if (transitRes.ok) {
-          const transitJson = (await transitRes.json()) as { guides?: Array<{ mode: string; detail: string }> };
-          guides = Array.isArray(transitJson.guides) ? transitJson.guides.slice(0, 3) : [];
-        }
+        guides = (await fetchWeddingHallTransit(venue.address)).slice(0, 3);
       } catch {
         // 네트워크 실패 시 기존 값 유지
       }
@@ -2277,7 +1659,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
   useEffect(() => {
     if (locationSearchOpen) return;
-    setLocationAddressKeyword((data.location as any)?.address ?? '');
+    setLocationAddressKeyword(data.location?.address ?? '');
   }, [data.location, locationSearchOpen]);
 
   const [sharePreviewOpen, setSharePreviewOpen] = useState(false);
@@ -2390,12 +1772,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     setEditingInvitationTabName("");
   };
 
-  const pickSearchParam = (key: string) => {
+  const pickSearchParam = useCallback((key: string) => {
     const query = initialSearchParams ?? {};
     const value = query[key];
     if (Array.isArray(value)) return value[0] ?? '';
     return typeof value === 'string' ? value : '';
-  };
+  }, [initialSearchParams]);
 
   useEffect(() => {
     if (onboardingAppliedRef.current) return;
@@ -2412,7 +1794,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     const mergedVenueName = [venueName, venueDetail].filter(Boolean).join(' ');
     const venueAddress = pickSearchParam('venueAddress').trim();
     const themeType = pickSearchParam('themeType').trim().toUpperCase();
-    const brideFirstInfo = !!((data as any).i18n?.brideFirstInfo ?? false);
+    const brideFirstInfo = isBrideFirstInfo;
 
     if (groomName) updateData('hosts.groom.name', groomName);
     if (brideName) updateData('hosts.bride.name', brideName);
@@ -2431,7 +1813,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       updateData('main.title', composedTitle);
       updateData('share.title', composedTitle);
     }
-  }, [initialSearchParams, updateData]);
+  }, [data, isBrideFirstInfo, pickSearchParam, updateData]);
 
   // 공유 섹션 썸네일 프리셋 (사용자 제공 배너 리소스)
   const shareThumbnailPresets = useMemo(
@@ -2500,7 +1882,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
     targets.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, [data.theme.scrollEffect, data.sectionEnabled, optionalOrder, isTabletViewport, mobilePanel]);
+  }, [data.theme.scrollEffect, data.sectionEnabled, optionalOrder, isTabletViewport, mobilePanel, setPreviewVisibleSections]);
 
   const scrollPreviewToSection = (sectionId: string) => {
     if (sectionId === "hosts" || sectionId === "eventInfo") return;
@@ -2562,26 +1944,39 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     | '켄번즈(줌 아웃)'
   >('크로스페이드');
   const selectedKeyColorPreset = useMemo(() => {
-    const selectedId = (data.theme as any)?.colorPreset;
+    const selectedId = data.theme?.colorPreset;
     return KEY_COLOR_PRESETS.find((preset) => preset.id === selectedId) ?? KEY_COLOR_PRESETS[0];
-  }, [(data.theme as any)?.colorPreset]);
+  }, [data.theme]);
+  const galleryLayoutType = (data.gallery?.layoutType ?? 'grid') as 'grid' | 'slide';
+  const galleryGridColumns = Number(data.gallery?.gridColumns ?? 3);
+  const galleryUseLoadMore = (data.gallery?.useLoadMore ?? true) as boolean;
+  const galleryImages = useMemo(
+    () =>
+      Array.isArray(data.gallery?.images)
+        ? data.gallery.images.filter((u: unknown) => typeof u === 'string' && u.trim().length > 0)
+        : [],
+    [data.gallery],
+  );
+  const galleryImagesLength = galleryImages.length;
+  const galleryAutoSlide = !!(data.gallery?.autoSlide);
+  const galleryAutoSlideIntervalSec = Number(data.gallery?.autoSlideIntervalSec ?? 3);
+  const accountsDisplayMode = (data.accounts?.displayMode ?? 'accordion') as 'accordion' | 'expanded';
+  const guestbookEntriesLength = Array.isArray(data.guestbook?.entries)
+    ? data.guestbook.entries.length
+    : 0;
+  const mainImageMode = data.main.imageMode;
+  const mainTransitionEffect = data.main.transitionEffect;
+  const mainTransitionIntervalSec = Number(data.main.transitionIntervalSec ?? 3);
 
   useEffect(() => {
     setGalleryGridVisibleRows(3);
-  }, [
-    (data.gallery as any)?.layoutType,
-    (data.gallery as any)?.gridColumns,
-    (data.gallery as any)?.useLoadMore,
-    Array.isArray((data.gallery as any)?.images) ? (data.gallery as any).images.length : 0,
-  ]);
+  }, [galleryLayoutType, galleryGridColumns, galleryUseLoadMore, galleryImagesLength]);
 
   useEffect(() => {
-    const layoutType = ((data.gallery as any)?.layoutType ?? 'grid') as 'grid' | 'slide';
-    const autoSlide = !!((data.gallery as any)?.autoSlide);
-    const intervalSec = Number((data.gallery as any)?.autoSlideIntervalSec ?? 3);
-    const images = Array.isArray((data.gallery as any)?.images)
-      ? (data.gallery as any).images.filter((u: unknown) => typeof u === 'string' && u.trim().length > 0)
-      : [];
+    const layoutType = galleryLayoutType;
+    const autoSlide = galleryAutoSlide;
+    const intervalSec = galleryAutoSlideIntervalSec;
+    const images = galleryImages;
     if (layoutType !== 'slide' || !autoSlide || images.length <= 1) return;
 
     const timerId = window.setInterval(() => {
@@ -2591,15 +1986,10 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     return () => {
       window.clearInterval(timerId);
     };
-  }, [
-    (data.gallery as any)?.layoutType,
-    (data.gallery as any)?.autoSlide,
-    (data.gallery as any)?.autoSlideIntervalSec,
-    Array.isArray((data.gallery as any)?.images) ? (data.gallery as any).images.length : 0,
-  ]);
+  }, [galleryAutoSlide, galleryAutoSlideIntervalSec, galleryImages, galleryLayoutType]);
 
   useEffect(() => {
-    const displayMode = ((data.accounts as any)?.displayMode ?? 'accordion') as 'accordion' | 'expanded';
+    const displayMode = accountsDisplayMode;
     if (displayMode !== 'accordion') return;
     const list = Array.isArray(data.accounts?.list) ? data.accounts.list : [];
     setAccountPreviewExpandedMap((prev) => {
@@ -2609,11 +1999,11 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       }
       return next;
     });
-  }, [data.accounts?.list, (data.accounts as any)?.displayMode]);
+  }, [accountsDisplayMode, data.accounts?.list]);
 
   useEffect(() => {
     setGuestbookPreviewPage(1);
-  }, [Array.isArray((data.guestbook as any)?.entries) ? (data.guestbook as any).entries.length : 0]);
+  }, [guestbookEntriesLength]);
 
   useEffect(() => {
     if (!guestbookMenuEntryId) return;
@@ -2709,7 +2099,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
   // location 교통수단 목록: 기존 subway/bus 값을 1개 항목으로 호환
   const transportItems = useMemo(() => {
-    const transports = (data.location as any)?.transports;
+    const transports = data.location?.transports;
     if (Array.isArray(transports)) {
       const list = transports as Array<{ mode: string; detail: string }>;
       if (list.length === 0) return [];
@@ -2738,8 +2128,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
   const galleryDetailImages = useMemo(
     () =>
-      Array.isArray((data.gallery as any)?.images)
-        ? (data.gallery as any).images.filter((u: unknown) => typeof u === "string" && u.trim().length > 0)
+      Array.isArray(data.gallery?.images)
+        ? data.gallery.images.filter((u: unknown) => typeof u === "string" && u.trim().length > 0)
         : [],
     [data.gallery],
   );
@@ -2756,7 +2146,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   }, [galleryDetailImages, galleryDetailIndex]);
 
   const galleryDetailRatioClass =
-    ((data.gallery as any)?.imageRatio ?? 'portrait') === 'square' ? 'aspect-square' : 'aspect-[3/4]';
+    (data.gallery?.imageRatio ?? 'portrait') === 'square' ? 'aspect-square' : 'aspect-[3/4]';
 
   // 주소 검색 모달 로직은 AddressSearchDialog로 분리
 
@@ -2935,17 +2325,17 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   }, []);
 
   const greetingEntries = useMemo(() => {
-    const raw = (data.greeting as any)?.entries;
+    const raw = data.greeting?.entries;
     if (Array.isArray(raw) && raw.length > 0) {
-      return raw.map((entry: any) => ({
+      return raw.map((entry: GreetingEntry) => ({
         title: String(entry?.title ?? ''),
         content: String(entry?.content ?? ''),
       }));
     }
     return [
       {
-        title: String((data.greeting as any)?.title ?? ''),
-        content: String((data.greeting as any)?.content ?? ''),
+        title: String(data.greeting?.title ?? ''),
+        content: String(data.greeting?.content ?? ''),
       },
     ];
   }, [data.greeting]);
@@ -3162,8 +2552,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     audio.crossOrigin = 'anonymous';
     audio.preload = 'metadata';
     audio.loop = !!data.music?.isLoop;
-    audio.muted = muted;
-    audio.volume = volume;
 
     const onLoaded = () => setDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
     const onTime = () => setCurrentTime(audio.currentTime || 0);
@@ -3405,16 +2793,9 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
     const t = window.setTimeout(async () => {
       try {
-        const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`, {
-          signal: controller.signal,
-          headers: { Accept: "application/json" },
-        });
-        if (!res.ok) throw new Error("geocode failed");
-        const json = (await res.json()) as { lat?: number; lon?: number };
-        const lat = typeof json.lat === "number" ? json.lat : NaN;
-        const lon = typeof json.lon === "number" ? json.lon : NaN;
-        if (!cancelled && Number.isFinite(lat) && Number.isFinite(lon)) {
-          setLocationPreviewCoords({ lat, lon });
+        const coords = await geocodeAddress(query, controller.signal);
+        if (!cancelled && coords) {
+          setLocationPreviewCoords(coords);
         }
       } catch {
         // 지오코딩 실패 시에도 경복궁 기본 위치를 유지
@@ -3432,9 +2813,9 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   }, [data.location.address]);
 
   useEffect(() => {
-    const mode = normalizeMainImageMode((data.main as any).imageMode);
-    const imagesRaw = Array.isArray((data.main as any).images) ? (data.main as any).images : [];
-    const images = (imagesRaw as any[]).filter((u) => typeof u === 'string' && u.trim().length > 0) as string[];
+    const mode = normalizeMainImageMode(data.main.imageMode);
+    const imagesRaw = Array.isArray(data.main.images) ? data.main.images : [];
+    const images = imagesRaw.filter((u): u is string => typeof u === "string" && u.trim().length > 0);
     if (mode !== 'multi' || images.length < 2) {
       setMainPreviewIndex(0);
       setMainPreviewPrevIndex(null);
@@ -3444,7 +2825,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     // 모드/이미지 목록 변경 시 인덱스 클램프
     setMainPreviewIndex((i) => (i >= images.length ? 0 : i));
 
-    const selected = normalizeTransitionEffect((data.main as any).transitionEffect ?? '없음');
+    const selected = normalizeTransitionEffect(data.main.transitionEffect ?? '없음');
     const durationMs = 1400;
     const randomPool = [
       '크로스페이드',
@@ -3469,9 +2850,10 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       });
       setMainPreviewIndex((current) => {
         const next = (current + 1) % images.length;
-        const effectToApply = selected === '랜덤' ? pickRandomEffect() : selected;
         if (selected !== '없음') {
-          if (selected === '랜덤') setMainPreviewRandomEffect(effectToApply);
+          if (selected === '랜덤') {
+            setMainPreviewRandomEffect(pickRandomEffect());
+          }
           setMainPreviewPrevIndex(current);
           setMainPreviewAnimKey((k) => k + 1);
           window.setTimeout(() => setMainPreviewPrevIndex(null), durationMs + 30);
@@ -3480,11 +2862,10 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       });
     };
 
-    const intervalSec = Number((data.main as any).transitionIntervalSec ?? 3);
-    const intervalMs = (Number.isFinite(intervalSec) ? intervalSec : 3) * 1000;
+    const intervalMs = (Number.isFinite(mainTransitionIntervalSec) ? mainTransitionIntervalSec : 3) * 1000;
     const id = window.setInterval(tick, intervalMs);
     return () => window.clearInterval(id);
-  }, [data.main, (data.main as any).imageMode, (data.main as any).transitionEffect, mainPreviewRandomEffect]);
+  }, [data.main, mainImageMode, mainTransitionEffect, mainPreviewRandomEffect, mainTransitionIntervalSec]);
 
   useEffect(() => {
     const clamp = (v: number) => Math.min(560, Math.max(400, v));
@@ -3507,13 +2888,13 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
     };
-  }, []);
+  }, [setEditorWidth]);
 
   const orderedContentOptionalItems = optionalOrder
     .map((id) => sidebarItems.find((i) => i.id === id))
     .filter(Boolean) as typeof sidebarItems;
   const otherOptionItems = sidebarItems.filter((i) =>
-    OTHER_OPTION_IDS.includes(i.id as any),
+    OTHER_OPTION_IDS_AS_STRINGS.includes(i.id),
   );
   const layoutOrder = [
     ...baseLayoutOrder,
@@ -3540,7 +2921,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     ...otherOptionItems,
   ];
   const isRsvpPreviewExpired = (() => {
-    const deadline = String((data as any)?.rsvp?.deadline ?? "").trim();
+    const deadline = String(data?.rsvp?.deadline ?? "").trim();
     if (!deadline) return false;
     const now = new Date();
     const y = now.getFullYear();
@@ -3619,7 +3000,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
     setImageEditorFlipX(false);
     setImageEditorPan({ x: 0, y: 0 });
     if (target.kind === 'gallery') {
-      const ratio = ((data.gallery as any)?.imageRatio ?? 'portrait') as string;
+      const ratio = (data.gallery?.imageRatio ?? 'portrait') as string;
       setImageEditorAspect(ratio === 'square' ? 'square' : 'portrait');
     } else if (target.kind === 'shareThumbnail' || target.kind === 'contactThumbnail') {
       setImageEditorAspect('landscape10x4');
@@ -3663,7 +3044,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       mainImageObjectUrlRef.current = url;
       updateData('main.image', url);
     } else if (imageEditorTarget.kind === 'multi') {
-      const prev = Array.isArray((data.main as any).images) ? [...(data.main as any).images] : [];
+      const prev = Array.isArray(data.main.images) ? [...data.main.images] : [];
       // 기존 blob url이면 정리
       const prevUrl = prev[imageEditorTarget.index];
       if (typeof prevUrl === 'string' && prevUrl.startsWith('blob:')) {
@@ -3672,7 +3053,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       prev[imageEditorTarget.index] = url;
       updateData('main.images', prev);
     } else if (imageEditorTarget.kind === 'gallery') {
-      const prev = Array.isArray((data.gallery as any).images) ? [...(data.gallery as any).images] : [];
+      const prev = Array.isArray(data.gallery.images) ? [...data.gallery.images] : [];
       const prevUrl = prev[imageEditorTarget.index];
       if (typeof prevUrl === 'string' && prevUrl.startsWith('blob:')) {
         try { URL.revokeObjectURL(prevUrl); } catch {}
@@ -3680,19 +3061,19 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       prev[imageEditorTarget.index] = url;
       updateData('gallery.images', prev);
     } else if (imageEditorTarget.kind === 'shareThumbnail') {
-      const prevUrl = String((data.share as any)?.thumbnail ?? '');
+      const prevUrl = String(data.share?.thumbnail ?? '');
       if (prevUrl.startsWith('blob:')) {
         try { URL.revokeObjectURL(prevUrl); } catch {}
       }
       updateData('share.thumbnail', url);
     } else if (imageEditorTarget.kind === 'contactThumbnail') {
-      const prevUrl = String((data.contact as any)?.thumbnail ?? '');
+      const prevUrl = String(data.contact?.thumbnail ?? '');
       if (prevUrl.startsWith('blob:')) {
         try { URL.revokeObjectURL(prevUrl); } catch {}
       }
       updateData('contact.thumbnail', url);
     } else if (imageEditorTarget.kind === 'intro') {
-      const prevIntroUrl = String(((data as any).intro?.[imageEditorTarget.role]?.image ?? ''));
+      const prevIntroUrl = String((data.intro?.[imageEditorTarget.role]?.image ?? ''));
       if (prevIntroUrl.startsWith('blob:')) {
         try { URL.revokeObjectURL(prevIntroUrl); } catch {}
       }
@@ -3703,17 +3084,17 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   };
 
   const noticeSections = useMemo(() => {
-    const rawSections = (data.notice as any)?.sections;
+    const rawSections = data.notice?.sections;
     if (Array.isArray(rawSections) && rawSections.length > 0) {
-      return rawSections.slice(0, 3).map((section: any, idx: number) => ({
+      return rawSections.slice(0, 3).map((section: NoticeSection, idx: number) => ({
         id: String(section?.id ?? `notice-${idx + 1}`),
         title: String(section?.title ?? "").trim() || `안내 ${idx + 1}`,
         content: String(section?.content ?? ""),
       }));
     }
-    const fallbackTitle = (data.notice as any)?.title ?? "안내사항";
+    const fallbackTitle = data.notice?.title ?? "안내사항";
     const fallbackContent =
-      (data.notice as any)?.content ??
+      data.notice?.content ??
       "마음 편히 오셔서 함께 축복해 주세요.\n예식장 내 주차가 가능하며, 식전 30분 전부터 입장이 가능합니다.";
     return [
       {
@@ -3745,12 +3126,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
   const renderPreviewSection = (sectionId: string) => {
     switch (sectionId) {
       case 'main': {
-        const frame = normalizeMainImageFrame((data.main as any).imageFrame);
-        const mode = normalizeMainImageMode((data.main as any).imageMode);
-        const mainBlackAndWhiteEnabled = !!((data.main as any).blackAndWhite ?? false);
+        const frame = normalizeMainImageFrame(data.main.imageFrame);
+        const mode = normalizeMainImageMode(data.main.imageMode);
+        const mainBlackAndWhiteEnabled = !!(data.main.blackAndWhite ?? false);
         const mainImageFilterStyle = mainBlackAndWhiteEnabled ? { filter: "grayscale(100%)" } : undefined;
         if (mode === 'default') {
-          const presetUrl = String((data.main as any).presetImage ?? '').trim();
+          const presetUrl = String(data.main.presetImage ?? '').trim();
           if (!presetUrl) {
             return null;
           }
@@ -3763,16 +3144,11 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
             </MainHeroFrameShell>
           );
         }
-        const groomName = data.hosts.groom.name;
-        const brideName = data.hosts.bride.name;
-        const brideFirstInfo = !!((data as any).i18n?.brideFirstInfo ?? false);
-        const firstDisplayName = brideFirstInfo ? brideName : groomName;
-        const secondDisplayName = brideFirstInfo ? groomName : brideName;
-        const normalizedEffect = normalizeTransitionEffect((data.main as any).transitionEffect ?? '없음');
+        const normalizedEffect = normalizeTransitionEffect(data.main.transitionEffect ?? '없음');
         const transitionEffect = normalizedEffect === '랜덤' ? mainPreviewRandomEffect : normalizedEffect;
-        const imagesRaw = Array.isArray((data.main as any).images) ? (data.main as any).images : [];
-        const images = (imagesRaw as any[]).filter((u) => typeof u === 'string' && u.trim().length > 0) as string[];
-        const singleUrl = typeof (data.main as any).image === 'string' ? (data.main as any).image : '';
+        const imagesRaw = Array.isArray(data.main.images) ? data.main.images : [];
+        const images = imagesRaw.filter((u): u is string => typeof u === "string" && u.trim().length > 0);
+        const singleUrl = typeof data.main.image === 'string' ? data.main.image : '';
         const currentUrl =
           mode === 'multi' && images.length > 0
             ? images[Math.min(mainPreviewIndex, images.length - 1)]
@@ -3876,14 +3252,21 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         );
       }
       case 'greeting': {
-        const greetingUseImage = !!((data.greeting as any)?.useImage ?? true);
-        const greetingThumb = ((data.greeting as any)?.thumbnail ?? '').trim();
+        const greetingUseImage = !!(data.greeting?.useImage ?? true);
+        const greetingThumb = (data.greeting?.thumbnail ?? '').trim();
         const greetingThumbnailForPreview = greetingThumb || greetingDefaultThumbnail;
         return (
           <div className="max-w-[320px] mx-auto flex flex-col justify-start items-center">
             {greetingUseImage && (
-              <div className="w-[56px] h-[56px] rounded-xl bg-white overflow-hidden mb-4 flex items-center justify-center">
-                <img src={greetingThumbnailForPreview} alt="인사말 이미지" className="w-[56px] h-[56px] object-contain" />
+              <div className="relative mb-4 h-[56px] w-[56px] overflow-hidden rounded-xl bg-white">
+                <NextImage
+                  src={greetingThumbnailForPreview}
+                  alt="인사말 이미지"
+                  width={56}
+                  height={56}
+                  className="object-contain"
+                  unoptimized
+                />
               </div>
             )}
             <div className="space-y-5">
@@ -3900,11 +3283,11 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         );
       }
       case 'intro': {
-        const introData = (data as any).intro ?? {};
+        const introData = data.intro ?? {};
         const introHeading = String(introData.sectionHeading ?? '').trim() || '저희를 소개합니다';
         const groomName = (data.hosts.groom.name ?? '').trim() || '신랑';
         const brideName = (data.hosts.bride.name ?? '').trim() || '신부';
-        const brideFirst = !!((data as any).i18n?.brideFirstInfo ?? false);
+        const brideFirst = !!(data.i18n?.brideFirstInfo ?? false);
         const layoutType = (introData.layoutType ?? 'A') as 'A' | 'B' | 'C' | 'D';
 
         /** 공통 사진 박스 (사이즈·모양은 레이아웃별로 override) */
@@ -3917,13 +3300,21 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           return (
             <div
               className={[
+                'relative',
                 sizeClass,
                 'overflow-hidden flex-shrink-0 bg-[color:var(--surface-20)]',
                 hasImage ? '' : 'flex items-center justify-center',
               ].join(' ')}
             >
               {hasImage ? (
-                <img src={image} alt={`${role} 소개 사진`} className="w-full h-full object-cover" />
+                <NextImage
+                  src={image}
+                  alt={`${role} 소개 사진`}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 420px) 45vw, 200px"
+                  unoptimized
+                />
               ) : (
                 <UserRound className="w-9 h-9 text-[color:var(--on-surface-disabled)]" strokeWidth={1.25} aria-hidden />
               )}
@@ -4170,7 +3561,6 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       case 'hosts': {
         const groom = data.hosts.groom;
         const bride = data.hosts.bride;
-        const brideFirstInfo = !!((data as any).i18n?.brideFirstInfo ?? false);
         const groomRelation = (groom.relation ?? '').trim() || '아들';
         const brideRelation = (bride.relation ?? '').trim() || '딸';
         const renderParentLabel = (
@@ -4179,10 +3569,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         ) => (
           <span className="inline-flex items-center gap-1">
             {parent.isDeceased ? (
-              <img
+              <NextImage
                 src="/chrysanthemum.svg"
                 alt="국화"
-                className="w-3.5 h-3.5 object-contain"
+                width={14}
+                height={14}
+                className="h-3.5 w-3.5 object-contain"
                 aria-hidden
               />
             ) : null}
@@ -4229,8 +3621,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       }
       case 'contact': {
         const contactEnabled = isSectionEnabled('contact');
-        const useContactThumbnail = (data.contact as any)?.useThumbnail ?? true;
-        const brideFirstInfo = !!((data as any).i18n?.brideFirstInfo ?? false);
+        const useContactThumbnail = data.contact?.useThumbnail ?? true;
+        const brideFirstInfo = !!(data.i18n?.brideFirstInfo ?? false);
         const groomName = (data.hosts.groom.name ?? '').trim() || '신랑';
         const brideName = (data.hosts.bride.name ?? '').trim() || '신부';
         const groomRelation = (data.hosts.groom.relation ?? '').trim() || '아들';
@@ -4249,10 +3641,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         ) => (
           <span key={key} className="inline-flex items-center gap-1">
             {isDeceased ? (
-              <img
+              <NextImage
                 src="/chrysanthemum.svg"
                 alt="국화"
-                className="w-3.5 h-3.5 object-contain"
+                width={14}
+                height={14}
+                className="h-3.5 w-3.5 object-contain"
                 aria-hidden
               />
             ) : null}
@@ -4331,11 +3725,14 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         return (
           <div className="mx-auto w-full px-5 space-y-5">
             {contactEnabled && useContactThumbnail && !!(data.contact?.thumbnail ?? '').trim() && (
-              <div className="w-full aspect-[10/4] bg-[color:var(--surface-20)] overflow-hidden mb-[40px] rounded-[8px]">
-                <img
-                  src={(data.contact?.thumbnail ?? '').trim()}
+              <div className="relative mb-[40px] aspect-[10/4] w-full overflow-hidden rounded-[8px] bg-[color:var(--surface-20)]">
+                <NextImage
+                  src={(data.contact?.thumbnail ?? "").trim()}
                   alt="혼주 섹션 이미지"
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 420px) 100vw, 400px"
+                  unoptimized
                 />
               </div>
             )}
@@ -4435,12 +3832,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         );
       }
       case 'eventInfo': {
-        const brideFirstInfo = !!((data as any).i18n?.brideFirstInfo ?? false);
+        const brideFirstInfo = !!(data.i18n?.brideFirstInfo ?? false);
         const dateText = (data.eventInfo.date ?? "").trim();
         const eventDate = parseEventDateLocal(dateText);
         const isValidEventDate = eventDate !== null;
-        const showDday = (data.eventInfo as any)?.showDday !== false && isSectionEnabled('eventDate');
-        const calendarDisplayType = normalizeCalendarDisplayType((data.eventInfo as any)?.calendarDisplayType);
+        const showDday = data.eventInfo?.showDday !== false && isSectionEnabled('eventDate');
+        const calendarDisplayType = normalizeCalendarDisplayType(data.eventInfo?.calendarDisplayType);
         const calendarUseThemeColor = true;
         const timeTrimmed = (data.eventInfo.time ?? "").trim();
         let ddayStatusText = "";
@@ -4517,8 +3914,8 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         {
           const addressInput = (data.location.address || '').trim();
           const address = addressInput || '경복궁';
-          const venueName = String((data.eventInfo as any)?.venueName ?? '').trim();
-          const venueDetail = String((data.eventInfo as any)?.venueDetail ?? '').trim();
+          const venueName = String(data.eventInfo?.venueName ?? '').trim();
+          const venueDetail = String(data.eventInfo?.venueDetail ?? '').trim();
           const venueDisplay = venueName
             ? (venueDetail && !venueName.includes(venueDetail) ? `${venueName} ${venueDetail}` : venueName)
             : address;
@@ -4557,15 +3954,15 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
             return compactParts.join(' ').trim();
           })();
           const title =
-            String((data.location as any).title ?? LOCATION_TITLE_OPTIONS[0]).trim() || LOCATION_TITLE_OPTIONS[0];
+            String(data.location.title ?? LOCATION_TITLE_OPTIONS[0]).trim() || LOCATION_TITLE_OPTIONS[0];
           const enc = encodeURIComponent(address);
           const naverWeb = address ? `https://map.naver.com/v5/search/${enc}` : '';
 
-          const transportsRaw = (data.location as any)?.transports;
+          const transportsRaw = data.location?.transports;
           const transports: Array<{ mode: string; detail: string }> = Array.isArray(transportsRaw)
             ? transportsRaw
             : [
-                { mode: (data.location as any).subway || '', detail: (data.location as any).bus || '' },
+                { mode: data.location.subway || '', detail: data.location.bus || '' },
               ];
           const transportsClean = transports
             .map((t) => ({ mode: (t?.mode ?? '').trim(), detail: (t?.detail ?? '').trim() }))
@@ -4619,11 +4016,13 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                     {locationPreviewCoords ? (
                       <>
                         {!naverPreviewFailed && (
-                          <img
+                          <NextImage
                             key={`${locationPreviewCoords.lat}-${locationPreviewCoords.lon}`}
                             alt=""
                             src={`/api/naver-map-preview?lat=${encodeURIComponent(String(locationPreviewCoords.lat))}&lon=${encodeURIComponent(String(locationPreviewCoords.lon))}&w=800&h=500`}
-                            className="absolute inset-0 z-[1] h-full w-full object-cover"
+                            fill
+                            className="z-[1] object-cover"
+                            sizes="800px"
                             onError={() => setNaverPreviewFailed(true)}
                           />
                         )}
@@ -4729,7 +4128,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         const rawContent = String(activeSection?.content ?? "");
         const content = rawContent.trim().length > 0 ? rawContent : "안내 내용을 입력해 주세요.";
         const noticeHeading =
-          String((data.notice as any)?.sectionHeading ?? "").trim() || NOTICE_HEADING_OPTIONS[0];
+          String(data.notice?.sectionHeading ?? "").trim() || NOTICE_HEADING_OPTIONS[0];
         const noticeTitle = (
           <div className="space-y-1">
             <div className={PREVIEW_TYPOGRAPHY_GUIDE.subtitle}>{noticeHeading}</div>
@@ -4775,19 +4174,19 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         );
       }
       case 'gallery': {
-        const images = Array.isArray((data.gallery as any)?.images)
-          ? (data.gallery as any).images.filter((u: unknown) => typeof u === "string" && u.trim().length > 0)
+        const images = Array.isArray(data.gallery?.images)
+          ? data.gallery.images.filter((u: unknown) => typeof u === "string" && u.trim().length > 0)
           : [];
-        const layoutType = ((data.gallery as any)?.layoutType ?? "grid") as "grid" | "slide";
-        const imageRatio = ((data.gallery as any)?.imageRatio ?? "portrait") as "square" | "portrait";
-        const imageGap = (((data.gallery as any)?.imageGap ?? 'middle') as 'none' | 'small' | 'middle' | 'large');
+        const layoutType = (data.gallery?.layoutType ?? "grid") as "grid" | "slide";
+        const imageRatio = (data.gallery?.imageRatio ?? "portrait") as "square" | "portrait";
+        const imageGap = ((data.gallery?.imageGap ?? 'middle') as 'none' | 'small' | 'middle' | 'large');
         const imageGapPx = imageGap === 'none' ? 0 : imageGap === 'small' ? 2 : imageGap === 'large' ? 8 : 4;
         const gridPreviewRadiusClass = imageGap === 'none' ? 'rounded-none' : 'rounded';
         const gridPreviewBorderClass = imageGap === 'none' ? 'border-0' : 'border-border';
-        const requestedGridColumns = Number((data.gallery as any)?.gridColumns ?? 3);
+        const requestedGridColumns = Number(data.gallery?.gridColumns ?? 3);
         const gridColumns = requestedGridColumns === 2 ? 2 : 3;
-        const useLoadMore = ((data.gallery as any)?.useLoadMore ?? true) === true;
-        const enableDetailView = ((data.gallery as any)?.enableDetailView ?? true) === true;
+        const useLoadMore = (data.gallery?.useLoadMore ?? true) === true;
+        const enableDetailView = (data.gallery?.enableDetailView ?? true) === true;
         const effectiveDetailViewEnabled = layoutType === "slide" ? false : enableDetailView;
         const ratioClass = imageRatio === "square" ? "aspect-square" : "aspect-[3/4]";
         if (!images.length) {
@@ -4820,7 +4219,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               {galleryTitle}
               <div className="relative">
                 <div
-                  className={`w-full rounded overflow-hidden border border-border ${ratioClass}`}
+                  className={`relative w-full overflow-hidden rounded border border-border ${ratioClass}`}
                   onTouchStart={(e) => {
                     gallerySwipeStartXRef.current = e.changedTouches[0]?.clientX ?? null;
                   }}
@@ -4838,10 +4237,13 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                     moveToPrev();
                   }}
                 >
-                  <img
+                  <NextImage
                     src={images[currentIndex]}
                     alt={`갤러리 이미지 ${currentIndex + 1}`}
-                    className={`w-full h-full object-cover ${effectiveDetailViewEnabled ? 'cursor-zoom-in' : ''}`}
+                    fill
+                    className={`object-cover ${effectiveDetailViewEnabled ? "cursor-zoom-in" : ""}`}
+                    sizes="(max-width: 768px) 100vw, 360px"
+                    unoptimized
                     onClick={() => {
                       if (!effectiveDetailViewEnabled) return;
                       setGalleryDetailIndex(currentIndex);
@@ -4901,11 +4303,17 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               style={{ gap: `${imageGapPx}px` }}
             >
               {images.slice(0, visibleCount).map((src: string, idx: number) => (
-                <div key={`${src}-${idx}`} className={`${gridPreviewRadiusClass} overflow-hidden border ${gridPreviewBorderClass} ${ratioClass}`}>
-                  <img
+                <div
+                  key={`${src}-${idx}`}
+                  className={`relative ${gridPreviewRadiusClass} overflow-hidden border ${gridPreviewBorderClass} ${ratioClass}`}
+                >
+                  <NextImage
                     src={src}
                     alt={`갤러리 이미지 ${idx + 1}`}
-                    className={`w-full h-full object-cover ${effectiveDetailViewEnabled ? 'cursor-zoom-in' : ''}`}
+                    fill
+                    className={`object-cover ${effectiveDetailViewEnabled ? "cursor-zoom-in" : ""}`}
+                    sizes="(max-width: 768px) 33vw, 200px"
+                    unoptimized
                     onClick={() => {
                       if (!effectiveDetailViewEnabled) return;
                       setGalleryDetailIndex(idx);
@@ -4941,7 +4349,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         const subtitle2 = getOptionalSubtitle2('account');
         const content = data.accounts?.content || "";
         const list = Array.isArray(data.accounts?.list) ? data.accounts.list : [];
-        const displayMode = ((data.accounts as any)?.displayMode ?? 'accordion') as 'accordion' | 'expanded';
+        const displayMode = (data.accounts?.displayMode ?? 'accordion') as 'accordion' | 'expanded';
         return (
           <div className="max-w-full mx-auto w-full space-y-3 text-[0.8125em] text-on-surface-20">
             <div className="space-y-0">
@@ -5001,18 +4409,18 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         );
       }
       case 'guestbook': {
-        const rawTitle = ((data.guestbook as any)?.title ?? "축하해 주세요") as string;
+        const rawTitle = (data.guestbook?.title ?? "축하해 주세요") as string;
         const title = rawTitle.trim() || "축하해 주세요";
-        const descriptionRaw = ((data.guestbook as any)?.description ?? "guestbook") as string;
+        const descriptionRaw = (data.guestbook?.description ?? "guestbook") as string;
         const description = descriptionRaw === "축하 인사를 남겨주세요." || descriptionRaw === "Guestbook"
           ? "Guestbook"
           : upperCaseFirst(descriptionRaw);
-        const showCreatedAt = ((data.guestbook as any)?.showCreatedAt ?? true) as boolean;
+        const showCreatedAt = (data.guestbook?.showCreatedAt ?? true) as boolean;
         const hasPassword = Boolean(data.guestbook?.password?.trim());
-        const entries = Array.isArray((data.guestbook as any)?.entries) ? (data.guestbook as any).entries : [];
-        const masterPassword = ((data.guestbook as any)?.password ?? "").trim();
+        const entries = (Array.isArray(data.guestbook?.entries) ? data.guestbook.entries : []) as GuestbookEntry[];
+        const masterPassword = (data.guestbook?.password ?? "").trim();
         const orderedEntries = entries;
-        const perPageRaw = Number((data.guestbook as any)?.displayCount ?? 5);
+        const perPageRaw = Number(data.guestbook?.displayCount ?? 5);
         const perPage = perPageRaw === 3 || perPageRaw === 5 || perPageRaw === 7 ? perPageRaw : 5;
         const totalPages = Math.max(1, Math.ceil(orderedEntries.length / perPage));
         const currentPage = Math.min(guestbookPreviewPage, totalPages);
@@ -5034,21 +4442,21 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           setGuestbookDeletePassword("");
           setGuestbookDeletePasswordError("");
         };
-        const canManageGuestbookEntry = (entry: any, password: string) => {
+        const canManageGuestbookEntry = (entry: GuestbookEntry, password: string) => {
           const pass = password.trim();
           if (!pass) return false;
-          const entryPassword = String((entry as any)?.password ?? "").trim();
+          const entryPassword = String(entry?.password ?? "").trim();
           if (masterPassword && pass === masterPassword) return true;
           if (entryPassword && pass === entryPassword) return true;
           return false;
         };
-        const getEntryDateText = (entry: any) => {
-          const createdAtRaw = String((entry as any)?.createdAt ?? "").trim();
+        const getEntryDateText = (entry: GuestbookEntry) => {
+          const createdAtRaw = String(entry?.createdAt ?? "").trim();
           const fromCreatedAt = createdAtRaw ? new Date(createdAtRaw) : null;
           if (fromCreatedAt && Number.isFinite(fromCreatedAt.getTime())) {
             return fromCreatedAt.toLocaleDateString("ko-KR");
           }
-          const id = String((entry as any)?.id ?? "");
+          const id = String(entry?.id ?? "");
           const match = id.match(/guestbook-(\d{10,13})/);
           if (!match) return "";
           const ts = Number(match[1]);
@@ -5091,8 +4499,10 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               </div>
             )}
             <div className="space-y-2">
-              {pagedEntries.map((entry: any) => (
-                <div key={entry.id} className="rounded-lg border border-border bg-white px-4 pt-3 pb-3 flex flex-col gap-1 space-y-0 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+              {pagedEntries.map((entry: GuestbookEntry) => {
+                const entryId = String(entry.id ?? "");
+                return (
+                <div key={entryId} className="rounded-lg border border-border bg-white px-4 pt-3 pb-3 flex flex-col gap-1 space-y-0 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
                   <div className="flex items-center justify-between -mr-2">
                     <div className="min-w-0 flex flex-col">
                       <span className="font-semibold text-on-surface-10 truncate">
@@ -5109,12 +4519,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                         type="button"
                         data-guestbook-menu-trigger="true"
                         className="h-6 w-6 inline-flex items-center justify-center rounded-md text-on-surface-20 hover:bg-slate-100 hover:text-on-surface-10"
-                        onClick={() => setGuestbookMenuEntryId((prev) => (prev === entry.id ? null : entry.id))}
+                        onClick={() => setGuestbookMenuEntryId((prev) => (prev === entryId ? null : entryId))}
                         aria-label="방명록 더보기"
                       >
                         <MoreVertical className="w-4 h-4" />
                       </button>
-                      {guestbookMenuEntryId === entry.id && (
+                      {guestbookMenuEntryId === entryId && (
                         <div
                           data-guestbook-menu-root="true"
                           className="absolute right-0 mt-1 min-w-[84px] rounded-md border border-border bg-white shadow-sm z-10 overflow-hidden"
@@ -5123,7 +4533,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             type="button"
                             className="w-full h-8 px-3 text-left text-[12px] text-on-surface-20 hover:bg-slate-50"
                             onClick={() => {
-                              setGuestbookEditingEntryId(String(entry.id));
+                              setGuestbookEditingEntryId(entryId);
                               setGuestbookDraftName(String(entry.name ?? ""));
                               setGuestbookDraftMessage(String(entry.message ?? ""));
                               setGuestbookDraftPassword("");
@@ -5138,7 +4548,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             type="button"
                             className="w-full h-8 px-3 text-left text-[12px] text-red-600 hover:bg-red-50"
                             onClick={() => {
-                              setGuestbookDeleteTargetEntryId(String(entry.id));
+                              setGuestbookDeleteTargetEntryId(entryId);
                               setGuestbookDeletePassword("");
                               setGuestbookMenuEntryId(null);
                             }}
@@ -5153,7 +4563,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                     {entry.isSecret ? "🔒 비밀글입니다." : entry.message}
                   </p>
                 </div>
-              ))}
+              )})}
             </div>
             {orderedEntries.length > perPage && (
               <>
@@ -5266,12 +4676,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           const password = guestbookDraftPassword.trim();
                           if (!message || !password) return;
                           if (guestbookEditingEntryId) {
-                            const targetEntry = orderedEntries.find((it: any) => String(it.id) === guestbookEditingEntryId);
+                            const targetEntry = orderedEntries.find((it: GuestbookEntry) => String(it.id) === guestbookEditingEntryId);
                             if (!targetEntry || !canManageGuestbookEntry(targetEntry, password)) {
                               setGuestbookComposerPasswordError("비밀번호가 올바르지 않습니다.");
                               return;
                             }
-                            const nextEntries = orderedEntries.map((it: any) =>
+                            const nextEntries = orderedEntries.map((it: GuestbookEntry) =>
                               String(it.id) === guestbookEditingEntryId
                                 ? {
                                     ...it,
@@ -5342,12 +4752,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                         className="h-9 px-4 text-[12px] bg-red-600 hover:bg-red-700"
                         disabled={!guestbookDeletePassword.trim()}
                         onClick={() => {
-                          const targetEntry = orderedEntries.find((it: any) => String(it.id) === guestbookDeleteTargetEntryId);
+                          const targetEntry = orderedEntries.find((it: GuestbookEntry) => String(it.id) === guestbookDeleteTargetEntryId);
                           if (!targetEntry || !canManageGuestbookEntry(targetEntry, guestbookDeletePassword)) {
                             setGuestbookDeletePasswordError("비밀번호가 틀립니다.");
                             return;
                           }
-                          const nextEntries = orderedEntries.filter((it: any) => String(it.id) !== guestbookDeleteTargetEntryId);
+                          const nextEntries = orderedEntries.filter((it: GuestbookEntry) => String(it.id) !== guestbookDeleteTargetEntryId);
                           updateData("guestbook.entries", nextEntries);
                           closeGuestbookDeleteDialog();
                         }}
@@ -5366,12 +4776,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         );
       }
       case 'youtube': {
-        const title = String((data.youtube as any)?.title ?? YOUTUBE_TITLE_OPTIONS[0]).trim() || YOUTUBE_TITLE_OPTIONS[0];
+        const title = String(data.youtube?.title ?? YOUTUBE_TITLE_OPTIONS[0]).trim() || YOUTUBE_TITLE_OPTIONS[0];
         const subtitle2 = getOptionalSubtitle2('youtube');
-        const sourceType = ((data.youtube as any)?.sourceType ?? 'url') as 'file' | 'url';
-        const fileUrl = ((data.youtube as any)?.fileUrl ?? '').trim();
+        const sourceType = (data.youtube?.sourceType ?? 'url') as 'file' | 'url';
+        const fileUrl = (data.youtube?.fileUrl ?? '').trim();
         const videoId = getYoutubeVideoId(data.youtube?.url ?? "");
-        const isLoop = !!(data.youtube as any)?.isLoop;
+        const isLoop = !!data.youtube?.isLoop;
         const embedUrl = videoId
           ? `https://www.youtube.com/embed/${videoId}${isLoop ? `?loop=1&playlist=${videoId}` : ""}`
           : null;
@@ -5417,7 +4827,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         );
       }
       case 'rsvp': {
-        const r = (data as any).rsvp ?? {};
+        const r = data.rsvp ?? {};
         const title = String(r.title ?? RSVP_TITLE_OPTIONS[0]).trim() || RSVP_TITLE_OPTIONS[0];
         const subtitle2 = getOptionalSubtitle2('rsvp');
         const description = (r.description ?? "") as string;
@@ -5441,9 +4851,9 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
         );
       }
       case 'guestUpload': {
-        const title = String((data.guestUpload as any)?.title ?? GUEST_UPLOAD_TITLE_OPTIONS[0]).trim() || GUEST_UPLOAD_TITLE_OPTIONS[0];
+        const title = String(data.guestUpload?.title ?? GUEST_UPLOAD_TITLE_OPTIONS[0]).trim() || GUEST_UPLOAD_TITLE_OPTIONS[0];
         const subtitle2 = getOptionalSubtitle2('guestUpload');
-        const description = ((data.guestUpload as any)?.description ?? "예식 후 촬영하신 사진/영상을 업로드해 주세요.") as string;
+        const description = (data.guestUpload?.description ?? "예식 후 촬영하신 사진/영상을 업로드해 주세요.") as string;
         return (
           <div className="max-w-full mx-auto w-full space-y-3 text-[0.8125em] text-on-surface-20 text-left">
             <div className="space-y-0 text-center">
@@ -5458,15 +4868,22 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       case 'share': {
         const title = data.share?.title || "모바일 청첩장";
         const description = data.share?.description || "소중한 날에 초대합니다.";
-        const useThumbnail = (data.share as any)?.useThumbnail ?? true;
+        const useThumbnail = data.share?.useThumbnail ?? true;
         const thumb = data.share?.thumbnail?.trim() || "";
         return (
           <div className="max-w-full mx-auto w-full space-y-3 text-[0.8125em] text-on-surface-20">
             <div className="rounded-xl border border-border overflow-hidden bg-white text-left">
               {useThumbnail && (
-                <div className="h-36 w-full bg-[color:var(--surface-20)]">
+                <div className="relative h-36 w-full bg-[color:var(--surface-20)]">
                   {thumb ? (
-                    <img src={thumb} alt="공유 썸네일" className="w-full h-full object-cover" />
+                    <NextImage
+                      src={thumb}
+                      alt="공유 썸네일"
+                      fill
+                      className="object-cover"
+                      sizes="360px"
+                      unoptimized
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-on-surface-30">썸네일 미리보기</div>
                   )}
@@ -5561,13 +4978,9 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                 const draftTitle = String(data.main?.title || "새 청첩장").trim() || "새 청첩장";
 
                 try {
-                  const res = await fetch("/api/invitations/draft", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      title: draftTitle,
-                      payload: data,
-                    }),
+                  const res = await saveInvitationDraft({
+                    title: draftTitle,
+                    payload: data,
                   });
                   if (res.status === 401 || res.status === 503) {
                     window.location.assign(`/login?next=${encodeURIComponent(nextPath)}`);
@@ -5604,7 +5017,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       status: savedDraftMeta?.status ?? "결제 전",
                     }),
                   );
-                } catch (_e) {
+                } catch {
                   // ignore localStorage errors
                 }
                 router.push('/mypage?saved=1');
@@ -5840,7 +5253,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
             >
               {orderedItems.map((item, idx) => {
                 const isInitiallyExpanded = true;
-                const isContentOptional = item.category === '선택' && !OTHER_OPTION_IDS.includes(item.id as any);
+                const isContentOptional = item.category === '선택' && !OTHER_OPTION_IDS_AS_STRINGS.includes(item.id);
                 const prevItem = orderedItems[idx - 1];
                 const editorSortProps = isContentOptional ? sidebarSortable.getItemProps(item.id) : null;
                 const isDragging = editorSortProps?.isDragging ?? false;
@@ -5916,7 +5329,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           <FormItem label="테마컬러">
                             <div className="flex flex-wrap gap-2">
                               {KEY_COLOR_PRESETS.map((preset) => {
-                                const isActive = ((data.theme as any)?.colorPreset ?? KEY_COLOR_PRESETS[0].id) === preset.id;
+                                const isActive = (data.theme?.colorPreset ?? KEY_COLOR_PRESETS[0].id) === preset.id;
                                 return (
                                   <ThemeColorChip
                                     key={preset.id}
@@ -6019,7 +5432,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 { value: 'H' as const, label: 'F' },
                                 { value: 'I' as const, label: 'G' },
                               ] as const).map((opt) => {
-                                const active = (data.main as any).introType === opt.value;
+                                const active = data.main.introType === opt.value;
                                 return (
                                   <button
                                     key={opt.value}
@@ -6049,17 +5462,17 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             <div className="flex flex-wrap gap-2">
                               <OptionChip
                                 label="단일 이미지"
-                                active={((data.main as any).imageMode ?? 'single') === 'single'}
+                                active={(data.main.imageMode ?? 'single') === 'single'}
                                 onClick={() => updateData('main.imageMode', 'single')}
                               />
                               <OptionChip
                                 label="다중 이미지 전환"
-                                active={((data.main as any).imageMode ?? 'single') === 'multi'}
+                                active={(data.main.imageMode ?? 'single') === 'multi'}
                                 onClick={() => updateData('main.imageMode', 'multi')}
                               />
                               <OptionChip
                                 label="기본 이미지"
-                                active={normalizeMainImageMode((data.main as any).imageMode) === 'default'}
+                                active={normalizeMainImageMode(data.main.imageMode) === 'default'}
                                 onClick={() => {
                                   updateData('main.imageMode', 'default');
                                 }}
@@ -6069,19 +5482,22 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
 
                           <FormItem label="사진">
                             <div className="flex flex-col gap-2 w-full">
-                              {normalizeMainImageMode((data.main as any).imageMode) === 'default' ? (
+                              {normalizeMainImageMode(data.main.imageMode) === 'default' ? (
                                 <div className="w-full min-h-[120px] flex items-start gap-3">
                                   {(() => {
-                                    const presetUrl = String((data.main as any).presetImage ?? '').trim();
+                                    const presetUrl = String(data.main.presetImage ?? '').trim();
                                     const hasPreset = !!presetUrl;
                                     return (
                                       <>
-                                        <div className="w-[120px] h-[120px] rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden flex items-center justify-center flex-shrink-0">
+                                        <div className="relative flex h-[120px] w-[120px] flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-[color:var(--surface-20)]">
                                           {hasPreset ? (
-                                            <img
+                                            <NextImage
                                               src={presetUrl}
                                               alt="메인 기본 이미지 미리보기"
-                                              className="w-full h-full object-cover"
+                                              fill
+                                              className="object-cover"
+                                              sizes="120px"
+                                              unoptimized
                                             />
                                           ) : (
                                             <span className="text-[12px] text-on-surface-40 text-center px-2">
@@ -6102,18 +5518,21 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                     );
                                   })()}
                                 </div>
-                              ) : normalizeMainImageMode((data.main as any).imageMode) === 'single' ? (
+                              ) : normalizeMainImageMode(data.main.imageMode) === 'single' ? (
                                 <div className="w-full min-h-[120px] flex items-start gap-3">
                                   {(() => {
                                     const hasMainImage = !!String(data.main.image ?? '').trim();
                                     return (
                                       <>
-                                        <div className="w-[120px] aspect-[3/4] rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden flex items-center justify-center flex-shrink-0">
+                                        <div className="relative flex aspect-[3/4] w-[120px] flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-[color:var(--surface-20)]">
                                           {hasMainImage ? (
-                                            <img
+                                            <NextImage
                                               src={data.main.image}
                                               alt="메인 사진"
-                                              className="w-full h-full object-cover"
+                                              fill
+                                              className="object-cover"
+                                              sizes="120px"
+                                              unoptimized
                                             />
                                           ) : (
                                             <ImageIcon
@@ -6179,7 +5598,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               ) : (
                                 <>
                                   <MultiImageGrid
-                                    images={Array.isArray((data.main as any).images) ? (data.main as any).images : []}
+                                    images={Array.isArray(data.main.images) ? data.main.images : []}
                                     onReorder={(next) => updateData('main.images', next)}
                                     onSlotClick={(i, hasImg) => {
                                       if (!hasImg) { mainMultiBatchInputRef.current?.click(); return; }
@@ -6188,7 +5607,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                     }}
                                     onEdit={(i, src) => openImageEditor({ kind: 'multi', index: i }, src)}
                                     onDelete={(i) => {
-                                      const next = Array.isArray((data.main as any).images) ? [...(data.main as any).images] : [];
+                                      const next = Array.isArray(data.main.images) ? [...data.main.images] : [];
                                       next[i] = '';
                                       updateData('main.images', next);
                                     }}
@@ -6205,7 +5624,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                       const files = Array.from(e.target.files ?? []);
                                       if (!files.length) return;
 
-                                      const prev = Array.isArray((data.main as any).images) ? [...(data.main as any).images] : [];
+                                      const prev = Array.isArray(data.main.images) ? [...data.main.images] : [];
                                       const next = Array.from({ length: 4 }).map((_, i) => prev[i] ?? '');
 
                                       let fileIdx = 0;
@@ -6232,7 +5651,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                         const file = e.target.files?.[0];
                                         if (!file) return;
                                         const url = URL.createObjectURL(file);
-                                        const next = Array.isArray((data.main as any).images) ? [...(data.main as any).images] : [];
+                                        const next = Array.isArray(data.main.images) ? [...data.main.images] : [];
                                         next[i] = url;
                                         updateData('main.images', next);
                                         // multi 업로드는 별도 revoke 관리가 필요하지만, 현재는 미리보기/사용이 없어서 누수 영향이 작음
@@ -6248,7 +5667,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             <div className="flex flex-wrap gap-3">
                               {MAIN_IMAGE_FRAME_OPTIONS.map((opt) => {
                                 const active =
-                                  normalizeMainImageFrame((data.main as any).imageFrame) === opt.id;
+                                  normalizeMainImageFrame(data.main.imageFrame) === opt.id;
                                 return (
                                   <button
                                     key={opt.id}
@@ -6272,7 +5691,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             </div>
                           </FormItem>
 
-                          {((data.main as any).imageMode ?? 'single') === 'multi' && (
+                          {(data.main.imageMode ?? 'single') === 'multi' && (
                             <FormItem label="전환효과">
                               <div className="flex flex-wrap gap-2">
                                 {(
@@ -6289,21 +5708,21 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                   <OptionChip
                                     key={value}
                                     label={label}
-                                    active={normalizeTransitionEffect((data.main as any).transitionEffect) === value}
+                                    active={normalizeTransitionEffect(data.main.transitionEffect) === value}
                                     onClick={() => updateData('main.transitionEffect', value)}
                                   />
                                 ))}
                               </div>
                             </FormItem>
                           )}
-                          {((data.main as any).imageMode ?? 'single') === 'multi' && (
+                          {(data.main.imageMode ?? 'single') === 'multi' && (
                             <FormItem label="전환시간">
                               <div className="flex flex-wrap gap-2">
                                 {([2, 3, 4, 5] as const).map((sec) => (
                                   <OptionChip
                                     key={sec}
                                     label={`${sec}초`}
-                                    active={Number((data.main as any).transitionIntervalSec ?? 3) === sec}
+                                    active={Number(data.main.transitionIntervalSec ?? 3) === sec}
                                     onClick={() => updateData('main.transitionIntervalSec', sec)}
                                   />
                                 ))}
@@ -6316,15 +5735,15 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               role="button"
                               tabIndex={0}
                               className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
-                              onClick={() => updateData('main.blackAndWhite', !((data.main as any).blackAndWhite ?? false))}
+                              onClick={() => updateData('main.blackAndWhite', !(data.main.blackAndWhite ?? false))}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
-                                  updateData('main.blackAndWhite', !((data.main as any).blackAndWhite ?? false));
+                                  updateData('main.blackAndWhite', !(data.main.blackAndWhite ?? false));
                                 }
                               }}
                             >
                               <CircleCheckbox
-                                checked={!!((data.main as any).blackAndWhite ?? false)}
+                                checked={!!(data.main.blackAndWhite ?? false)}
                                 onChange={(e) => updateData('main.blackAndWhite', e.target.checked)}
                               />
                               흑백전환
@@ -6696,32 +6115,35 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 role="button"
                                 tabIndex={0}
                                 className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
-                                onClick={() => updateData('contact.useThumbnail', !((data.contact as any)?.useThumbnail ?? true))}
+                                onClick={() => updateData('contact.useThumbnail', !(data.contact?.useThumbnail ?? true))}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter' || e.key === ' ') {
-                                    updateData('contact.useThumbnail', !((data.contact as any)?.useThumbnail ?? true));
+                                    updateData('contact.useThumbnail', !(data.contact?.useThumbnail ?? true));
                                   }
                                 }}
                               >
                                 <CircleCheckbox
-                                  checked={!!((data.contact as any)?.useThumbnail ?? true)}
+                                  checked={!!(data.contact?.useThumbnail ?? true)}
                                   onChange={(e) => updateData('contact.useThumbnail', e.target.checked)}
                                 />
                                 이미지
                               </span>
                             </div>
                           </FormItem>
-                          {((data.contact as any)?.useThumbnail ?? true) && (
+                          {(data.contact?.useThumbnail ?? true) && (
                             <FormItem label="썸네일">
                               <div className="flex min-w-0 flex-1 flex-col gap-2">
                                 <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:gap-3">
                                   <div className="flex w-full min-w-0 justify-start sm:flex-1 sm:justify-start">
-                                    <div className="aspect-[10/4] w-full max-w-[200px] rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden">
+                                    <div className="relative aspect-[10/4] w-full max-w-[200px] overflow-hidden rounded-lg border border-border bg-[color:var(--surface-20)]">
                                       {data.contact?.thumbnail ? (
-                                        <img
+                                        <NextImage
                                           src={data.contact.thumbnail}
                                           alt="연락처 썸네일 미리보기"
-                                          className="h-full w-full object-cover"
+                                          fill
+                                          className="object-cover"
+                                          sizes="200px"
+                                          unoptimized
                                         />
                                       ) : (
                                         <div className="flex h-full w-full items-center justify-center px-2 text-center text-[clamp(10px,1.6vw,12px)] text-on-surface-30">
@@ -6978,7 +6400,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           <FormItem label="웨딩홀 상세">
                             <Input
                               placeholder="층수, 홀 정보 입력"
-                              value={String((data.eventInfo as any)?.venueDetail ?? "")}
+                              value={String(data.eventInfo?.venueDetail ?? "")}
                               onChange={(e) => updateData("eventInfo.venueDetail", e.target.value)}
                               className="shadow-none flex-1"
                             />
@@ -7000,7 +6422,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 <OptionChip
                                   key={id}
                                   label={label}
-                                  active={normalizeCalendarDisplayType((data.eventInfo as any)?.calendarDisplayType) === id}
+                                  active={normalizeCalendarDisplayType(data.eventInfo?.calendarDisplayType) === id}
                                   onClick={() => updateData('eventInfo.calendarDisplayType', id)}
                                 />
                               ))}
@@ -7015,20 +6437,20 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 onClick={() =>
                                   updateData(
                                     'eventInfo.showDday',
-                                    !((data.eventInfo as any)?.showDday !== false),
+                                    !(data.eventInfo?.showDday !== false),
                                   )
                                 }
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter' || e.key === ' ') {
                                     updateData(
                                       'eventInfo.showDday',
-                                      !((data.eventInfo as any)?.showDday !== false),
+                                      !(data.eventInfo?.showDday !== false),
                                     );
                                   }
                                 }}
                               >
                                 <CircleCheckbox
-                                  checked={(data.eventInfo as any)?.showDday !== false}
+                                  checked={data.eventInfo?.showDday !== false}
                                   onChange={(e) => updateData('eventInfo.showDday', e.target.checked)}
                                 />
                                 D-Day 표시
@@ -7048,30 +6470,33 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 tabIndex={0}
                                 className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
                                 onClick={() =>
-                                  updateData('greeting.useImage', !(((data.greeting as any)?.useImage) ?? true))
+                                  updateData('greeting.useImage', !((data.greeting?.useImage) ?? true))
                                 }
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter' || e.key === ' ') {
-                                    updateData('greeting.useImage', !(((data.greeting as any)?.useImage) ?? true));
+                                    updateData('greeting.useImage', !((data.greeting?.useImage) ?? true));
                                   }
                                 }}
                               >
                                 <CircleCheckbox
-                                  checked={!!(((data.greeting as any)?.useImage) ?? true)}
+                                  checked={!!((data.greeting?.useImage) ?? true)}
                                   onChange={(e) => updateData('greeting.useImage', e.target.checked)}
                                 />
                                 이미지 추가
                               </span>
                             </FormItem>
-                            {!!((data.greeting as any)?.useImage ?? true) && (
+                            {!!(data.greeting?.useImage ?? true) && (
                               <FormItem label="썸네일">
                                 <div className="flex-1 flex flex-col gap-2">
                                   <div className="w-full min-h-[120px] flex items-start gap-3">
-                                    <div className="w-[120px] h-[120px] rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden flex items-center justify-center">
-                                      <img
-                                        src={((data.greeting as any)?.thumbnail || greetingDefaultThumbnail)}
+                                    <div className="relative flex h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-lg border border-border bg-[color:var(--surface-20)]">
+                                      <NextImage
+                                        src={data.greeting?.thumbnail || greetingDefaultThumbnail}
                                         alt="인사말 썸네일 미리보기"
-                                        className="w-full h-full object-fill"
+                                        fill
+                                        className="object-fill"
+                                        sizes="120px"
+                                        unoptimized
                                       />
                                     </div>
                                     <div className="h-full flex flex-col justify-start gap-2">
@@ -7326,7 +6751,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             <FormItem label="제목">
                               <div className="flex flex-wrap gap-2 w-full">
                                 {LOCATION_TITLE_OPTIONS.map((opt) => {
-                                  const current = String((data.location as any)?.title ?? "").trim();
+                                  const current = String(data.location?.title ?? "").trim();
                                   const active =
                                     current === opt ||
                                     (!current && opt === LOCATION_TITLE_OPTIONS[0]);
@@ -7496,7 +6921,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               <div className="flex flex-col gap-1 text-[13px] text-on-surface-20">
                                 <div className="flex items-center gap-2">
                                   <CircleCheckbox
-                                    checked={(((data.accounts as any)?.displayMode ?? 'accordion') === 'expanded')}
+                                    checked={((data.accounts?.displayMode ?? 'accordion') === 'expanded')}
                                     onChange={(e) => {
                                       const showAccounts = e.target.checked;
                                       // 체크: 전체 노출, 해제: 접힘/펼침 모드(초기 접힘)
@@ -7606,7 +7031,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                       holder: '',
                                       isKakaoPay: false,
                                       isExpanded: true,
-                                    } as any,
+                                    } satisfies AccountItem,
                                   ];
                                   updateData('accounts.list', next);
                                 }}
@@ -7682,13 +7107,13 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       {/* 갤러리 섹션 */}
                       {item.id === 'gallery' && (
                         <>
-                          <FormItem label={`사진 ${Array.isArray((data.gallery as any).images) ? (data.gallery as any).images.length : 0}/50`}>
+                          <FormItem label={`사진 ${Array.isArray(data.gallery.images) ? data.gallery.images.length : 0}/50`}>
                             <div className="flex-1 flex flex-col gap-2 w-full">
                               <GalleryImageGrid
-                                images={Array.isArray((data.gallery as any).images) ? (data.gallery as any).images : []}
+                                images={Array.isArray(data.gallery.images) ? data.gallery.images : []}
                                 onChange={(next) => updateData('gallery.images', next)}
                                 onEdit={(i, src) => openImageEditor({ kind: 'gallery', index: i }, src)}
-                                imageRatio={((data.gallery as any).imageRatio ?? 'portrait') as 'square' | 'portrait'}
+                                imageRatio={(data.gallery.imageRatio ?? 'portrait') as 'square' | 'portrait'}
                                 max={50}
                                 touchMode={isTabletViewport}
                               />
@@ -7707,7 +7132,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 <OptionChip
                                   key={opt.value}
                                   label={opt.label}
-                                  active={(((data.gallery as any).imageRatio ?? 'portrait') === opt.value)}
+                                  active={((data.gallery.imageRatio ?? 'portrait') === opt.value)}
                                   onClick={() => updateData('gallery.imageRatio', opt.value)}
                                 />
                               ))}
@@ -7723,14 +7148,14 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 <OptionChip
                                   key={opt.value}
                                   label={opt.label}
-                                  active={(((data.gallery as any).layoutType ?? 'grid') === opt.value)}
+                                  active={((data.gallery.layoutType ?? 'grid') === opt.value)}
                                   onClick={() => updateData('gallery.layoutType', opt.value)}
                                 />
                               ))}
                             </div>
                           </FormItem>
 
-                          {(((data.gallery as any).layoutType ?? 'grid') === 'slide') && (
+                          {((data.gallery.layoutType ?? 'grid') === 'slide') && (
                             <>
                               <FormItem label="옵션">
                                 <div className="flex-1 flex flex-col gap-4">
@@ -7738,29 +7163,29 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                     role="button"
                                     tabIndex={0}
                                     className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
-                                    onClick={() => updateData('gallery.autoSlide', !((data.gallery as any)?.autoSlide))}
+                                    onClick={() => updateData('gallery.autoSlide', !(data.gallery?.autoSlide))}
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter' || e.key === ' ') {
-                                        updateData('gallery.autoSlide', !((data.gallery as any)?.autoSlide));
+                                        updateData('gallery.autoSlide', !(data.gallery?.autoSlide));
                                       }
                                     }}
                                   >
                                     <CircleCheckbox
-                                      checked={!!(data.gallery as any)?.autoSlide}
+                                      checked={!!data.gallery?.autoSlide}
                                       onChange={(e) => updateData('gallery.autoSlide', e.target.checked)}
                                     />
                                     이미지 자동 전환
                                   </span>
                                 </div>
                               </FormItem>
-                              {!!((data.gallery as any)?.autoSlide) && (
+                              {!!(data.gallery?.autoSlide) && (
                                 <FormItem label="전환시간">
                                   <div className="flex flex-wrap gap-2">
                                     {([2, 3, 4, 5] as const).map((sec) => (
                                       <OptionChip
                                         key={sec}
                                         label={`${sec}초`}
-                                        active={Number((data.gallery as any).autoSlideIntervalSec ?? 3) === sec}
+                                        active={Number(data.gallery.autoSlideIntervalSec ?? 3) === sec}
                                         onClick={() => updateData('gallery.autoSlideIntervalSec', sec)}
                                       />
                                     ))}
@@ -7770,7 +7195,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             </>
                           )}
 
-                          {(((data.gallery as any).layoutType ?? 'grid') === 'grid') && (
+                          {((data.gallery.layoutType ?? 'grid') === 'grid') && (
                             <>
                               <FormItem label="배치 방법">
                                 <div className="flex flex-wrap gap-2">
@@ -7778,7 +7203,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                     <OptionChip
                                       key={col}
                                       label={`${col}단 그리드`}
-                                      active={(Number((data.gallery as any).gridColumns ?? 3) === 2 ? 2 : 3) === col}
+                                      active={(Number(data.gallery.gridColumns ?? 3) === 2 ? 2 : 3) === col}
                                       onClick={() => updateData('gallery.gridColumns', col)}
                                     />
                                   ))}
@@ -7795,7 +7220,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                     <OptionChip
                                       key={opt.value}
                                       label={opt.label}
-                                      active={(((data.gallery as any).imageGap ?? 'middle') === opt.value)}
+                                      active={((data.gallery.imageGap ?? 'middle') === opt.value)}
                                       onClick={() => updateData('gallery.imageGap', opt.value)}
                                     />
                                   ))}
@@ -7807,15 +7232,15 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                     role="button"
                                     tabIndex={0}
                                     className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
-                                    onClick={() => updateData('gallery.useLoadMore', !(((data.gallery as any)?.useLoadMore ?? true)))}
+                                    onClick={() => updateData('gallery.useLoadMore', !((data.gallery?.useLoadMore ?? true)))}
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter' || e.key === ' ') {
-                                        updateData('gallery.useLoadMore', !(((data.gallery as any)?.useLoadMore ?? true)));
+                                        updateData('gallery.useLoadMore', !((data.gallery?.useLoadMore ?? true)));
                                       }
                                     }}
                                   >
                                     <CircleCheckbox
-                                      checked={((data.gallery as any)?.useLoadMore ?? true)}
+                                      checked={(data.gallery?.useLoadMore ?? true)}
                                       onChange={(e) => updateData('gallery.useLoadMore', e.target.checked)}
                                     />
                                     3줄 이상 더보기 사용
@@ -7824,15 +7249,15 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                     role="button"
                                     tabIndex={0}
                                     className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
-                                    onClick={() => updateData('gallery.enableDetailView', !(((data.gallery as any)?.enableDetailView ?? true)))}
+                                    onClick={() => updateData('gallery.enableDetailView', !((data.gallery?.enableDetailView ?? true)))}
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter' || e.key === ' ') {
-                                        updateData('gallery.enableDetailView', !(((data.gallery as any)?.enableDetailView ?? true)));
+                                        updateData('gallery.enableDetailView', !((data.gallery?.enableDetailView ?? true)));
                                       }
                                     }}
                                   >
                                     <CircleCheckbox
-                                      checked={((data.gallery as any)?.enableDetailView ?? true)}
+                                      checked={(data.gallery?.enableDetailView ?? true)}
                                       onChange={(e) => updateData('gallery.enableDetailView', e.target.checked)}
                                     />
                                     상세보기 허용
@@ -7850,7 +7275,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           <div className="flex flex-col gap-5">
                             <FormItem label="제목">
                               <HeadingChipPicker
-                                value={String((data.notice as any)?.sectionHeading ?? "")}
+                                value={String(data.notice?.sectionHeading ?? "")}
                                 options={NOTICE_HEADING_OPTIONS}
                                 onChange={(v) => updateData("notice.sectionHeading", v)}
                               />
@@ -8109,7 +7534,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           <FormItem label="제목">
                             <div className="flex flex-wrap gap-2 w-full">
                               {GUESTBOOK_TITLE_OPTIONS.map((opt) => {
-                                const current = String((data.guestbook as any)?.title ?? "").trim();
+                                const current = String(data.guestbook?.title ?? "").trim();
                                 const active =
                                   current === opt ||
                                   (!current && opt === GUESTBOOK_TITLE_OPTIONS[0]);
@@ -8144,7 +7569,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 <OptionChip
                                   key={count}
                                   label={`${count}개`}
-                                  active={Number((data.guestbook as any)?.displayCount ?? 5) === count}
+                                  active={Number(data.guestbook?.displayCount ?? 5) === count}
                                   onClick={() => updateData('guestbook.displayCount', count)}
                                 />
                               ))}
@@ -8155,15 +7580,15 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               role="button"
                               tabIndex={0}
                               className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
-                              onClick={() => updateData('guestbook.showCreatedAt', !(((data.guestbook as any)?.showCreatedAt ?? true)))}
+                              onClick={() => updateData('guestbook.showCreatedAt', !((data.guestbook?.showCreatedAt ?? true)))}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
-                                  updateData('guestbook.showCreatedAt', !(((data.guestbook as any)?.showCreatedAt ?? true)));
+                                  updateData('guestbook.showCreatedAt', !((data.guestbook?.showCreatedAt ?? true)));
                                 }
                               }}
                             >
                               <CircleCheckbox
-                                checked={!!(((data.guestbook as any)?.showCreatedAt ?? true))}
+                                checked={!!((data.guestbook?.showCreatedAt ?? true))}
                                 onChange={(e) => updateData('guestbook.showCreatedAt', e.target.checked)}
                               />
                               작성일 공개
@@ -8178,7 +7603,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           <FormItem label="제목">
                             <div className="flex flex-wrap gap-2 w-full">
                               {YOUTUBE_TITLE_OPTIONS.map((opt) => {
-                                const current = String((data.youtube as any)?.title ?? "").trim();
+                                const current = String(data.youtube?.title ?? "").trim();
                                 const active =
                                   current === opt ||
                                   (!current && opt === YOUTUBE_TITLE_OPTIONS[0]);
@@ -8197,24 +7622,24 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             <div className="flex flex-wrap gap-2">
                               <OptionChip
                                 label="파일첨부"
-                                active={(((data.youtube as any)?.sourceType ?? 'url') === 'file')}
+                                active={((data.youtube?.sourceType ?? 'url') === 'file')}
                                 onClick={() => updateData('youtube.sourceType', 'file')}
                               />
                               <OptionChip
                                 label="URL"
-                                active={(((data.youtube as any)?.sourceType ?? 'url') === 'url')}
+                                active={((data.youtube?.sourceType ?? 'url') === 'url')}
                                 onClick={() => updateData('youtube.sourceType', 'url')}
                               />
                             </div>
                           </FormItem>
-                          {(((data.youtube as any)?.sourceType ?? 'url') === 'file') ? (
+                          {((data.youtube?.sourceType ?? 'url') === 'file') ? (
                             <FormItem label="영상 파일">
                               <div className="flex-1 flex flex-col gap-2">
                                 <div className="w-full min-w-0 flex flex-col gap-3 sm:h-[120px] sm:flex-row sm:items-center">
                                   <div className="w-full max-w-[240px] aspect-video rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden sm:h-full sm:w-auto sm:max-w-none">
-                                    {((data.youtube as any)?.fileUrl ?? '') ? (
+                                    {(data.youtube?.fileUrl ?? '') ? (
                                       <video
-                                        src={(data.youtube as any).fileUrl}
+                                        src={data.youtube.fileUrl}
                                         className="w-full h-full object-cover"
                                         muted
                                         playsInline
@@ -8241,7 +7666,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                         }}
                                       />
                                     </label>
-                                    {!!((data.youtube as any)?.fileUrl ?? '') && (
+                                    {!!(data.youtube?.fileUrl ?? '') && (
                                       <button
                                         type="button"
                                         className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-30 hover:text-on-surface-10 hover:bg-slate-50"
@@ -8269,15 +7694,15 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               role="button"
                               tabIndex={0}
                               className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
-                              onClick={() => updateData('youtube.isLoop', !((data.youtube as any)?.isLoop))}
+                              onClick={() => updateData('youtube.isLoop', !(data.youtube?.isLoop))}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
-                                  updateData('youtube.isLoop', !((data.youtube as any)?.isLoop));
+                                  updateData('youtube.isLoop', !(data.youtube?.isLoop));
                                 }
                               }}
                             >
                               <CircleCheckbox
-                                checked={!!(data.youtube as any)?.isLoop}
+                                checked={!!data.youtube?.isLoop}
                                 onChange={(e) => updateData('youtube.isLoop', e.target.checked)}
                               />
                               반복 재생
@@ -8291,7 +7716,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           <FormItem label="제목">
                             <div className="flex flex-wrap gap-2 w-full">
                               {RSVP_TITLE_OPTIONS.map((opt) => {
-                                const current = String((data as any).rsvp?.title ?? "").trim();
+                                const current = String(data.rsvp?.title ?? "").trim();
                                 const active =
                                   current === opt ||
                                   (!current && opt === RSVP_TITLE_OPTIONS[0]);
@@ -8310,7 +7735,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             <div className="flex-1 flex flex-col gap-2">
                               <Textarea
                                 rows={3}
-                                value={(data as any).rsvp?.description ?? ""}
+                                value={data.rsvp?.description ?? ""}
                                 onChange={(e) => updateData("rsvp.description", e.target.value)}
                                 placeholder="참석 여부를 알려주시면 준비에 도움이 됩니다."
                                 className="resize-none shadow-none flex-1"
@@ -8337,19 +7762,19 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               tabIndex={0}
                               className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
                               onClick={() =>
-                                updateData("rsvp.collectGuestCount", !((data as any).rsvp?.collectGuestCount ?? true))
+                                updateData("rsvp.collectGuestCount", !(data.rsvp?.collectGuestCount ?? true))
                               }
                               onKeyDown={(e) => {
                                 if (e.key === "Enter" || e.key === " ") {
                                   updateData(
                                     "rsvp.collectGuestCount",
-                                    !((data as any).rsvp?.collectGuestCount ?? true),
+                                    !(data.rsvp?.collectGuestCount ?? true),
                                   );
                                 }
                               }}
                             >
                               <CircleCheckbox
-                                checked={!!((data as any).rsvp?.collectGuestCount ?? true)}
+                                checked={!!(data.rsvp?.collectGuestCount ?? true)}
                                 onChange={(e) => updateData("rsvp.collectGuestCount", e.target.checked)}
                               />
                               동반 인원 수 받기
@@ -8359,7 +7784,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             <div className="flex-1 flex flex-col gap-2">
                               <Input
                                 type="date"
-                                value={(data as any).rsvp?.deadline ?? ""}
+                                value={data.rsvp?.deadline ?? ""}
                                 onChange={(e) => updateData("rsvp.deadline", e.target.value)}
                                 className="shadow-none max-w-[240px]"
                               />
@@ -8504,7 +7929,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                           <FormItem label="제목">
                             <div className="flex flex-wrap gap-2 w-full">
                               {GUEST_UPLOAD_TITLE_OPTIONS.map((opt) => {
-                                const current = String((data.guestUpload as any)?.title ?? "").trim();
+                                const current = String(data.guestUpload?.title ?? "").trim();
                                 const active =
                                   current === opt ||
                                   (!current && opt === GUEST_UPLOAD_TITLE_OPTIONS[0]);
@@ -8523,7 +7948,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             <div className="flex-1 flex flex-col gap-2">
                               <Textarea
                                 rows={3}
-                                value={(data.guestUpload as any)?.description ?? ""}
+                                value={data.guestUpload?.description ?? ""}
                                 onChange={(e) => updateData('guestUpload.description', e.target.value)}
                                 placeholder="예식 후 촬영하신 사진/영상을 업로드해 주세요."
                                 className="resize-none shadow-none flex-1"
@@ -8552,20 +7977,20 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 onClick={() =>
                                   updateData(
                                     "guestUpload.showAfterEventModal",
-                                    !((data.guestUpload as any)?.showAfterEventModal ?? true),
+                                    !(data.guestUpload?.showAfterEventModal ?? true),
                                   )
                                 }
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter" || e.key === " ") {
                                     updateData(
                                       "guestUpload.showAfterEventModal",
-                                      !((data.guestUpload as any)?.showAfterEventModal ?? true),
+                                      !(data.guestUpload?.showAfterEventModal ?? true),
                                     );
                                   }
                                 }}
                               >
                                 <CircleCheckbox
-                                  checked={!!((data.guestUpload as any)?.showAfterEventModal ?? true)}
+                                  checked={!!(data.guestUpload?.showAfterEventModal ?? true)}
                                   onChange={(e) =>
                                     updateData("guestUpload.showAfterEventModal", e.target.checked)
                                   }
@@ -8662,30 +8087,33 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               role="button"
                               tabIndex={0}
                               className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
-                              onClick={() => updateData('share.useThumbnail', !((data.share as any)?.useThumbnail ?? true))}
+                              onClick={() => updateData('share.useThumbnail', !(data.share?.useThumbnail ?? true))}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
-                                  updateData('share.useThumbnail', !((data.share as any)?.useThumbnail ?? true));
+                                  updateData('share.useThumbnail', !(data.share?.useThumbnail ?? true));
                                 }
                               }}
                             >
                               <CircleCheckbox
-                                checked={!!((data.share as any)?.useThumbnail ?? true)}
+                                checked={!!(data.share?.useThumbnail ?? true)}
                                 onChange={(e) => updateData('share.useThumbnail', e.target.checked)}
                               />
                               썸네일 사용하기
                             </span>
                           </FormItem>
-                          {((data.share as any)?.useThumbnail ?? true) && (
+                          {(data.share?.useThumbnail ?? true) && (
                             <FormItem label="썸네일">
                               <div className="flex-1 flex flex-col gap-2">
                                 <div className="w-full min-w-0 flex flex-col gap-3 sm:h-[120px] sm:flex-row sm:items-center">
-                                  <div className="w-full max-w-[240px] aspect-video rounded-lg border border-border bg-[color:var(--surface-20)] overflow-hidden sm:h-full sm:w-auto sm:max-w-none">
+                                  <div className="relative aspect-video w-full max-w-[240px] overflow-hidden rounded-lg border border-border bg-[color:var(--surface-20)] sm:h-full sm:w-auto sm:max-w-none">
                                     {data.share?.thumbnail ? (
-                                      <img
+                                      <NextImage
                                         src={data.share.thumbnail}
                                         alt="공유 썸네일 미리보기"
-                                        className="w-full h-full object-cover"
+                                        fill
+                                        className="object-cover"
+                                        sizes="240px"
+                                        unoptimized
                                       />
                                     ) : (
                                       <div className="w-full h-full flex items-center justify-center text-[clamp(10px,1.6vw,12px)] text-on-surface-30">
@@ -8843,7 +8271,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                             <div className="flex-1 flex flex-col gap-2">
                               <Input
                                 type="date"
-                                value={(data as any).publish?.publicStartDate ?? ""}
+                                value={data.publish?.publicStartDate ?? ""}
                                 onChange={(e) => updateData("publish.publicStartDate", e.target.value)}
                                 className="shadow-none max-w-[240px]"
                               />
@@ -8863,15 +8291,15 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                                 role="button"
                                 tabIndex={0}
                                 className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
-                                onClick={() => updateData("i18n.enabled", !((data as any).i18n?.enabled ?? false))}
+                                onClick={() => updateData("i18n.enabled", !(data.i18n?.enabled ?? false))}
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter" || e.key === " ") {
-                                    updateData("i18n.enabled", !((data as any).i18n?.enabled ?? false));
+                                    updateData("i18n.enabled", !(data.i18n?.enabled ?? false));
                                   }
                                 }}
                               >
                                 <CircleCheckbox
-                                  checked={!!(data as any).i18n?.enabled}
+                                  checked={!!data.i18n?.enabled}
                                   onChange={(e) => updateData("i18n.enabled", e.target.checked)}
                                 />
                                 다국어 지원
@@ -8886,15 +8314,15 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                               role="button"
                               tabIndex={0}
                               className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
-                              onClick={() => updateData("i18n.brideFirstInfo", !((data as any).i18n?.brideFirstInfo ?? false))}
+                              onClick={() => updateData("i18n.brideFirstInfo", !(data.i18n?.brideFirstInfo ?? false))}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter" || e.key === " ") {
-                                  updateData("i18n.brideFirstInfo", !((data as any).i18n?.brideFirstInfo ?? false));
+                                  updateData("i18n.brideFirstInfo", !(data.i18n?.brideFirstInfo ?? false));
                                 }
                               }}
                             >
                               <CircleCheckbox
-                                checked={!!((data as any).i18n?.brideFirstInfo ?? false)}
+                                checked={!!(data.i18n?.brideFirstInfo ?? false)}
                                 onChange={(e) => updateData("i18n.brideFirstInfo", e.target.checked)}
                               />
                               신부측 정보 먼저 노출
@@ -8974,7 +8402,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   // 미리보기에서는 배경 톤을 더 연하게 보이도록 화이트와 강하게 혼합
                   backgroundColor: `color-mix(in srgb, ${selectedKeyColorPreset.background} 42%, white)`,
                   fontFamily: data.theme.fontFamily,
-                  fontSize: `${fontScaleToPercent((data.theme as any).fontScale)}%`,
+                  fontSize: `${fontScaleToPercent(data.theme.fontScale)}%`,
                   '--primary-custom': selectedKeyColorPreset.key,
                   '--key': `color-mix(in srgb, ${selectedKeyColorPreset.key} 82%, ${selectedKeyColorPreset.keyDark})`,
                   '--key-dark': selectedKeyColorPreset.keyDark,
@@ -8989,7 +8417,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
               }
             >
               <ParticleCanvasOverlay
-                effect={(data.theme as any)?.particleEffect ?? 'none'}
+                effect={data.theme?.particleEffect ?? 'none'}
                 themeColor={selectedKeyColorPreset.key}
               />
               <div ref={previewScrollRef} className="flex-1 overflow-y-auto no-scrollbar">
@@ -9091,11 +8519,14 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                     className="relative w-full max-w-none"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className={`w-full ${galleryDetailRatioClass} rounded-xl border-2 border-white/90 overflow-hidden`}>
-                      <img
+                    <div className={`relative w-full ${galleryDetailRatioClass} overflow-hidden rounded-xl border-2 border-white/90`}>
+                      <NextImage
                         src={galleryDetailImages[galleryDetailIndex]}
                         alt={`갤러리 상세 이미지 ${galleryDetailIndex + 1}`}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="100vw"
+                        unoptimized
                       />
                     </div>
                     {galleryDetailImages.length > 1 && (
@@ -9177,7 +8608,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
       </Dialog>
 
       <Dialog open={imageEditorOpen} onOpenChange={(o) => !o && closeImageEditor()}>
-        <DialogContent className="bg-[color:var(--surface-10)] w-[min(420px,calc(100vw-16px))] max-h-[calc(100dvh-16px)] rounded-2xl shadow-[0px_8px_16px_8px_rgba(0,0,0,0.16)] outline outline-1 outline-offset-[-1px] outline-[color:var(--border-10)]/5 p-0 overflow-hidden border-0 flex flex-col">
+        <DialogContent className="bg-[color:var(--surface-10)] w-[min(420px,calc(100vw-40px))] max-h-[calc(100dvh-16px)] rounded-2xl shadow-[0px_8px_16px_8px_rgba(0,0,0,0.16)] outline outline-1 outline-offset-[-1px] outline-[color:var(--border-10)]/5 p-0 overflow-hidden border-0 flex flex-col justify-center">
           <div className="p-4 sm:p-5 flex-1 min-h-0 overflow-y-auto flex flex-col justify-start items-center gap-5">
             {/* 프리뷰 */}
             <div
@@ -9353,15 +8784,20 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           </div>
           <div className="p-4 sm:p-5 bg-[color:var(--surface-10)] flex-1 min-h-0 overflow-y-auto">
             <div className="w-full rounded-xl border border-border bg-white overflow-hidden">
-              {((data.share as any)?.useThumbnail ?? true) &&
+              {(data.share?.useThumbnail ?? true) &&
                 (!!data.share?.thumbnail ? (
-                  <img
-                    src={data.share.thumbnail}
-                    alt="공유 썸네일"
-                    className="w-full aspect-[1.91/1] object-cover"
-                  />
+                  <div className="relative aspect-[1.91/1] w-full">
+                    <NextImage
+                      src={data.share.thumbnail}
+                      alt="공유 썸네일"
+                      fill
+                      className="object-cover"
+                      sizes="380px"
+                      unoptimized
+                    />
+                  </div>
                 ) : (
-                  <div className="w-full aspect-[1.91/1] bg-[color:var(--surface-20)] flex items-center justify-center text-[12px] text-on-surface-30">
+                  <div className="flex aspect-[1.91/1] w-full items-center justify-center bg-[color:var(--surface-20)] text-[12px] text-on-surface-30">
                     썸네일 이미지가 없습니다.
                   </div>
                 ))}
@@ -9417,7 +8853,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                   <button
                     key={t.id}
                     type="button"
-                    className={`rounded-lg overflow-hidden border bg-white ${
+                    className={`relative block aspect-[1.91/1] w-full overflow-hidden rounded-lg border bg-white p-0 ${
                       selected ? 'border-[color:var(--key)]' : 'border-border'
                     } hover:border-[color:var(--key)]/50`}
                     onClick={() => {
@@ -9429,10 +8865,13 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       setShareThumbPresetPickerFor(null);
                     }}
                   >
-                    <img
+                    <NextImage
                       src={t.url}
                       alt={`${t.label} 썸네일`}
-                      className="w-full aspect-[1.91/1] object-cover"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 680px) 45vw, 160px"
+                      unoptimized
                     />
                   </button>
                 );
@@ -9465,12 +8904,12 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           <div className="p-4 sm:p-5 w-full flex-1 min-h-0 overflow-y-auto bg-[color:var(--surface-10)]">
             <div className="grid w-full h-fit grid-cols-2 sm:grid-cols-3 gap-3 justify-items-center">
               {flowerThumbnailPresets.map((t) => {
-                const selected = (data.greeting as any)?.thumbnail === t.url;
+                const selected = data.greeting?.thumbnail === t.url;
                 return (
                   <button
                     key={t.id}
                     type="button"
-                    className={`w-full min-w-[120px] aspect-square rounded-lg overflow-hidden border bg-white flex items-center justify-center ${
+                    className={`relative aspect-square w-full min-w-[120px] overflow-hidden rounded-lg border bg-white p-0 ${
                       selected ? 'border-[color:var(--key)]' : 'border-border'
                     } hover:border-[color:var(--key)]/50`}
                     onClick={() => {
@@ -9478,10 +8917,13 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                       setGreetingThumbnailPickerOpen(false);
                     }}
                   >
-                    <img
+                    <NextImage
                       src={t.url}
                       alt={`${t.label} 썸네일`}
-                      className="w-full h-full object-fill"
+                      fill
+                      className="object-fill"
+                      sizes="(max-width: 424px) 40vw, 140px"
+                      unoptimized
                     />
                   </button>
                 );
@@ -9514,7 +8956,7 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
           <div className="p-4 sm:p-5 w-full flex-1 min-h-0 overflow-y-auto bg-[color:var(--surface-10)]">
             <div className="grid w-full grid-cols-2 gap-4 justify-items-center">
               {MAIN_IMAGE_PRESETS.map((t) => {
-                const current = String((data.main as any)?.presetImage ?? '').trim() || DEFAULT_MAIN_PRESET_URL;
+                const current = String(data.main?.presetImage ?? '').trim() || DEFAULT_MAIN_PRESET_URL;
                 const selected = current === t.url;
                 return (
                   <button
@@ -9527,14 +8969,17 @@ export default function BuilderPageClient({ initialParams, initialSearchParams }
                     }}
                   >
                     <div
-                      className={`aspect-square w-full overflow-hidden rounded-lg border bg-white ${
+                      className={`relative aspect-square w-full overflow-hidden rounded-lg border bg-white ${
                         selected ? 'border-[color:var(--key)]' : 'border-border'
                       } hover:border-[color:var(--key)]/50`}
                     >
-                      <img
+                      <NextImage
                         src={t.url}
                         alt={`${t.label} 예시`}
-                        className="h-full w-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 424px) 45vw, 168px"
+                        unoptimized
                       />
                     </div>
                   </button>

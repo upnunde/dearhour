@@ -6,13 +6,10 @@ type PageProps = {
 };
 
 export default async function EditorPage({ params, searchParams }: PageProps) {
-  const resolvedParams = await params;
+  await params;
   const resolvedSearchParams = await searchParams;
 
   return (
-    <BuilderPageClient
-      initialParams={resolvedParams}
-      initialSearchParams={resolvedSearchParams}
-    />
+    <BuilderPageClient initialSearchParams={resolvedSearchParams} />
   );
 }
