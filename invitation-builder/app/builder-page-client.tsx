@@ -5373,25 +5373,30 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                           {/* 파티클 효과 */}
                           <FormItem label="파티클 효과">
                             <div className="flex flex-wrap gap-2">
-                              {[
-                                { value: 'none', label: '사용 안 함' },
-                                { value: 'cherryBlossom', label: '꽃잎 날림' },
-                                { value: 'snow', label: '눈송이' },
-                                { value: 'sparkle', label: '반짝임' },
-                                { value: 'heart', label: '하트' },
-                              ].map((option) => {
-                                const isActive = data.theme.particleEffect === option.value;
-                                return (
-                                  <OptionChip
-                                    key={option.value}
-                                    label={option.label}
-                                    active={isActive}
-                                    onClick={() =>
-                                      updateData('theme.particleEffect', option.value)
-                                    }
-                                  />
-                                );
-                              })}
+                              {(() => {
+                                const raw = data.theme.particleEffect ?? 'none';
+                                const particleForUi =
+                                  raw === 'snow' || raw === 'sparkle' ? 'none' : raw;
+                                return [
+                                  { value: 'none', label: '사용 안 함' },
+                                  { value: 'cherryBlossom', label: '벚꽃 날림' },
+                                  { value: 'yellowPetal', label: '노란꽃 날림' },
+                                  { value: 'daisyPetal', label: '데이지꽃 날림' },
+                                  { value: 'heart', label: '하트' },
+                                ].map((option) => {
+                                  const isActive = particleForUi === option.value;
+                                  return (
+                                    <OptionChip
+                                      key={option.value}
+                                      label={option.label}
+                                      active={isActive}
+                                      onClick={() =>
+                                        updateData('theme.particleEffect', option.value)
+                                      }
+                                    />
+                                  );
+                                });
+                              })()}
                             </div>
                           </FormItem>
 
