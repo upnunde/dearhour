@@ -25,7 +25,7 @@ export type HostsIntroPreviewBase = {
 function buildHostsIntroBase(data: CardData): HostsIntroPreviewBase {
   const titleColor = data.main.titleColor;
   const bodyColor = data.main.bodyColor;
-  const brideFirst = !!(data as any).i18n?.brideFirstInfo;
+  const brideFirst = !!(data.i18n?.brideFirstInfo ?? false);
   const groom = (data.hosts.groom.name ?? "").trim() || "신랑";
   const bride = (data.hosts.bride.name ?? "").trim() || "신부";
   const firstName = brideFirst ? bride : groom;
@@ -60,7 +60,7 @@ function buildHostsIntroBase(data: CardData): HostsIntroPreviewBase {
 
   const venueBlock =
     !!venueDisplay && (
-      <p className="text-[1em] leading-relaxed" style={{ color: bodyColor }}>
+      <p className="text-[16px] leading-relaxed" style={{ color: bodyColor }}>
         {venueDisplay}
       </p>
     );
@@ -109,7 +109,7 @@ function HostsIntroPreviewHeroA({
           {secondName}
         </p>
         <div className="space-y-1">
-          <p className="text-[1em] leading-relaxed whitespace-nowrap" style={{ color: bodyColor }}>
+          <p className="text-[16px] leading-relaxed whitespace-nowrap" style={{ color: bodyColor }}>
             {dateTimeLine}
           </p>
           {venueBlock}
@@ -131,7 +131,7 @@ function HostsIntroPreviewSoloA({ base }: { base: HostsIntroPreviewBase }) {
         {secondName}
       </p>
       <div className="space-y-2">
-        <p className="text-[1em] leading-relaxed whitespace-nowrap" style={{ color: bodyColor }}>
+        <p className="text-[16px] leading-relaxed whitespace-nowrap" style={{ color: bodyColor }}>
           {dateTimeLine}
         </p>
         {venueBlock}
@@ -149,19 +149,19 @@ function HostsIntroPreviewHeroB({ base, hero }: { base: HostsIntroPreviewBase; h
     <div className="w-full flex flex-col items-stretch pt-0">
       <div className="px-5 py-0 flex flex-col items-center text-center gap-2 mt-[60px] mb-5">
         <div className="flex items-baseline justify-center gap-2 sm:gap-3">
-          <span className="text-[clamp(22px,6vw,34px)] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
+          <span className="text-[34px] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
             {yy}
           </span>
           <span className="text-[14px] font-extralight opacity-35" style={{ color: bodyColor }}>
             |
           </span>
-          <span className="text-[clamp(22px,6vw,34px)] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
+          <span className="text-[34px] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
             {mm}
           </span>
           <span className="text-[14px] font-extralight opacity-35" style={{ color: bodyColor }}>
             |
           </span>
-          <span className="text-[clamp(22px,6vw,34px)] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
+          <span className="text-[34px] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
             {dd}
           </span>
         </div>
@@ -180,7 +180,7 @@ function HostsIntroPreviewHeroB({ base, hero }: { base: HostsIntroPreviewBase; h
           {secondName}
         </p>
         <div className="space-y-2 w-full">
-          <p className="text-[0.95em] leading-relaxed" style={{ color: bodyColor }}>
+          <p className="text-[15px] leading-relaxed" style={{ color: bodyColor }}>
             {dateTimeLine}
           </p>
           {venueBlock}
@@ -196,19 +196,19 @@ function HostsIntroPreviewSoloB({ base }: { base: HostsIntroPreviewBase }) {
   return (
     <div className="w-full max-w-[340px] mx-auto flex flex-col items-center text-center gap-4">
       <div className="flex items-baseline justify-center gap-2 sm:gap-3">
-        <span className="text-[clamp(26px,7vw,34px)] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
+        <span className="text-[34px] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
           {yy}
         </span>
         <span className="text-[15px] font-extralight opacity-40" style={{ color: bodyColor }}>
           |
         </span>
-        <span className="text-[clamp(26px,7vw,34px)] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
+        <span className="text-[34px] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
           {mm}
         </span>
         <span className="text-[15px] font-extralight opacity-40" style={{ color: bodyColor }}>
           |
         </span>
-        <span className="text-[clamp(26px,7vw,34px)] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
+        <span className="text-[34px] font-light tabular-nums tracking-tight" style={{ color: titleColor }}>
           {dd}
         </span>
       </div>
@@ -217,13 +217,13 @@ function HostsIntroPreviewSoloB({ base }: { base: HostsIntroPreviewBase }) {
           {weekdayKo}요일
         </p>
       )}
-      <p className="text-[1.05em] font-medium tracking-[0.04em]" style={{ color: titleColor }}>
+      <p className="text-[17px] font-medium tracking-[0.04em]" style={{ color: titleColor }}>
         {firstName}
         <span className="mx-2 opacity-40">·</span>
         {secondName}
       </p>
       <div className="space-y-2 w-full">
-        <p className="text-[0.95em] leading-relaxed" style={{ color: bodyColor }}>
+        <p className="text-[15px] leading-relaxed" style={{ color: bodyColor }}>
           {dateTimeLine}
         </p>
         {venueBlock}
@@ -263,7 +263,7 @@ function HostsIntroPreviewHeroC({ base, hero }: { base: HostsIntroPreviewBase; h
       </div>
       <div className="w-full p-0 m-0">{hero}</div>
       <div className="w-full max-w-[320px] mx-0 px-6 pt-0 pb-0 mb-10 mt-10 flex flex-col justify-center items-center space-y-2 text-center">
-        <p className="text-[1em] leading-relaxed" style={{ color: bodyColor }}>
+        <p className="text-[16px] leading-relaxed" style={{ color: bodyColor }}>
           {dateTimeLine}
         </p>
         {venueBlock}
@@ -276,15 +276,15 @@ function HostsIntroPreviewSoloC({ base }: { base: HostsIntroPreviewBase }) {
   const { titleColor, bodyColor, firstName, secondName, dateTimeLine, venueBlock } = base;
   return (
     <div className="w-full max-w-[340px] mx-auto flex flex-col items-center text-center gap-3">
-      <p className="text-[1.2em] font-medium tracking-[0.02em]" style={{ color: titleColor }}>
+      <p className="text-[19px] font-medium tracking-[0.02em]" style={{ color: titleColor }}>
         {firstName}
       </p>
       <div className="w-10 h-px opacity-30" style={{ backgroundColor: titleColor }} aria-hidden />
-      <p className="text-[1.2em] font-medium tracking-[0.02em]" style={{ color: titleColor }}>
+      <p className="text-[19px] font-medium tracking-[0.02em]" style={{ color: titleColor }}>
         {secondName}
       </p>
       <div className="mt-2 space-y-2 w-full">
-        <p className="text-[1em] leading-relaxed" style={{ color: bodyColor }}>
+        <p className="text-[16px] leading-relaxed" style={{ color: bodyColor }}>
           {dateTimeLine}
         </p>
         {venueBlock}
@@ -319,7 +319,7 @@ function HostsIntroPreviewHeroD({ base, hero }: { base: HostsIntroPreviewBase; h
       </div>
       <div className="w-full p-0 m-0">{hero}</div>
       <div className="max-w-[340px] mx-auto w-full px-6 pt-0 pb-[30px] mt-[30px] mb-[60px] space-y-2 text-center">
-        <p className="text-[0.95em] leading-relaxed" style={{ color: bodyColor }}>
+        <p className="text-[15px] leading-relaxed" style={{ color: bodyColor }}>
           {dateTimeLine}
         </p>
         {venueBlock}
@@ -350,7 +350,7 @@ function HostsIntroPreviewSoloD({ base }: { base: HostsIntroPreviewBase }) {
         </p>
       </div>
       <div className="space-y-2">
-        <p className="text-[0.95em] leading-relaxed" style={{ color: bodyColor }}>
+        <p className="text-[15px] leading-relaxed" style={{ color: bodyColor }}>
           {dateTimeLine}
         </p>
         {venueBlock}
@@ -375,9 +375,9 @@ function HostsIntroPreviewHeroE({ base, hero }: { base: HostsIntroPreviewBase; h
             className="h-10 w-10 shrink-0 mb-3"
             aria-hidden
           />
-          <p className="text-[1.5em] font-medium tracking-[0.08em]" style={{ color: titleColor }}>
+          <p className="text-[24px] font-medium tracking-[0.08em]" style={{ color: titleColor }}>
             {firstName}{" "}
-            <span className="inline-block opacity-40 mx-0.5 font-normal text-[0.9em]" aria-hidden>
+            <span className="inline-block opacity-40 mx-0.5 font-normal text-[14px]" aria-hidden>
               &
             </span>{" "}
             {secondName}
@@ -387,7 +387,7 @@ function HostsIntroPreviewHeroE({ base, hero }: { base: HostsIntroPreviewBase; h
         <div className="w-full p-0 m-0">
           <div className="w-full overflow-hidden rounded-none p-0 m-0 block leading-none">{hero}</div>
         </div>
-        <div className="max-w-[340px] mx-auto w-full px-6 pt-10 pb-12 space-y-1.5 text-[0.95em] text-center">
+        <div className="max-w-[340px] mx-auto w-full px-6 pt-10 pb-12 space-y-1.5 text-[15px] text-center">
           <p className="leading-relaxed" style={{ color: bodyColor }}>
             {dateTimeLine}
           </p>
@@ -403,15 +403,15 @@ function HostsIntroPreviewSoloE({ base }: { base: HostsIntroPreviewBase }) {
   return (
     <div className="w-full px-3 sm:px-4 py-4">
       <div className="w-full max-w-[340px] mx-auto flex flex-col items-center text-center gap-4 border border-gray-200 px-6 py-10">
-        <p className="text-[1.35em] font-medium tracking-[0.06em]" style={{ color: titleColor }}>
+        <p className="text-[22px] font-medium tracking-[0.06em]" style={{ color: titleColor }}>
           {firstName}{" "}
-          <span className="inline-block opacity-45 mx-0.5 font-normal text-[0.95em]" aria-hidden>
+          <span className="inline-block opacity-45 mx-0.5 font-normal text-[15px]" aria-hidden>
             &
           </span>{" "}
           {secondName}
         </p>
         <div className="w-12 h-px opacity-25 mx-auto" style={{ backgroundColor: titleColor }} aria-hidden />
-        <div className="space-y-1.5 text-[0.95em] w-full">
+        <div className="space-y-1.5 text-[15px] w-full">
           <p className="leading-relaxed" style={{ color: bodyColor }}>
             {dateTimeLine}
           </p>
@@ -435,7 +435,7 @@ function HostsIntroPreviewHeroF({ base, hero }: { base: HostsIntroPreviewBase; h
           {firstName}
         </p>
         <p
-          className="hosts-intro-f-and-calligraphy mt-0.5 mb-0.5 text-[clamp(16px,4.5vw,26px)] font-normal leading-none tracking-normal opacity-[0.88]"
+          className="hosts-intro-f-and-calligraphy mt-0.5 mb-0.5 text-[26px] font-normal leading-none tracking-normal opacity-[0.88]"
           style={{ color: `var(--key, ${titleColor})` }}
           lang="en"
         >
@@ -447,7 +447,7 @@ function HostsIntroPreviewHeroF({ base, hero }: { base: HostsIntroPreviewBase; h
       </div>
       <div className="w-full p-0 m-0">{hero}</div>
       <div className="max-w-[340px] mx-auto w-full px-6 pt-10 pb-[50px] space-y-2 text-center">
-        <p className="text-[1em] leading-relaxed" style={{ color: bodyColor }}>
+        <p className="text-[16px] leading-relaxed" style={{ color: bodyColor }}>
           {dateTimeLine}
         </p>
         {venueBlock}
@@ -466,7 +466,7 @@ function HostsIntroPreviewSoloF({ base }: { base: HostsIntroPreviewBase }) {
         {firstName}
       </p>
       <p
-        className="hosts-intro-f-and-calligraphy mt-0.5 mb-0.5 text-[clamp(16px,4.5vw,26px)] font-normal leading-none tracking-normal opacity-[0.88]"
+        className="hosts-intro-f-and-calligraphy mt-0.5 mb-0.5 text-[26px] font-normal leading-none tracking-normal opacity-[0.88]"
         style={{ color: titleColor }}
         lang="en"
       >
@@ -476,7 +476,7 @@ function HostsIntroPreviewSoloF({ base }: { base: HostsIntroPreviewBase }) {
         {secondName}
       </p>
       <div className="mt-10 space-y-2 w-full">
-        <p className="text-[1em] leading-relaxed" style={{ color: bodyColor }}>
+        <p className="text-[16px] leading-relaxed" style={{ color: bodyColor }}>
           {dateTimeLine}
         </p>
         {venueBlock}
@@ -492,7 +492,7 @@ function HostsIntroPreviewHeroG({ base, hero }: { base: HostsIntroPreviewBase; h
   return (
     <div className="w-full flex flex-col items-stretch pt-0">
       <div className="w-full max-w-[340px] mx-auto px-6 pt-20 pb-10 flex flex-col items-center text-center gap-2">
-        <p className="flex justify-center items-center gap-[5px] text-[clamp(17px,4.2vw,22px)] font-medium leading-snug">
+        <p className="flex justify-center items-center gap-[5px] text-[22px] font-medium leading-snug">
           <span className="text-[24px] font-medium" style={{ color: titleColor }}>{firstName}</span>
           <span className="mx-2 font-normal text-base text-on-surface-30">그리고</span>
           <span className="text-[24px] font-medium" style={{ color: titleColor }}>{secondName}</span>
@@ -503,7 +503,7 @@ function HostsIntroPreviewHeroG({ base, hero }: { base: HostsIntroPreviewBase; h
       </div>
       <div className="w-full p-0 m-0">{hero}</div>
       <div className="max-w-[340px] mx-auto w-full px-6 pt-10 pb-[50px] space-y-2 text-center">
-        <p className="text-[1em] leading-relaxed" style={{ color: bodyColor }}>
+        <p className="text-[16px] leading-relaxed" style={{ color: bodyColor }}>
           {dateTimeLine}
         </p>
         {venueBlock}
@@ -517,17 +517,17 @@ function HostsIntroPreviewSoloG({ base }: { base: HostsIntroPreviewBase }) {
   return (
     <div className="w-full max-w-[340px] mx-auto px-6 pt-12 pb-6 flex flex-col items-center text-center">
       <div className="space-y-2">
-        <p className="text-[clamp(17px,4.2vw,22px)] font-semibold leading-snug">
+        <p className="text-[22px] font-semibold leading-snug">
           <span style={{ color: titleColor }}>{firstName}</span>
           <span className="mx-2 font-normal text-on-surface-30">그리고</span>
           <span style={{ color: titleColor }}>{secondName}</span>
         </p>
-        <p className="text-[clamp(17px,4.2vw,22px)] font-semibold leading-tight" style={{ color: titleColor }}>
+        <p className="text-[22px] font-semibold leading-tight" style={{ color: titleColor }}>
           결혼합니다
         </p>
       </div>
       <div className="mt-10 w-full space-y-2">
-        <p className="text-[1em] leading-relaxed" style={{ color: bodyColor }}>
+        <p className="text-[16px] leading-relaxed" style={{ color: bodyColor }}>
           {dateTimeLine}
         </p>
         {venueBlock}
@@ -582,7 +582,7 @@ function HostsIntroPreviewHeroH({ base, hero }: { base: HostsIntroPreviewBase; h
           {secondName}
         </p>
         <div className="space-y-2">
-          <p className="text-[0.95em] leading-relaxed" style={{ color: bodyColor }}>
+          <p className="text-[15px] leading-relaxed" style={{ color: bodyColor }}>
             {dateTimeLine}
           </p>
           {venueBlock}
@@ -598,21 +598,21 @@ function HostsIntroPreviewSoloH({ base }: { base: HostsIntroPreviewBase }) {
   const timeLabel = toMeridiemTimeLabel(timeText);
   return (
     <div className="w-full max-w-[340px] mx-auto px-6 pt-8 pb-6 flex flex-col items-center text-center">
-      <p className="text-[clamp(64px,16vw,96px)] font-extralight leading-[0.9] tracking-[0.02em]" style={{ color: titleColor }}>
+      <p className="text-[96px] font-extralight leading-[0.9] tracking-[0.02em]" style={{ color: titleColor }}>
         {dd}
       </p>
       <div className="mt-2 mb-2 h-px w-full opacity-30" style={{ backgroundColor: titleColor }} aria-hidden />
-      <p className="text-[clamp(18px,4.7vw,26px)] font-light tracking-[0.12em] leading-none" style={{ color: bodyColor }}>
+      <p className="text-[26px] font-light tracking-[0.12em] leading-none" style={{ color: bodyColor }}>
         {monthLabel}
         {timeLabel ? ` ${timeLabel}` : ""}
       </p>
-      <p className="mt-7 text-[1.05em] font-medium tracking-[0.04em]" style={{ color: titleColor }}>
+      <p className="mt-7 text-[17px] font-medium tracking-[0.04em]" style={{ color: titleColor }}>
         {firstName}
         <span className="mx-2 opacity-45">·</span>
         {secondName}
       </p>
       <div className="mt-4 space-y-2 w-full">
-        <p className="text-[0.95em] leading-relaxed" style={{ color: bodyColor }}>
+        <p className="text-[15px] leading-relaxed" style={{ color: bodyColor }}>
           {dateTimeLine}
         </p>
         {venueBlock}
@@ -653,7 +653,7 @@ function HostsIntroPreviewHeroI({ base, hero }: { base: HostsIntroPreviewBase; h
       </div>
       <div className="w-full p-0 m-0">{hero}</div>
       <div className="max-w-[340px] mx-auto w-full px-6 pt-8 pb-[50px] text-center space-y-2">
-        <p className="text-[0.95em] leading-relaxed" style={{ color: bodyColor }}>
+        <p className="text-[15px] leading-relaxed" style={{ color: bodyColor }}>
           {dateTimeLine}
         </p>
         {venueBlock}
@@ -689,7 +689,7 @@ function HostsIntroPreviewSoloI({ base }: { base: HostsIntroPreviewBase }) {
         </div>
       </div>
       <div className="mt-7 space-y-2 w-full">
-        <p className="text-[0.95em] leading-relaxed" style={{ color: bodyColor }}>
+        <p className="text-[15px] leading-relaxed" style={{ color: bodyColor }}>
           {dateTimeLine}
         </p>
         {venueBlock}

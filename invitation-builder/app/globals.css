@@ -374,6 +374,7 @@
   }
   html {
     @apply font-sans;
+    -webkit-text-size-adjust: 100%;
   }
   /* 인풋/텍스트영역 포커스: key 컬러 사용 */
   input:not([type="checkbox"]):not([type="radio"]):focus-visible,
@@ -396,6 +397,17 @@
   }
   [data-slot="switch"][data-state="unchecked"] {
     background-color: var(--surface-disabled-20) !important;
+  }
+}
+
+/* iOS Safari 입력 포커스 시 자동 확대(zoom-in) 방지 */
+@supports (-webkit-touch-callout: none) {
+  @media (hover: none) and (pointer: coarse) {
+    input,
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
   }
 }
 

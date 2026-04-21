@@ -196,7 +196,7 @@ export interface CardData {
     deadline: string;
   };
   publish: { publicStartDate: string };
-  i18n: { enabled: boolean; brideFirstInfo?: boolean };
+  i18n: { brideFirstInfo: boolean };
   billing: { isPaid: boolean; savedAt?: string };
   sectionEnabled: Record<string, boolean>;
 }

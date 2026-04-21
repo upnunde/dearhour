@@ -158,7 +158,7 @@ export const INITIAL_CARD_DATA: CardData = {
     publicStartDate: "",
   },
   i18n: {
-    enabled: false,
+    brideFirstInfo: false,
   },
   billing: {
     isPaid: false,

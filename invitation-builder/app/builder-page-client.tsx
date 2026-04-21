@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { createPortal } from 'react-dom';
 import NextImage from "next/image";
 import { useRouter } from 'next/navigation';
-import { Palette, Music, Image as ImageIcon, Users, UserRound, MessageSquare, MessageCircle, Phone, CalendarHeart, MapPin, Bell, Images, Wallet, BookOpen, Youtube, Share2, Shield, CheckCircle2, GripVertical, Play, VolumeX, Volume2, X, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, RotateCw, RefreshCcw, ArrowUpDown, ClipboardCheck, Calendar, Settings, Bus, Train, Car, ParkingCircle, Route, AlertCircle, Languages } from 'lucide-react';
+import { Palette, Music, Image as ImageIcon, Users, UserRound, MessageSquare, MessageCircle, Phone, CalendarHeart, MapPin, Bell, Images, Wallet, BookOpen, Youtube, Share2, Shield, CheckCircle2, GripVertical, Play, VolumeX, Volume2, X, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, RotateCw, RefreshCcw, ArrowUpDown, ClipboardCheck, Calendar, Settings, Bus, Train, Car, ParkingCircle, Route, AlertCircle } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import {
   ensureContactBlock,
@@ -98,101 +98,6 @@ const PREVIEW_TYPOGRAPHY_GUIDE = {
   body: "whitespace-pre-line leading-[26px]",
   subtitle2: "text-sm font-normal text-on-surface-30 opacity-70 [font-stretch:120%]",
 } as const;
-
-type PreviewLanguage = "ko" | "en" | "ja" | "zh-CN" | "zh-TW" | "vi" | "th";
-
-const PREVIEW_LANGUAGE_OPTIONS: Array<{ code: PreviewLanguage; label: string }> = [
-  { code: "ko", label: "한국어" },
-  { code: "en", label: "English" },
-  { code: "ja", label: "日本語" },
-  { code: "zh-CN", label: "简体中文" },
-  { code: "zh-TW", label: "繁體中文" },
-  { code: "vi", label: "Tiếng Việt" },
-  { code: "th", label: "ไทย" },
-];
-
-const PREVIEW_I18N_MAP: Record<PreviewLanguage, Record<string, string>> = {
-  ko: {},
-  en: {
-    "신랑": "Groom",
-    "신부": "Bride",
-    "아버님": "Father",
-    "어머님": "Mother",
-    "연락하기": "Contact",
-    "저희를 소개합니다": "About Us",
-    "오시는 길": "Directions",
-    "갤러리": "Gallery",
-    "안내 내용을 입력해 주세요.": "Please enter the information.",
-    "갤러리 이미지를 추가해 주세요.": "Please add gallery images.",
-    "신랑신부 섹션에서 연락처를 입력해 주세요.": "Please enter contact info in the couple section.",
-  },
-  ja: {
-    "신랑": "新郎",
-    "신부": "新婦",
-    "아버님": "お父様",
-    "어머님": "お母様",
-    "연락하기": "連絡する",
-    "저희를 소개합니다": "私たちのご紹介",
-    "오시는 길": "アクセス",
-    "갤러리": "ギャラリー",
-    "안내 내용을 입력해 주세요.": "ご案内内容を入力してください。",
-    "갤러리 이미지를 추가해 주세요.": "ギャラリー画像を追加してください。",
-    "신랑신부 섹션에서 연락처를 입력해 주세요.": "新郎新婦セクションで連絡先を入力してください。",
-  },
-  "zh-CN": {
-    "신랑": "新郎",
-    "신부": "新娘",
-    "아버님": "父亲",
-    "어머님": "母亲",
-    "연락하기": "联系",
-    "저희를 소개합니다": "关于我们",
-    "오시는 길": "路线",
-    "갤러리": "相册",
-    "안내 내용을 입력해 주세요.": "请输入说明内容。",
-    "갤러리 이미지를 추가해 주세요.": "请添加相册图片。",
-    "신랑신부 섹션에서 연락처를 입력해 주세요.": "请在新人信息中输入联系方式。",
-  },
-  "zh-TW": {
-    "신랑": "新郎",
-    "신부": "新娘",
-    "아버님": "父親",
-    "어머님": "母親",
-    "연락하기": "聯絡",
-    "저희를 소개합니다": "關於我們",
-    "오시는 길": "交通方式",
-    "갤러리": "相簿",
-    "안내 내용을 입력해 주세요.": "請輸入說明內容。",
-    "갤러리 이미지를 추가해 주세요.": "請新增相簿圖片。",
-    "신랑신부 섹션에서 연락처를 입력해 주세요.": "請在新人區塊輸入聯絡方式。",
-  },
-  vi: {
-    "신랑": "Chú rể",
-    "신부": "Cô dâu",
-    "아버님": "Cha",
-    "어머님": "Mẹ",
-    "연락하기": "Liên hệ",
-    "저희를 소개합니다": "Giới thiệu",
-    "오시는 길": "Chỉ đường",
-    "갤러리": "Thư viện ảnh",
-    "안내 내용을 입력해 주세요.": "Vui lòng nhập nội dung 안내.",
-    "갤러리 이미지를 추가해 주세요.": "Vui lòng thêm ảnh thư viện.",
-    "신랑신부 섹션에서 연락처를 입력해 주세요.": "Vui lòng nhập liên hệ trong mục cô dâu/chú rể.",
-  },
-  th: {
-    "신랑": "เจ้าบ่าว",
-    "신부": "เจ้าสาว",
-    "아버님": "คุณพ่อ",
-    "어머님": "คุณแม่",
-    "연락하기": "ติดต่อ",
-    "저희를 소개합니다": "เกี่ยวกับเรา",
-    "오시는 길": "เส้นทาง",
-    "갤러리": "แกลเลอรี",
-    "안내 내용을 입력해 주세요.": "กรุณากรอกข้อมูล 안내",
-    "갤러리 이미지를 추가해 주세요.": "กรุณาเพิ่มรูปแกลเลอรี",
-    "신랑신부 섹션에서 연락처를 입력해 주세요.": "กรุณากรอกข้อมูลติดต่อในส่วนคู่บ่าวสาว",
-  },
-};
-
 
 function upperCaseFirst(value: string) {
   const trimmed = value.trim();
@@ -435,7 +340,11 @@ function IntroTypeSwatch({ variant }: { variant: IntroTypeValue }) {
   );
 }
 
-type IntroLayoutValue = 'A' | 'B' | 'C' | 'D';
+type IntroLayoutValue = 'A' | 'B';
+
+function normalizeIntroLayoutType(raw: unknown): IntroLayoutValue {
+  return raw === 'B' || raw === 'D' ? 'B' : 'A';
+}
 
 /**
  * 소개 섹션 레이아웃 타입 스왓치 — 두 명의 프로필 구조를 미니어처로 시각화.
@@ -494,46 +403,6 @@ function IntroLayoutSwatch({ variant }: { variant: IntroLayoutValue }) {
         </span>
       )}
 
-      {/* Type C — Centered Focus: 세로 포트레이트 중앙정렬 */}
-      {variant === 'C' && (
-        <span className="flex h-full w-full flex-col items-center justify-center gap-[3px] px-[4px] py-[4px]">
-          <span className={cn('h-[22px] w-[18px]', photo)} />
-          <span className={cn('mt-[1px] h-[1px] w-[10px] rounded-[1px]', line)} style={faintest} />
-          <span className={cn('h-[2px] w-[20px] rounded-[1px]', lineDark)} />
-          <span className={cn('h-[1px] w-[8px] rounded-[1px]', line)} />
-          <span className="my-[2px] h-px w-[20px] bg-[#d6d6d6]" />
-          <span className={cn('h-[22px] w-[18px]', photo)} />
-          <span className={cn('mt-[1px] h-[1px] w-[10px] rounded-[1px]', line)} style={faintest} />
-          <span className={cn('h-[2px] w-[20px] rounded-[1px]', lineDark)} />
-          <span className={cn('h-[1px] w-[8px] rounded-[1px]', line)} />
-        </span>
-      )}
-
-      {/* Type D — Full-Bleed Portrait: 풀폭 세로 사진 + 아래 역할·이름·메타 */}
-      {variant === 'D' && (
-        <span className="flex h-full w-full flex-col gap-[6px] px-[4px] py-[5px]">
-          <span className="flex flex-col gap-[2px]">
-            <span className={cn('h-[30px] w-full', photo)} />
-            <span className="flex items-end justify-between gap-[3px]">
-              <span className="flex flex-col gap-[1px]">
-                <span className={cn('h-[1px] w-[10px] rounded-[1px]', line)} style={faintest} />
-                <span className={cn('h-[2px] w-[20px] rounded-[1px]', lineDark)} />
-              </span>
-              <span className={cn('h-[1px] w-[10px] rounded-[1px]', line)} style={faint} />
-            </span>
-          </span>
-          <span className="flex flex-col gap-[2px]">
-            <span className={cn('h-[30px] w-full', photo)} />
-            <span className="flex items-end justify-between gap-[3px]">
-              <span className="flex flex-col gap-[1px]">
-                <span className={cn('h-[1px] w-[10px] rounded-[1px]', line)} style={faintest} />
-                <span className={cn('h-[2px] w-[20px] rounded-[1px]', lineDark)} />
-              </span>
-              <span className={cn('h-[1px] w-[10px] rounded-[1px]', line)} style={faint} />
-            </span>
-          </span>
-        </span>
-      )}
     </span>
   );
 }
@@ -760,18 +629,6 @@ function ThemeColorChip({
       <span>{label}</span>
     </button>
   );
-}
-
-function fontScaleToPercent(scale: unknown) {
-  // 예전 '작게(sm)' 제거: 저장 데이터가 남아 있으면 중간(md)과 동일(100%)
-  if (scale === 'sm') return 100;
-  switch (scale) {
-    case 'lg':
-      return 120;
-    case 'md':
-    default:
-      return 100;
-  }
 }
 
 function getYoutubeVideoId(rawUrl: string) {
@@ -1165,16 +1022,16 @@ type BuiltInTrack = {
   fallbackUrl?: string;
 };
 
-/** 기본 음원: 로컬 파일 우선, 미존재 시 샘플 스트림으로 폴백 */
+/** 기본 음원: 실제 public/audio에 존재하는 파일만 노출 */
 const builtInTracks: BuiltInTrack[] = [
-  { id: 'march-1', label: '설레는 행진', url: '/audio/neti-main-theme.mp3', fallbackUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
-  { id: 'piano-1', label: '로맨틱 피아노', url: '/audio/piano-romantic.mp4', fallbackUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
-  { id: 'bgm-all-you-need', label: '온전한 마음', url: '/audio/bgm-all-you-need.mp3', fallbackUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
-  { id: 'bgm-chemistry', label: '마음의 화학', url: '/audio/bgm-chemistry.mp3', fallbackUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3' },
-  { id: 'bgm-my-first-love', label: '첫사랑의 결', url: '/audio/bgm-my-first-love.mp3', fallbackUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3' },
-  { id: 'bgm-perfect', label: '완벽한 약속', url: '/audio/bgm-perfect.mp3', fallbackUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3' },
-  { id: 'bgm-wedding-dress', label: '순백의 순간', url: '/audio/bgm-wedding-dress.mp3', fallbackUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3' },
-  { id: 'bgm-would-you-marry-me', label: '영원의 청혼', url: '/audio/bgm-would-you-marry-me.mp3', fallbackUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3' },
+  { id: 'march-1', label: '발랄한 시작', url: '/audio/neti-main-theme.mp3' },
+  { id: 'piano-1', label: '로맨틱 피아노', url: '/audio/piano-romantic.mp4' },
+  { id: 'bgm-all-you-need', label: '사랑스러운 고백', url: '/audio/bgm-all-you-need.mp3' },
+  { id: 'bgm-chemistry', label: '설레는 케미', url: '/audio/bgm-chemistry.mp3' },
+  { id: 'bgm-my-first-love', label: '첫사랑의 기억', url: '/audio/bgm-my-first-love.mp3' },
+  { id: 'bgm-perfect', label: '완벽한 순간', url: '/audio/bgm-perfect.mp3' },
+  { id: 'bgm-wedding-dress', label: '순백의 무드', url: '/audio/bgm-wedding-dress.mp3' },
+  { id: 'bgm-would-you-marry-me', label: '신나는 프로포즈', url: '/audio/bgm-would-you-marry-me.mp3' },
 ];
 
 function BankLogo({ name }: { name: (typeof BANK_OPTIONS)[number] }) {
@@ -1361,12 +1218,10 @@ function IntroEditor({
     );
   };
 
-  const layoutType = (intro.layoutType ?? 'A') as IntroLayoutValue;
+  const layoutType = normalizeIntroLayoutType(intro.layoutType);
   const layoutOptions = [
-    { value: 'A' as const, label: 'A' },
-    { value: 'B' as const, label: 'B' },
-    { value: 'C' as const, label: 'C' },
-    { value: 'D' as const, label: 'D' },
+    { value: 'A' as const, label: '1안' },
+    { value: 'B' as const, label: '2안' },
   ];
 
   return (
@@ -1394,11 +1249,11 @@ function IntroEditor({
                       ? 'bg-slate-50 outline outline-1 outline-offset-2 outline-[color:var(--on-surface-10)]'
                       : 'outline-none ring-1 ring-transparent hover:bg-slate-50',
                   )}
-                  title={`타입 ${opt.label}`}
+                  title={opt.label}
                 >
                   <IntroLayoutSwatch variant={opt.value} />
                   <span className="text-sm font-medium text-on-surface-20">
-                    타입 {opt.label}
+                    {opt.label}
                   </span>
                 </button>
               );
@@ -1583,7 +1438,6 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
   const onboardingAppliedRef = useRef(false);
   const shareTitleManuallyEditedRef = useRef(false);
   const isBrideFirstInfo = !!(data.i18n?.brideFirstInfo ?? false);
-
   const autoShareTitle = useMemo(() => {
     const groom = (data.hosts.groom.name ?? "").trim();
     const bride = (data.hosts.bride.name ?? "").trim();
@@ -1626,6 +1480,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
   };
   const [isTabletViewport, setIsTabletViewport] = useState(false);
   const [viewportHeightPx, setViewportHeightPx] = useState<number | null>(null);
+  const [keyboardInsetPx, setKeyboardInsetPx] = useState(0);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const isResizingEditorRef = useRef(false);
   const editorResizeStartRef = useRef<{ x: number; width: number } | null>(null);
@@ -1681,7 +1536,9 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
     const updateViewportHeight = () => {
       const vv = window.visualViewport;
       const visualHeight = vv?.height;
+      const visualOffsetTop = vv?.offsetTop ?? 0;
       const visualScale = vv?.scale ?? 1;
+      const layoutHeight = window.innerHeight;
 
       /**
        * iOS Safari에서 키보드/줌 시 visualViewport offsetTop을 더하면
@@ -1691,12 +1548,17 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
        */
       const nextRaw =
         visualScale > 1.01
-          ? window.innerHeight
+          ? layoutHeight
           : visualHeight && visualHeight > 0
             ? visualHeight
-            : window.innerHeight;
-      const next = Math.round(Math.max(0, Math.min(nextRaw, window.innerHeight)));
+            : layoutHeight;
+      const next = Math.round(Math.max(0, nextRaw));
       setViewportHeightPx(next);
+
+      // 키보드가 올라왔을 때 실제 가려지는 높이를 추정해 입력 필드가 잘리지 않도록 여유 패딩에 사용
+      const keyboardInsetRaw = layoutHeight - (nextRaw + visualOffsetTop);
+      const normalizedKeyboardInset = keyboardInsetRaw > 24 ? Math.round(keyboardInsetRaw) : 0;
+      setKeyboardInsetPx(normalizedKeyboardInset);
     };
 
     updateViewportHeight();
@@ -1712,6 +1574,28 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
       window.visualViewport?.removeEventListener('scroll', updateViewportHeight);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isTabletViewport || mobilePanel !== 'editor') return;
+    const scroller = editorScrollRef.current;
+    if (!scroller) return;
+
+    const onFocusIn = (event: FocusEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      const focusableField = target.closest<HTMLElement>('input, textarea, select, [contenteditable="true"]');
+      if (!focusableField) return;
+
+      window.setTimeout(() => {
+        focusableField.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+      }, 140);
+    };
+
+    scroller.addEventListener('focusin', onFocusIn);
+    return () => {
+      scroller.removeEventListener('focusin', onFocusIn);
+    };
+  }, [isTabletViewport, mobilePanel]);
 
   const [bankModalIndex, setBankModalIndex] = useState<number | null>(null);
   const [bankSearch, setBankSearch] = useState('');
@@ -1908,7 +1792,6 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
     const mergedVenueName = [venueName, venueDetail].filter(Boolean).join(' ');
     const venueAddress = pickSearchParam('venueAddress').trim();
     const themeType = pickSearchParam('themeType').trim().toUpperCase();
-    const brideFirstInfo = isBrideFirstInfo;
 
     if (groomName) updateData('hosts.groom.name', groomName);
     if (brideName) updateData('hosts.bride.name', brideName);
@@ -1921,8 +1804,8 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
       updateData('main.introType', themeType);
     }
     if (groomName || brideName) {
-      const firstDisplayName = brideFirstInfo ? (brideName || '신부') : (groomName || '신랑');
-      const secondDisplayName = brideFirstInfo ? (groomName || '신랑') : (brideName || '신부');
+      const firstDisplayName = isBrideFirstInfo ? (brideName || '신부') : (groomName || '신랑');
+      const secondDisplayName = isBrideFirstInfo ? (groomName || '신랑') : (brideName || '신부');
       const composedTitle = `${firstDisplayName} ♥ ${secondDisplayName} 결혼식`;
       updateData('main.title', composedTitle);
       updateData('share.title', composedTitle);
@@ -2619,8 +2502,6 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
   const [volume, setVolume] = useState(0.8);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [previewLanguage, setPreviewLanguage] = useState<PreviewLanguage>("ko");
-  const [previewLanguageFabOpen, setPreviewLanguageFabOpen] = useState(false);
   const [captureShieldVisible, setCaptureShieldVisible] = useState(false);
   const [availableTrackUrlById, setAvailableTrackUrlById] = useState<Record<string, string>>({});
   const captureShieldTimerRef = useRef<number | null>(null);
@@ -2653,23 +2534,6 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
   const preventCaptureEnabled = !!data.protect?.preventCapture;
   const preventZoomEnabled = !!data.protect?.preventZoom;
   const preventDownloadEnabled = !!data.protect?.preventDownload;
-  const i18nPreviewEnabled = !!data.i18n?.enabled;
-  const activePreviewLanguage: PreviewLanguage = i18nPreviewEnabled ? previewLanguage : "ko";
-  const showPreviewLanguageFab = i18nPreviewEnabled && isTabletViewport && mobilePanel === "preview";
-
-  const tPreview = useCallback(
-    (koText: string) => PREVIEW_I18N_MAP[activePreviewLanguage]?.[koText] ?? koText,
-    [activePreviewLanguage],
-  );
-  const tRole = useCallback(
-    (role: string) =>
-      role
-        .replaceAll("신랑", tPreview("신랑"))
-        .replaceAll("신부", tPreview("신부"))
-        .replaceAll("아버님", tPreview("아버님"))
-        .replaceAll("어머님", tPreview("어머님")),
-    [tPreview],
-  );
 
   useEffect(() => {
     let cancelled = false;
@@ -2695,12 +2559,6 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
     };
   }, []);
 
-  useEffect(() => {
-    if (!i18nPreviewEnabled) {
-      setPreviewLanguage("ko");
-      setPreviewLanguageFabOpen(false);
-    }
-  }, [i18nPreviewEnabled]);
 
   useEffect(() => {
     return () => {
@@ -3187,8 +3045,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
           isSectionEnabled(id) &&
           id !== "share" &&
           id !== "protect" &&
-          id !== "publish" &&
-          id !== "i18n",
+          id !== "publish",
       ),
   ];
   const itemById = Object.fromEntries(sidebarItems.map((i) => [i.id, i])) as Record<
@@ -3566,11 +3423,11 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
       }
       case 'intro': {
         const introData = data.intro ?? {};
-        const introHeading = String(introData.sectionHeading ?? '').trim() || tPreview('저희를 소개합니다');
-        const groomName = (data.hosts.groom.name ?? '').trim() || tPreview('신랑');
-        const brideName = (data.hosts.bride.name ?? '').trim() || tPreview('신부');
-        const brideFirst = !!(data.i18n?.brideFirstInfo ?? false);
-        const layoutType = (introData.layoutType ?? 'A') as 'A' | 'B' | 'C' | 'D';
+        const introHeadingRaw = String(introData.sectionHeading ?? '').trim();
+        const introHeading = introHeadingRaw || '저희를 소개합니다';
+        const groomName = (data.hosts.groom.name ?? '').trim() || '신랑';
+        const brideName = (data.hosts.bride.name ?? '').trim() || '신부';
+        const layoutType = normalizeIntroLayoutType(introData.layoutType);
 
         /** 공통 사진 박스 (사이즈·모양은 레이아웃별로 override) */
         const renderPhoto = (
@@ -3606,11 +3463,10 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
 
         /** Layout A — Gallery Grid (참고 이미지1 스타일 · 3:4 세로 사진 2열 나란히) */
         const renderCardA = (
-          _role: '신랑' | '신부',
+          role: '신랑' | '신부',
           _index: number,
           name: string,
           profile: IntroProfile | undefined,
-          roleLabelEn: string,
         ) => {
           const p = profile ?? { image: '', birthDate: '', mbti: '', hobbies: '', traits: '' };
           const birthDate = String(p.birthDate ?? '').trim();
@@ -3618,22 +3474,24 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
           const traits = String(p.traits ?? '').trim();
           return (
             <article className="w-full flex flex-col text-left">
-              {renderPhoto(p.image, _role, 'w-full aspect-[3/4]')}
-              <div className="mt-4 text-sm tracking-[0.28em] uppercase text-on-surface-30 font-medium">
-                {roleLabelEn}
-              </div>
-              <div className="mt-1.5 text-[18px] leading-[1.2] font-semibold text-on-surface-10 tracking-[0.02em] break-keep">
-                {name}
+              {renderPhoto(p.image, role, 'w-full h-48 rounded-md')}
+              <div className="mt-5 flex items-end justify-between gap-2">
+                <div className="text-xl leading-[1.2] font-medium text-neutral-800 break-keep">
+                  {name}
+                </div>
+                <span className="inline-flex items-center rounded border border-red-100 bg-rose-50 px-2 py-1 text-xs font-normal text-pink-500 leading-none">
+                  {role}
+                </span>
               </div>
               {(birthDate || mbti) && (
-                <div className="mt-2 text-sm leading-[16px] text-on-surface-20 tabular-nums">
-                  {birthDate}
-                  {birthDate && mbti && <span className="mx-1 text-on-surface-30">·</span>}
-                  <span className="tracking-[0.1em]">{mbti}</span>
+                <div className="mt-5 flex items-center gap-2 text-sm leading-none text-neutral-700 tabular-nums">
+                  {birthDate && <span>{birthDate}</span>}
+                  {birthDate && mbti && <span className="h-3 w-px bg-black/20" aria-hidden />}
+                  {mbti && <span>{mbti}</span>}
                 </div>
               )}
               {traits && (
-                <p className="mt-1.5 text-sm leading-[16px] text-on-surface-30 break-keep">
+                <p className="mt-2 text-sm leading-5 text-black/60 break-keep opacity-80">
                   {traits}
                 </p>
               )}
@@ -3643,127 +3501,46 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
 
         /** Layout B — Editorial Portrait (참고 이미지2 스타일 · 세로사진 + 이름 옆 배치, 좌우 교차) */
         const renderCardB = (
-          _role: '신랑' | '신부',
+          role: '신랑' | '신부',
           _index: number,
           name: string,
           profile: IntroProfile | undefined,
-          roleLabelEn: string,
           imageSide: 'left' | 'right',
         ) => {
           const p = profile ?? { image: '', birthDate: '', mbti: '', hobbies: '', traits: '' };
           const birthDate = String(p.birthDate ?? '').trim();
           const mbti = String(p.mbti ?? '').trim();
           const traits = String(p.traits ?? '').trim();
-          const textAlign = imageSide === 'left' ? 'items-start text-left' : 'items-end text-right';
           return (
-            <article className="w-full">
+            <article className="w-full rounded-lg border border-black/10 bg-white p-5">
               <div className={`flex items-stretch gap-4 ${imageSide === 'right' ? 'flex-row-reverse' : ''}`}>
-                <div className="w-[160px] flex-shrink-0">
-                  {renderPhoto(p.image, _role, 'w-[160px] aspect-[3/4]')}
+                <div className="w-28 flex-shrink-0">
+                  {renderPhoto(p.image, role, 'w-28 h-40 rounded-md')}
                 </div>
-                <div className={`flex-1 min-w-0 flex flex-col justify-center ${textAlign}`}>
-                  <div className="text-sm tracking-[0.28em] uppercase text-on-surface-30 font-medium">
-                    {roleLabelEn}
+                <div className="flex-1 min-w-0 flex flex-col justify-center text-left">
+                  <div className="flex items-end justify-between gap-2">
+                    <div className="text-xl leading-[1.2] font-medium text-neutral-800 break-keep">
+                      {name}
+                    </div>
+                    <span className="inline-flex items-center rounded border border-red-100 bg-rose-50 px-2 py-1 text-xs font-normal text-pink-500 leading-none">
+                      {role}
+                    </span>
                   </div>
-                  <div className="mt-2.5 text-[20px] leading-[1.2] font-medium text-on-surface-10 tracking-[0.03em] break-keep">
-                    {name}
-                  </div>
-                  <div className="mt-3 h-px w-7 bg-[color:var(--on-surface-30)] opacity-50" aria-hidden />
-                  {traits && (
-                    <p className="mt-3 text-[11.5px] leading-[17px] text-on-surface-20 italic break-keep">
-                      « {traits} »
-                    </p>
-                  )}
                   {(birthDate || mbti) && (
-                    <p className="mt-2.5 text-[10.5px] leading-[15px] text-on-surface-30 tabular-nums tracking-[0.04em]">
-                      {[birthDate, mbti].filter(Boolean).join(' · ')}
-                    </p>
+                    <div className="mt-5 flex items-center gap-2 text-sm leading-none text-neutral-700 tabular-nums">
+                      {birthDate && <span>{birthDate}</span>}
+                      {birthDate && mbti && <span className="h-3 w-px bg-black/20" aria-hidden />}
+                      {mbti && <span>{mbti}</span>}
+                    </div>
                   )}
+                  {traits && <p className="mt-2 text-sm leading-5 text-black/60 break-keep opacity-80">{traits}</p>}
                 </div>
               </div>
             </article>
           );
         };
 
-        /** Layout C — Centered Focus (세로 포트레이트 중앙 정렬 · 여유 타이포) */
-        const renderCardC = (
-          _role: '신랑' | '신부',
-          _index: number,
-          name: string,
-          profile: IntroProfile | undefined,
-          roleLabelEn: string,
-        ) => {
-          const p = profile ?? { image: '', birthDate: '', mbti: '', hobbies: '', traits: '' };
-          const birthDate = String(p.birthDate ?? '').trim();
-          const mbti = String(p.mbti ?? '').trim();
-          const traits = String(p.traits ?? '').trim();
-          return (
-            <article className="w-full flex flex-col items-center text-center">
-              <div className="w-[58%]">
-                {renderPhoto(p.image, _role, 'w-full aspect-[3/4]')}
-              </div>
-              <div className="mt-5 text-sm tracking-[0.32em] uppercase text-on-surface-30 font-medium">
-                {roleLabelEn}
-              </div>
-              <div className="mt-2 text-[24px] leading-[1.1] font-medium text-on-surface-10 tracking-[0.06em] break-keep">
-                {name}
-              </div>
-              <div className="mt-3 h-px w-6 bg-[color:var(--on-surface-30)] opacity-50" aria-hidden />
-              {(birthDate || mbti) && (
-                <div className="mt-3 text-[11.5px] leading-[16px] text-on-surface-30 tabular-nums tracking-[0.04em]">
-                  {[birthDate, mbti].filter(Boolean).join(' · ')}
-                </div>
-              )}
-              {traits && (
-                <p className="mt-3 text-[12.5px] leading-[19px] text-on-surface-20 max-w-[260px] break-keep">
-                  {traits}
-                </p>
-              )}
-            </article>
-          );
-        };
-
-        /** Layout D — Full-Bleed Portrait (풀폭 세로 사진 + 이름 위 역할 라벨 + 우측 메타) */
-        const renderCardD = (
-          _role: '신랑' | '신부',
-          _index: number,
-          name: string,
-          profile: IntroProfile | undefined,
-          roleLabelEn: string,
-        ) => {
-          const p = profile ?? { image: '', birthDate: '', mbti: '', hobbies: '', traits: '' };
-          const birthDate = String(p.birthDate ?? '').trim();
-          const mbti = String(p.mbti ?? '').trim();
-          const traits = String(p.traits ?? '').trim();
-          return (
-            <article className="w-full flex flex-col">
-              {renderPhoto(p.image, _role, 'w-full aspect-[3/4]')}
-              <div className="mt-4 flex items-end justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm tracking-[0.28em] uppercase text-on-surface-30 font-medium">
-                    {roleLabelEn}
-                  </div>
-                  <div className="mt-1.5 text-[24px] leading-[1.1] font-medium text-on-surface-10 tracking-[0.04em] break-keep">
-                    {name}
-                  </div>
-                </div>
-                {(birthDate || mbti) && (
-                  <div className="flex-shrink-0 text-right text-[10.5px] leading-[15px] text-on-surface-30 tabular-nums tracking-[0.04em]">
-                    {birthDate && <div>{birthDate}</div>}
-                    {mbti && <div className="tracking-[0.16em] mt-0.5">{mbti}</div>}
-                  </div>
-                )}
-              </div>
-              {traits && (
-                <p className="mt-3 text-[12.5px] leading-[19px] text-on-surface-20 break-keep">
-                  {traits}
-                </p>
-              )}
-            </article>
-          );
-        };
-
-        const profiles = brideFirst
+        const profiles = isBrideFirstInfo
           ? [
               { role: '신부' as const, name: brideName, data: introData.bride, side: 'right' as const },
               { role: '신랑' as const, name: groomName, data: introData.groom, side: 'left' as const },
@@ -3775,58 +3552,26 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
 
         const cards = profiles.map((p, idx) => {
           const index = idx + 1;
-          const roleLabelEn = p.role === '신랑' ? 'GROOM' : 'BRIDE';
-          // Layout B 이미지 좌/우 교차: 첫번째=left, 두번째=right (brideFirst면 자동으로 좌우 교차 유지됨)
           const imageSide: 'left' | 'right' = idx === 0 ? 'left' : 'right';
-          switch (layoutType) {
-            case 'B':
-              return renderCardB(p.role, index, p.name, p.data, roleLabelEn, imageSide);
-            case 'C':
-              return renderCardC(p.role, index, p.name, p.data, roleLabelEn);
-            case 'D':
-              return renderCardD(p.role, index, p.name, p.data, roleLabelEn);
-            case 'A':
-            default:
-              return renderCardA(p.role, index, p.name, p.data, roleLabelEn);
-          }
+          return layoutType === 'B'
+            ? renderCardB(p.role, index, p.name, p.data, imageSide)
+            : renderCardA(p.role, index, p.name, p.data);
         });
 
-        // 레이아웃별 래퍼 컨테이너
-        // A: 2열 그리드 (정사각 사진 나란히)
-        // B: 세로 스택 (좌/우 교차 내부 처리)
-        // C: 여유 간격 센터 정렬
-        // D: 간격 넓은 세로 스택
-        let wrapperEl: React.ReactNode;
-        if (layoutType === 'A') {
-          wrapperEl = (
-            <div className="grid grid-cols-2 gap-5">
+        const wrapperEl =
+          layoutType === 'B' ? (
+            <div className="flex flex-col gap-4">
               {cards[0]}
               {cards[1]}
             </div>
-          );
-        } else if (layoutType === 'B') {
-          wrapperEl = (
-            <div className="flex flex-col gap-10">
-              {cards[0]}
-              {cards[1]}
+          ) : (
+            <div className="rounded-lg border border-black/10 bg-white p-5">
+              <div className="grid grid-cols-2 gap-5">
+                {cards[0]}
+                {cards[1]}
+              </div>
             </div>
           );
-        } else if (layoutType === 'C') {
-          wrapperEl = (
-            <div className="flex flex-col gap-12 items-center">
-              {cards[0]}
-              <div className="w-10 h-px bg-[color:var(--border-10)]" aria-hidden />
-              {cards[1]}
-            </div>
-          );
-        } else {
-          wrapperEl = (
-            <div className="flex flex-col gap-10">
-              {cards[0]}
-              {cards[1]}
-            </div>
-          );
-        }
 
         return (
           <div className="max-w-full mx-auto w-full">
@@ -3860,7 +3605,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                 aria-hidden
               />
             ) : null}
-                  <span>{parent.name || tRole(fallback)}</span>
+                  <span>{parent.name || fallback}</span>
           </span>
         );
         const renderParentNames = (
@@ -3880,18 +3625,18 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
           <div className="w-full max-w-[340px] mx-auto text-center">
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-2 rounded-xl border border-border bg-white/70 px-3 py-4">
-                <p className="text-[0.8125em] tracking-[0.08em] text-on-surface-30 leading-none">{tPreview('신랑')}</p>
+                <p className="text-[0.8125em] tracking-[0.08em] text-on-surface-30 leading-none">신랑</p>
                 <p className="text-[1.375em] font-semibold text-on-surface-10 leading-none">
-                  {groom.name || `${tPreview('신랑')} ${tPreview('이름')}`}
+                  {groom.name || "신랑 이름"}
                 </p>
                 <p className="text-[0.8125em] text-on-surface-30 leading-relaxed break-keep">
                   {groomParents} 의 {groomRelation}
                 </p>
               </div>
               <div className="space-y-2 rounded-xl border border-border bg-white/70 px-3 py-4">
-                <p className="text-[0.8125em] tracking-[0.08em] text-on-surface-30 leading-none">{tPreview('신부')}</p>
+                <p className="text-[0.8125em] tracking-[0.08em] text-on-surface-30 leading-none">신부</p>
                 <p className="text-[1.375em] font-semibold text-on-surface-10 leading-none">
-                  {bride.name || `${tPreview('신부')} ${tPreview('이름')}`}
+                  {bride.name || "신부 이름"}
                 </p>
                 <p className="text-[0.8125em] text-on-surface-30 leading-relaxed break-keep">
                   {brideParents} 의 {brideRelation}
@@ -3904,9 +3649,8 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
       case 'contact': {
         const contactEnabled = isSectionEnabled('contact');
         const useContactThumbnail = data.contact?.useThumbnail ?? true;
-        const brideFirstInfo = !!(data.i18n?.brideFirstInfo ?? false);
-        const groomName = (data.hosts.groom.name ?? '').trim() || tPreview('신랑');
-        const brideName = (data.hosts.bride.name ?? '').trim() || tPreview('신부');
+        const groomName = (data.hosts.groom.name ?? '').trim() || '신랑';
+        const brideName = (data.hosts.bride.name ?? '').trim() || '신부';
         const groomRelation = (data.hosts.groom.relation ?? '').trim() || '아들';
         const brideRelation = (data.hosts.bride.relation ?? '').trim() || '딸';
         const groomFatherName = (data.hosts.groom.father.name ?? '').trim();
@@ -3966,7 +3710,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
           data.hosts.bride.mother.isDeceased,
         );
         const contactRows = (
-          brideFirstInfo
+          isBrideFirstInfo
             ? [
                 { role: '신부', name: brideName, phone: data.hosts.bride.phone, hidden: false },
                 { role: '신랑', name: groomName, phone: data.hosts.groom.phone, hidden: false },
@@ -3986,7 +3730,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
         )
           .filter((row) => !row.hidden)
           .filter((row) => (row.phone ?? '').trim().length > 0);
-        const orderedCoupleRows = brideFirstInfo
+        const orderedCoupleRows = isBrideFirstInfo
           ? [
               { role: '신부', name: brideName, relation: brideRelation, parentsText: brideParentsText, parentsInline: brideParentsInline },
               { role: '신랑', name: groomName, relation: groomRelation, parentsText: groomParentsText, parentsInline: groomParentsInline },
@@ -3999,7 +3743,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
         if (contactRows.length === 0) {
           return (
             <div className="max-w-[340px] mx-auto w-full rounded-xl border border-dashed border-border py-8 text-[0.8125em] text-on-surface-30">
-              {tPreview('신랑신부 섹션에서 연락처를 입력해 주세요.')}
+              신랑신부 섹션에서 연락처를 입력해 주세요.
             </div>
           );
         }
@@ -4039,9 +3783,9 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
               </div>
             ) : (
               <p className="min-h-[27px] flex items-center justify-center text-[18px] text-on-surface-20 tracking-tight text-center">
-                {tRole(orderedCoupleRows[0].role)} <span className="font-semibold text-on-surface-10 ml-1">{orderedCoupleRows[0].name}</span>
+                {orderedCoupleRows[0].role} <span className="font-semibold text-on-surface-10 ml-1">{orderedCoupleRows[0].name}</span>
                 <span className="mx-2 text-on-surface-30">·</span>
-                {tRole(orderedCoupleRows[1].role)} <span className="font-semibold text-on-surface-10 ml-1">{orderedCoupleRows[1].name}</span>
+                {orderedCoupleRows[1].role} <span className="font-semibold text-on-surface-10 ml-1">{orderedCoupleRows[1].name}</span>
               </p>
             )}
 
@@ -4055,7 +3799,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                   aria-label="연락처 상세 열기"
                 >
                   <Phone className="w-4.5 h-4.5" />
-                  <span>{tPreview('연락하기')}</span>
+                  <span>연락하기</span>
                   <ChevronDown className={`w-4 h-4 transition-transform ${contactPreviewExpanded ? 'rotate-180' : ''}`} />
                 </button>
 
@@ -4066,7 +3810,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                       return (
                       <div key={row.role} className="rounded-xl mb-0 bg-white px-4 py-2.5 flex items-center justify-between gap-2">
                         <div className="min-w-0 text-left">
-                          <p className="text-[15px] font-medium tracking-[0.06em] text-on-surface-30">{tRole(row.role)}</p>
+                          <p className="text-[15px] font-medium tracking-[0.06em] text-on-surface-30">{row.role}</p>
                         </div>
                         <div className="inline-flex items-center gap-1.5 shrink-0">
                           <a
@@ -4114,7 +3858,6 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
         );
       }
       case 'eventInfo': {
-        const brideFirstInfo = !!(data.i18n?.brideFirstInfo ?? false);
         const dateText = (data.eventInfo.date ?? "").trim();
         const eventDate = parseEventDateLocal(dateText);
         const isValidEventDate = eventDate !== null;
@@ -4123,53 +3866,33 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
         const calendarUseThemeColor = true;
         const timeTrimmed = (data.eventInfo.time ?? "").trim();
         let ddayStatusText = "";
-        let ddayDiffDays: number | null = null;
         if (showDday && isValidEventDate) {
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           const target = new Date(eventDate!);
           target.setHours(0, 0, 0, 0);
           const diffDays = Math.round((target.getTime() - today.getTime()) / 86400000);
-          ddayDiffDays = diffDays;
           const absDays = Math.abs(diffDays);
           if (diffDays > 0) ddayStatusText = `${absDays}일 남았습니다`;
           else if (diffDays < 0) ddayStatusText = `${absDays}일 지났습니다`;
           else ddayStatusText = "오늘입니다";
         }
-        const ddayStatusByLang: Record<PreviewLanguage, { today: string; left: (n: number) => string; passed: (n: number) => string }> = {
-          ko: { today: "오늘입니다", left: (n) => `${n}일 남았습니다`, passed: (n) => `${n}일 지났습니다` },
-          en: { today: "is today", left: (n) => `${n} days left`, passed: (n) => `${n} days passed` },
-          ja: { today: "は本日です", left: (n) => `あと${n}日です`, passed: (n) => `${n}日が経過しました` },
-          "zh-CN": { today: "就是今天", left: (n) => `还有${n}天`, passed: (n) => `已过去${n}天` },
-          "zh-TW": { today: "就是今天", left: (n) => `還有${n}天`, passed: (n) => `已過${n}天` },
-          vi: { today: "là hôm nay", left: (n) => `còn ${n} ngày`, passed: (n) => `đã qua ${n} ngày` },
-          th: { today: "คือวันนี้", left: (n) => `เหลืออีก ${n} วัน`, passed: (n) => `ผ่านมาแล้ว ${n} วัน` },
-        };
-        const ddayStatusCopy =
-          ddayDiffDays === null
-            ? ""
-            : ddayDiffDays > 0
-              ? ddayStatusByLang[activePreviewLanguage].left(Math.abs(ddayDiffDays))
-              : ddayDiffDays < 0
-                ? ddayStatusByLang[activePreviewLanguage].passed(Math.abs(ddayDiffDays))
-                : ddayStatusByLang[activePreviewLanguage].today;
-
-        const ddayMatch = activePreviewLanguage === "ko" ? ddayStatusText.match(/^(\d+)(일 .+)$/) : null;
+        const ddayMatch = ddayStatusText.match(/^(\d+)(일 .+)$/);
         const ddayNumber = ddayMatch?.[1] ?? "";
         const ddaySuffix = ddayMatch?.[2] ?? ddayStatusText;
         const ddayHeartCls = "text-[color:var(--key)]";
         const ddayNumCls = "text-[color:var(--key-dark)] font-medium";
-        const ddayMessage = (activePreviewLanguage === "ko" ? ddayStatusText : ddayStatusCopy) ? (
+        const ddayMessage = ddayStatusText ? (
           <>
-            {tPreview(brideFirstInfo ? '신부' : '신랑')} <span className={ddayHeartCls}>&hearts;</span> {tPreview(brideFirstInfo ? '신랑' : '신부')}{" "}
-            {activePreviewLanguage === "ko" ? "의 결혼식이 " : ""}
-            {activePreviewLanguage === "ko" && ddayNumber ? (
+            {(isBrideFirstInfo ? '신부' : '신랑')} <span className={ddayHeartCls}>&hearts;</span> {(isBrideFirstInfo ? '신랑' : '신부')}{" "}
+            {"의 결혼식이 "}
+            {ddayNumber ? (
               <>
                 <span className={ddayNumCls}>{ddayNumber}</span>
                 {ddaySuffix}
               </>
             ) : (
-              activePreviewLanguage === "ko" ? ddayStatusText : ddayStatusCopy
+              ddayStatusText
             )}
             .
           </>
@@ -4258,7 +3981,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
           })();
           const rawLocationTitle =
             String(data.location.title ?? LOCATION_TITLE_OPTIONS[0]).trim() || LOCATION_TITLE_OPTIONS[0];
-          const title = rawLocationTitle === LOCATION_TITLE_OPTIONS[0] ? tPreview('오시는 길') : rawLocationTitle;
+          const title = rawLocationTitle === LOCATION_TITLE_OPTIONS[0] ? '오시는 길' : rawLocationTitle;
           const enc = encodeURIComponent(address);
           const naverWeb = address ? `https://map.naver.com/v5/search/${enc}` : '';
 
@@ -4307,7 +4030,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
             <div className="w-full px-0 text-[0.8125em] text-on-surface-20 text-center">
               <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle} mb-1`}>{title}</p>
               <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle2} mb-0`}>
-                {activePreviewLanguage === 'ko' ? 'Directions' : tPreview('오시는 길')}
+                Directions
               </p>
 
               <>
@@ -4432,7 +4155,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
         const activeTabIndex = Math.min(noticePreviewTabIndex, noticeSections.length - 1);
         const activeSection = noticeSections[activeTabIndex] ?? noticeSections[0];
         const rawContent = String(activeSection?.content ?? "");
-        const content = rawContent.trim().length > 0 ? rawContent : tPreview("안내 내용을 입력해 주세요.");
+        const content = rawContent.trim().length > 0 ? rawContent : "안내 내용을 입력해 주세요.";
         const noticeHeading =
           String(data.notice?.sectionHeading ?? "").trim() || NOTICE_HEADING_OPTIONS[0];
         const noticeTitle = (
@@ -4498,13 +4221,13 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
         if (!images.length) {
           return (
             <div className="max-w-[320px] mx-auto w-full rounded-xl border border-dashed border-border py-10 text-[0.8125em] text-on-surface-30">
-              {tPreview('갤러리 이미지를 추가해 주세요.')}
+              갤러리 이미지를 추가해 주세요.
             </div>
           );
         }
         const galleryTitle = (
           <div className="space-y-1">
-            <div className={PREVIEW_TYPOGRAPHY_GUIDE.subtitle}>{tPreview('갤러리')}</div>
+            <div className={PREVIEW_TYPOGRAPHY_GUIDE.subtitle}>갤러리</div>
             <div className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle2} pb-5`}>
               Gallery
             </div>
@@ -5476,7 +5199,11 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
           onPointerUpCapture={focusSelectableTarget}
           onClickCapture={focusSelectableTarget}
         >
-          <div ref={editorScrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-smooth no-scrollbar">
+          <div
+            ref={editorScrollRef}
+            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-smooth no-scrollbar"
+            style={isTabletViewport ? { paddingBottom: `${Math.max(12, keyboardInsetPx)}px` } : undefined}
+          >
             <div className="px-4 pt-4 pb-2 bg-[color:var(--surface-20)]">
               <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
                 {invitationTabs.map((tab) => {
@@ -5710,7 +5437,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                           </FormItem>
 
                           {/* 스크롤 등장 효과 */}
-                          <FormItem label="다국어">
+                          <FormItem label="옵션">
                             <span
                               role="button"
                               tabIndex={0}
@@ -6339,7 +6066,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                           </FormItem>
 
                           {/* Options */}
-                          <FormItem label="다국어">
+                          <FormItem label="옵션">
                             <span
                               role="button"
                               tabIndex={0}
@@ -6908,7 +6635,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                           </div>
 
                           <Dialog open={greetingSampleOpen} onOpenChange={setGreetingSampleOpen}>
-                            <DialogContent className="w-[calc(100%-1rem)] max-w-md p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden">
+                            <DialogContent className="w-[calc(100%-1rem)] max-w-md p-4 sm:p-6 flex flex-col gap-5 max-h-[80dvh] overflow-hidden">
                               <DialogTitle>샘플 문구</DialogTitle>
 
                                 <div className="relative">
@@ -7348,7 +7075,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                               if (!open) setBankModalIndex(null);
                             }}
                           >
-                            <DialogContent className="w-[calc(100%-1rem)] max-w-md p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden">
+                            <DialogContent className="w-[calc(100%-1rem)] max-w-md p-4 sm:p-6 flex flex-col gap-5 max-h-[80dvh] overflow-hidden">
                               <DialogTitle>은행선택</DialogTitle>
 
                               <div className="relative">
@@ -7656,7 +7383,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                           ))}
 
                           <Dialog open={noticeSampleOpen} onOpenChange={setNoticeSampleOpen}>
-                            <DialogContent className="w-[calc(100%-1rem)] max-w-md p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden">
+                            <DialogContent className="w-[calc(100%-1rem)] max-w-md p-4 sm:p-6 flex flex-col gap-5 max-h-[80dvh] overflow-hidden">
                               <DialogTitle>샘플 문구</DialogTitle>
 
                                 <div className="relative">
@@ -8078,7 +7805,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                             </div>
                           </FormItem>
                           <Dialog open={rsvpSampleOpen} onOpenChange={setRsvpSampleOpen}>
-                            <DialogContent className="w-[calc(100%-1rem)] max-w-md p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden">
+                            <DialogContent className="w-[calc(100%-1rem)] max-w-md p-4 sm:p-6 flex flex-col gap-5 max-h-[80dvh] overflow-hidden">
                               <DialogTitle>샘플 문구</DialogTitle>
 
                                 <div className="relative">
@@ -8280,7 +8007,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                             </p>
                           </div>
                           <Dialog open={guestUploadSampleOpen} onOpenChange={setGuestUploadSampleOpen}>
-                            <DialogContent className="w-[calc(100%-1rem)] max-w-md p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden">
+                            <DialogContent className="w-[calc(100%-1rem)] max-w-md p-4 sm:p-6 flex flex-col gap-5 max-h-[80dvh] overflow-hidden">
                               <DialogTitle>샘플 문구</DialogTitle>
 
                                 <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
@@ -8543,30 +8270,6 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
 
                       {item.id === "i18n" && (
                         <>
-                          <FormItem label="다국어">
-                            <div className="flex flex-col gap-2 flex-1">
-                              <span
-                                role="button"
-                                tabIndex={0}
-                                className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
-                                onClick={() => updateData("i18n.enabled", !(data.i18n?.enabled ?? false))}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter" || e.key === " ") {
-                                    updateData("i18n.enabled", !(data.i18n?.enabled ?? false));
-                                  }
-                                }}
-                              >
-                                <CircleCheckbox
-                                  checked={!!data.i18n?.enabled}
-                                  onChange={(e) => updateData("i18n.enabled", e.target.checked)}
-                                />
-                                다국어 지원
-                              </span>
-                              <div className="text-[12px] leading-4 text-on-surface-30">
-                                기본 제공 국가: 대한민국, 미국, 일본, 중국(간체), 대만(번체), 베트남, 태국. (추가/삭제 불가)
-                              </div>
-                            </div>
-                          </FormItem>
                           <FormItem label="정보순서">
                             <span
                               role="button"
@@ -8661,7 +8364,6 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                   // 미리보기에서는 배경 톤을 더 연하게 보이도록 화이트와 강하게 혼합
                   backgroundColor: `color-mix(in srgb, ${selectedKeyColorPreset.background} 42%, white)`,
                   fontFamily: data.theme.fontFamily,
-                  fontSize: `${fontScaleToPercent(data.theme.fontScale)}%`,
                   '--primary-custom': selectedKeyColorPreset.key,
                   '--key': `color-mix(in srgb, ${selectedKeyColorPreset.key} 82%, ${selectedKeyColorPreset.keyDark})`,
                   '--key-dark': selectedKeyColorPreset.keyDark,
@@ -8753,49 +8455,6 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                   );
                   })}
               </div>
-              {showPreviewLanguageFab && (
-                <>
-                  {previewLanguageFabOpen && (
-                    <div className="absolute bottom-20 right-4 z-30 w-[168px] rounded-xl border border-white/30 bg-white/95 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.18)] backdrop-blur-sm">
-                      <div className="max-h-[220px] overflow-y-auto no-scrollbar">
-                        {PREVIEW_LANGUAGE_OPTIONS.map((opt) => {
-                          const active = opt.code === activePreviewLanguage;
-                          return (
-                            <button
-                              key={opt.code}
-                              type="button"
-                              className={cn(
-                                "mb-1 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors last:mb-0",
-                                active
-                                  ? "bg-[color:var(--key)]/12 text-[color:var(--key-dark)] font-semibold"
-                                  : "text-on-surface-20 hover:bg-[color:var(--surface-10)]",
-                              )}
-                              onClick={() => {
-                                setPreviewLanguage(opt.code);
-                                setPreviewLanguageFabOpen(false);
-                              }}
-                            >
-                              <span>{opt.label}</span>
-                              {active ? <CheckCircle2 className="h-4 w-4" /> : null}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setPreviewLanguageFabOpen((prev) => !prev)}
-                    className={[
-                      "absolute bottom-20 right-4 z-20 h-12 w-12 rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.18)] flex items-center justify-center border border-white/25 transition-[transform,filter,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--key)] focus-visible:ring-offset-2",
-                      "bg-[color:var(--key)] text-white hover:brightness-110 active:scale-[0.98]",
-                    ].join(" ")}
-                    aria-label="미리보기 언어 선택"
-                  >
-                    <Languages className="h-5 w-5" />
-                  </button>
-                </>
-              )}
               {isBgmEnabled && (
                 <button
                   type="button"
