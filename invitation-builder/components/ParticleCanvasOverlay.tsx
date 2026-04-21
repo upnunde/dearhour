@@ -13,6 +13,12 @@ const HEART_BASE_SEED = Math.round(17 * 1.2);
 /** 하트: 매 프레임 위치 이동(낙하·흔들림) 속도 +20% */
 const HEART_MOVE_SPEED_MULT = 1.2;
 
+/** 데이지꽃 날림: 꽃잎 기본 개수(22) 대비 −20% */
+const DAISY_PETAL_COUNT_MULT = 0.8;
+/** 데이지꽃 날림: 꽃잎 기본 스케일(0.675) 대비 +20% */
+const DAISY_PETAL_SIZE_MULT = 1.2;
+const PETAL_BASE_SEED = 22;
+
 function isPetalEffect(e: string): e is (typeof PETAL_EFFECTS)[number] {
   return (PETAL_EFFECTS as readonly string[]).includes(e);
 }
@@ -139,7 +145,9 @@ export default function ParticleCanvasOverlay({
     const seedCount =
       targetEffect === "heart"
         ? Math.max(1, Math.round(HEART_BASE_SEED * HEART_COUNT_MULT))
-        : 22;
+        : targetEffect === "daisyPetal"
+          ? Math.max(1, Math.round(PETAL_BASE_SEED * DAISY_PETAL_COUNT_MULT))
+          : PETAL_BASE_SEED;
 
     const rand = (min: number, max: number) => min + Math.random() * (max - min);
 
@@ -151,7 +159,9 @@ export default function ParticleCanvasOverlay({
     const heartSizeBoost = targetEffect === "heart" ? 1.3 * 1.2 : 1;
     const heartVyMult = targetEffect === "heart" ? 1.2 : 1;
 
-    const petalSizeScale = isPetalEffect(targetEffect) ? 0.675 : 1;
+    const petalSizeScale = isPetalEffect(targetEffect)
+      ? 0.675 * (targetEffect === "daisyPetal" ? DAISY_PETAL_SIZE_MULT : 1)
+      : 1;
 
     const randomPetalSpawn = () => ({
       x: rand(state.w * 1.02, state.w * 1.28),
