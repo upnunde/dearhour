@@ -6666,7 +6666,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                   />
                                 </div>
 
-                                <div className="flex-1 overflow-y-auto no-scrollbar">
+                                <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
                                   <div className="flex flex-col gap-3">
                                     {greetingSamples[greetingSampleTab].map((sample) => (
                                       <div
@@ -7431,7 +7431,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                   />
                                 </div>
 
-                                <div className="flex-1 overflow-y-auto no-scrollbar">
+                                <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
                                   <div className="flex flex-col gap-3">
                                     {noticeSamples[noticeSampleTab].map((sample) => (
                                       <div
@@ -7866,7 +7866,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                   />
                                 </div>
 
-                                <div className="flex-1 overflow-y-auto no-scrollbar">
+                                <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
                                   <div className="flex flex-col gap-3">
                                     {rsvpSamples[rsvpSampleTab].map((sample) => (
                                       <div
@@ -8021,7 +8021,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                   <h3 className="text-[15px] font-semibold text-on-surface-10">샘플 문구</h3>
                                 </div>
 
-                                <div className="flex-1 overflow-y-auto no-scrollbar">
+                                <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
                                   <div className="flex flex-col gap-3">
                                     {guestUploadSamples.map((sample) => (
                                       <div
