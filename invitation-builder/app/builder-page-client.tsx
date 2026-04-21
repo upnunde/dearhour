@@ -7028,66 +7028,62 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                             </div>
                           )}
 
-                          {/* 은행 선택 모달 (Portal로 body에 렌더링) */}
-                          {bankModalIndex !== null && createPortal(
-                            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-2 sm:p-4" onClick={() => setBankModalIndex(null)}>
-                              <div className="w-full max-w-md rounded-2xl bg-white border border-[color:var(--border-10)] p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
-                                <div className="flex items-center justify-between">
-                                  <h3 className="text-[15px] font-semibold text-on-surface-10">은행선택</h3>
-                                </div>
+                          <Dialog
+                            open={bankModalIndex !== null}
+                            onOpenChange={(open) => {
+                              if (!open) setBankModalIndex(null);
+                            }}
+                          >
+                            <DialogContent className="w-[calc(100%-1rem)] max-w-md p-4 sm:p-6 flex flex-col gap-5 max-h-[60dvh] overflow-hidden">
+                              <DialogTitle>은행선택</DialogTitle>
 
-                                <div className="w-full">
-                                  <div className="relative">
-                                    <Input
-                                      value={bankSearch}
-                                      onChange={(e) => setBankSearch(e.target.value)}
-                                      placeholder="은행검색"
-                                      className="pl-9 pr-3 text-sm h-10 bg-[color:var(--surface-10)]"
-                                    />
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-30">
-                                      🔍
-                                    </span>
-                                  </div>
-                                </div>
+                              <div className="relative">
+                                <Input
+                                  value={bankSearch}
+                                  onChange={(e) => setBankSearch(e.target.value)}
+                                  placeholder="은행검색"
+                                  className="pl-9 pr-3 h-10 bg-[color:var(--surface-10)]"
+                                />
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-30">
+                                  🔍
+                                </span>
+                              </div>
 
-                                <div className="max-h-[360px] overflow-y-auto pr-1">
-                                  <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm text-on-surface-20">
-                                    {BANK_OPTIONS.filter((name) =>
-                                      name.toLowerCase().includes(bankSearch.toLowerCase().trim()),
-                                    ).map((name) => (
-                                      <button
-                                        key={name}
-                                        type="button"
-                                        onClick={() => {
-                                          if (bankModalIndex === null) return;
-                                          const next = [...data.accounts.list];
-                                          next[bankModalIndex] = { ...next[bankModalIndex], bank: name };
-                                          updateData('accounts.list', next);
-                                          setBankModalIndex(null);
-                                        }}
-                                        className="flex items-center gap-2 text-left hover:text-on-surface-10 hover:bg-slate-50 rounded-full px-2 py-1"
-                                      >
-                                        <BankLogo name={name as (typeof BANK_OPTIONS)[number]} />
-                                        <span className="truncate">{name}</span>
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-
-                                <div className="pt-0 flex justify-end">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="w-fit h-10 px-5 rounded-lg text-[14px] font-semibold border-[color:var(--border-30)] bg-white text-on-surface-20 hover:bg-slate-50 hover:text-on-surface-10"
-                                    onClick={() => setBankModalIndex(null)}
-                                  >
-                                    닫기
-                                  </Button>
+                              <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+                                <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm text-on-surface-20">
+                                  {BANK_OPTIONS.filter((name) =>
+                                    name.toLowerCase().includes(bankSearch.toLowerCase().trim()),
+                                  ).map((name) => (
+                                    <button
+                                      key={name}
+                                      type="button"
+                                      onClick={() => {
+                                        if (bankModalIndex === null) return;
+                                        const next = [...data.accounts.list];
+                                        next[bankModalIndex] = { ...next[bankModalIndex], bank: name };
+                                        updateData('accounts.list', next);
+                                        setBankModalIndex(null);
+                                      }}
+                                      className="flex items-center gap-2 text-left hover:text-on-surface-10 hover:bg-slate-50 rounded-full px-2 py-1"
+                                    >
+                                      <BankLogo name={name as (typeof BANK_OPTIONS)[number]} />
+                                      <span className="truncate">{name}</span>
+                                    </button>
+                                  ))}
                                 </div>
                               </div>
-                            </div>,
-                            document.body
-                          )}
+
+                              <div className="pt-0 flex justify-end">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => setBankModalIndex(null)}
+                                >
+                                  닫기
+                                </Button>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                         </>
                       )}
 
