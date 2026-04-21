@@ -48,23 +48,15 @@
   --font-weight-bold: 700;
 
   /* ========================================= */
-  /* 디자인 시스템 v0.2: Spacing 시맨틱 토큰     */
+  /* 디자인 시스템 v0.2: Spacing 가이드          */
   /* 4배수(4/8/12/16/24/32/48/64) 기준           */
-  /* Tailwind 기본 수치 스케일(p-1=4 … p-16=64)과 병행 */
+  /* ⚠️ --spacing-{xs,sm,md,lg,xl,...} 시맨틱   */
+  /* 토큰은 Tailwind v4 의 `max-w-md`, `w-sm`    */
+  /* 등 이름 기반 유틸리티의 해석을 가로채므로   */
+  /* 별도 별칭을 추가하지 않고 Tailwind 기본     */
+  /* 수치 스케일(p-1=4px, p-2=8px, p-3=12px,    */
+  /*  p-4=16px, p-6=24px, p-8=32px, …)을 사용한다. */
   /* ========================================= */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 12px;
-  --spacing-lg: 16px;
-  --spacing-xl: 24px;
-  --spacing-2xl: 32px;
-  --spacing-3xl: 48px;
-  --spacing-4xl: 64px;
-
-  /* UI 컨트롤 높이(4배수) */
-  --size-control-sm: 32px;
-  --size-control-md: 40px;
-  --size-control-lg: 48px;
 
   /* --- Figma Design System: Surface --- */
   --color-surface-10: var(--surface-10);
