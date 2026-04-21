@@ -20,6 +20,50 @@
 }
 
 @theme inline {
+  /* ========================================= */
+  /* 디자인 시스템 v0.2: Typography 토큰          */
+  /* 본문 16/400 기준, 계층 헤더(B), 라인하이트 4배수 우선 */
+  /* ========================================= */
+  --text-caption: var(--ds-text-caption);
+  --text-caption--line-height: var(--ds-lh-caption);
+  --text-sub: var(--ds-text-sub);
+  --text-sub--line-height: var(--ds-lh-sub);
+  --text-body: var(--ds-text-body);
+  --text-body--line-height: var(--ds-lh-body);
+  --text-heading-block: var(--ds-text-heading-block);
+  --text-heading-block--line-height: var(--ds-lh-heading-block);
+  --text-heading-card: var(--ds-text-heading-card);
+  --text-heading-card--line-height: var(--ds-lh-heading-card);
+  --text-heading-section: var(--ds-text-heading-section);
+  --text-heading-section--line-height: var(--ds-lh-heading-section);
+  --text-heading-page: var(--ds-text-heading-page);
+  --text-heading-page--line-height: var(--ds-lh-heading-page);
+
+  /* Font weight 토큰 */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ========================================= */
+  /* 디자인 시스템 v0.2: Spacing 시맨틱 토큰     */
+  /* 4배수(4/8/12/16/24/32/48/64) 기준           */
+  /* Tailwind 기본 수치 스케일(p-1=4 … p-16=64)과 병행 */
+  /* ========================================= */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+  --spacing-3xl: 48px;
+  --spacing-4xl: 64px;
+
+  /* UI 컨트롤 높이(4배수) */
+  --size-control-sm: 32px;
+  --size-control-md: 40px;
+  --size-control-lg: 48px;
+
   /* --- Figma Design System: Surface --- */
   --color-surface-10: var(--surface-10);
   --color-surface-20: var(--surface-20);
@@ -100,6 +144,27 @@
 }
 
 :root {
+  /* ========================================= */
+  /* 디자인 시스템 v0.2: Typography 원본 스펙      */
+  /*  - 본문 16/400, 서브 14, 캡션 12              */
+  /*  - 헤더 계층(B): block 20 / card 24 / section 32 / page 48 */
+  /*  - 라인하이트는 가능하면 4배수(16/20/28/32/40/56) */
+  /* ========================================= */
+  --ds-text-caption: 12px;
+  --ds-lh-caption: 16px;
+  --ds-text-sub: 14px;
+  --ds-lh-sub: 20px;
+  --ds-text-body: 16px;
+  --ds-lh-body: 24px;
+  --ds-text-heading-block: 20px;
+  --ds-lh-heading-block: 28px;
+  --ds-text-heading-card: 24px;
+  --ds-lh-heading-card: 32px;
+  --ds-text-heading-section: 32px;
+  --ds-lh-heading-section: 40px;
+  --ds-text-heading-page: 48px;
+  --ds-lh-heading-page: 56px;
+
   /* ========================================= */
   /* Figma Design System 컬러 스펙 정의 */
   /* ========================================= */
@@ -299,6 +364,10 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* 디자인 시스템 v0.2: 본문 기본값 16/400/line-height 24 */
+    font-size: var(--ds-text-body);
+    line-height: var(--ds-lh-body);
+    font-weight: var(--font-weight-regular);
   }
   html {
     @apply font-sans;
