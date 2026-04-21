@@ -1064,15 +1064,16 @@ const sidebarItems = [
   { id: 'i18n', icon: Settings, label: '설정', category: '선택', navGroup: 5 as SidebarNavGroup },
 ];
 
+/** 기본 음원: `public/audio/` 로컬 파일. 외부 스트리밍 URL 없음. */
 const builtInTracks = [
-  // NOTE: 샘플 내장 음원(스트리밍 URL). 필요하면 추후 public/로 옮겨서 로컬 제공 가능.
-  { id: 'classic-1', label: '클래식 (잔잔한)' , url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
-  { id: 'jazz-1', label: '재즈 (스윙)' , url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3' },
-  { id: 'march-1', label: '발랄한 행진곡' , url: '/audio/neti-main-theme.mp3' },
-  { id: 'piano-1', label: '피아노 (로맨틱)' , url: '/audio/piano-romantic.mp4' },
-  { id: 'acoustic-1', label: '어쿠스틱 (따뜻한)' , url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
-  { id: 'string-1', label: '스트링 (웅장한)' , url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3' },
-  { id: 'lofi-1', label: '로파이 (감성)' , url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3' },
+  { id: 'march-1', label: '발랄한 행진곡', url: '/audio/neti-main-theme.mp3' },
+  { id: 'piano-1', label: '피아노 (로맨틱)', url: '/audio/piano-romantic.mp4' },
+  { id: 'bgm-all-you-need', label: '온전한 마음', url: '/audio/bgm-all-you-need.mp3' },
+  { id: 'bgm-chemistry', label: '설렘의 여운', url: '/audio/bgm-chemistry.mp3' },
+  { id: 'bgm-my-first-love', label: '첫설렘', url: '/audio/bgm-my-first-love.mp3' },
+  { id: 'bgm-perfect', label: '완벽한 순간', url: '/audio/bgm-perfect.mp3' },
+  { id: 'bgm-wedding-dress', label: '순백의 서약', url: '/audio/bgm-wedding-dress.mp3' },
+  { id: 'bgm-would-you-marry-me', label: '영원을 묻다', url: '/audio/bgm-would-you-marry-me.mp3' },
 ] as const;
 
 function BankLogo({ name }: { name: (typeof BANK_OPTIONS)[number] }) {
@@ -2521,9 +2522,16 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
 
   const musicSrc = useMemo(() => {
     if (data.music?.uploadedFile?.url) return data.music.uploadedFile.url;
-    const builtIn = builtInTracks.find((t) => t.id === data.music?.selectedId);
-    return builtIn?.url || '';
+    const track =
+      builtInTracks.find((t) => t.id === data.music?.selectedId) ?? builtInTracks[0];
+    return track.url;
   }, [data.music?.selectedId, data.music?.uploadedFile?.url]);
+
+  /** 제거된 트랙 id 등 레거시 값이면 첫 번째 기본곡으로 취급 */
+  const effectiveBgmSelectedId = useMemo(
+    () => builtInTracks.find((t) => t.id === data.music?.selectedId)?.id ?? builtInTracks[0].id,
+    [data.music?.selectedId],
+  );
 
   useEffect(() => {
     if (simulateTimerRef.current) {
@@ -5916,7 +5924,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                             <div className="w-full">
                               <div className="grid grid-cols-2 gap-2">
                                 {builtInTracks.map((t) => {
-                                  const selected = (data.music?.selectedId ?? builtInTracks[0].id) === t.id;
+                                  const selected = effectiveBgmSelectedId === t.id;
                                   const disabled = !!data.music?.uploadedFile;
                                   return (
                                     <button

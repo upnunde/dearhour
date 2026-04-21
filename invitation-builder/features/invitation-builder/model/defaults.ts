@@ -3,7 +3,7 @@ import type { CardData } from "./types";
 
 export const INITIAL_CARD_DATA: CardData = {
   style: { primaryColor: "#882CDF", bgColor: "#FFFFFF", fontFamily: "Pretendard", borderRadius: "8px" },
-  music: { selectedId: "classic-1", uploadedFile: null, isLoop: true },
+  music: { selectedId: "march-1", uploadedFile: null, isLoop: true },
   theme: {
     fontFamily: "Pretendard",
     fontScale: "md",
