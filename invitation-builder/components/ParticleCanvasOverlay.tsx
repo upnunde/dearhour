@@ -7,6 +7,12 @@ type ParticleEffect = "none" | "cherryBlossom" | "yellowPetal" | "daisyPetal" | 
 
 const PETAL_EFFECTS = ["cherryBlossom", "yellowPetal", "daisyPetal"] as const;
 
+/** 하트: 기존 반올림 개수 `round(17*1.2)` 대비 +30% */
+const HEART_COUNT_MULT = 1.3;
+const HEART_BASE_SEED = Math.round(17 * 1.2);
+/** 하트: 매 프레임 위치 이동(낙하·흔들림) 속도 +20% */
+const HEART_MOVE_SPEED_MULT = 1.2;
+
 function isPetalEffect(e: string): e is (typeof PETAL_EFFECTS)[number] {
   return (PETAL_EFFECTS as readonly string[]).includes(e);
 }
@@ -130,7 +136,10 @@ export default function ParticleCanvasOverlay({
     const ro = new ResizeObserver(() => onResize());
     ro.observe(parent);
 
-    const seedCount = targetEffect === "heart" ? Math.round(17 * 1.2) : 22;
+    const seedCount =
+      targetEffect === "heart"
+        ? Math.max(1, Math.round(HEART_BASE_SEED * HEART_COUNT_MULT))
+        : 22;
 
     const rand = (min: number, max: number) => min + Math.random() * (max - min);
 
@@ -267,8 +276,9 @@ export default function ParticleCanvasOverlay({
           p.x += (p.vx + windX) * (dt * 60);
           p.y += (p.vy + swayY) * (dt * 60);
         } else {
-          p.x += p.vx * (dt * 60);
-          p.y += p.vy * (dt * 60);
+          const m = HEART_MOVE_SPEED_MULT;
+          p.x += p.vx * (dt * 60) * m;
+          p.y += p.vy * (dt * 60) * m;
         }
         p.rot += p.vr * (dt * 60);
         p.tw += dt * (p.kind === "heart" ? 1.6 : 3.2);
