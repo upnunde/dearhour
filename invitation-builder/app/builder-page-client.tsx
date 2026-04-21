@@ -624,7 +624,7 @@ function OptionChip({
     <button
       type="button"
       onClick={onClick}
-      className={`h-8 px-3 rounded-lg inline-flex items-center text-[13px] font-medium border transition-colors ${
+      className={`h-8 px-3 rounded-lg inline-flex items-center text-sm font-medium border transition-colors ${
         active
           ? 'bg-transparent text-on-surface-10 border-[color:var(--on-surface-10)] hover:bg-slate-50'
           : 'bg-[color:var(--surface-disabled)] text-[color:var(--on-surface-30)] opacity-70 border-transparent hover:bg-slate-50'
@@ -650,7 +650,7 @@ function ThemeColorChip({
     <button
       type="button"
       onClick={onClick}
-      className={`h-8 px-3 rounded-lg inline-flex items-center gap-2 text-[13px] font-medium border transition-colors ${
+      className={`h-8 px-3 rounded-lg inline-flex items-center gap-2 text-sm font-medium border transition-colors ${
         active
           ? "bg-transparent text-on-surface-10 border-[color:var(--on-surface-10)] hover:bg-slate-50"
           : "bg-[color:var(--surface-disabled)] text-[color:var(--on-surface-30)] opacity-70 border-transparent hover:bg-slate-50"
@@ -770,7 +770,7 @@ import { useBuilderUiStore } from "@/store/useBuilderUiStore";
 function NaverMapPreviewFallbackHint({ visible }: { visible: boolean }) {
   if (!visible) return null;
   return (
-    <p className="mx-auto mt-2 max-w-[340px] rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-left text-[11px] leading-snug text-amber-950">
+    <p className="mx-auto mt-2 max-w-[340px] rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-left text-xs leading-snug text-amber-950">
       <span className="font-semibold">네이버 지도</span> 미리보기: NCP Maps → Application에서 <span className="font-semibold">Static Map</span> 을 켜고,{" "}
       <code className="rounded bg-white/80 px-1 py-0.5 text-[10px]">.env.local</code> 에{" "}
       <span className="font-semibold">NAVER_MAPS_CLIENT_SECRET</span> 과 Client ID(
@@ -1095,7 +1095,7 @@ function BankLogo({ name }: { name: (typeof BANK_OPTIONS)[number] }) {
           unoptimized
         />
       ) : (
-        <span className="text-[11px] font-semibold text-on-surface-20">{name.charAt(0)}</span>
+        <span className="text-xs font-semibold text-on-surface-20">{name.charAt(0)}</span>
       )}
     </div>
   );
@@ -1105,7 +1105,7 @@ function FormItem({ label, children }: { label: string; children: React.ReactNod
   return (
     <div className="flex min-w-0 items-start gap-2 sm:gap-3">
       <AppLabel
-        className={`w-[64px] sm:w-[90px] flex-shrink-0 text-[13px] font-medium text-on-surface-30 leading-tight ${
+        className={`w-16 sm:w-[88px] flex-shrink-0 text-sm font-medium text-on-surface-30 leading-tight ${
           label ? 'pt-1' : ''
         }`}
       >
