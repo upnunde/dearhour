@@ -8778,9 +8778,9 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
       </Dialog>
 
       <Dialog open={sharePreviewOpen} onOpenChange={setSharePreviewOpen}>
-        <DialogContent className="w-[420px] max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-16px)] rounded-2xl border border-border p-0 overflow-hidden flex flex-col">
+        <DialogContent className="w-[420px] max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-16px)] border border-border p-0 overflow-hidden flex flex-col">
           <div className="p-5 border-b border-border">
-            <DialogTitle className="text-[16px] font-semibold text-on-surface-10">공유 썸네일 미리보기</DialogTitle>
+            <DialogTitle>공유 썸네일 미리보기</DialogTitle>
           </div>
           <div className="p-4 sm:p-5 bg-[color:var(--surface-10)] flex-1 min-h-0 overflow-y-auto">
             <div className="w-full rounded-xl border border-border bg-white overflow-hidden">
@@ -8815,7 +8815,6 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
             <Button
               type="button"
               variant="outline"
-              className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
               onClick={() => setSharePreviewOpen(false)}
             >
               닫기
@@ -8830,9 +8829,9 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
           if (!open) setShareThumbPresetPickerFor(null);
         }}
       >
-        <DialogContent className="w-[680px] max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-16px)] rounded-2xl border border-border p-0 overflow-hidden flex flex-col">
+        <DialogContent className="w-[680px] max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-16px)] border border-border p-0 overflow-hidden flex flex-col">
           <div className="p-5 border-b border-border bg-white">
-            <DialogTitle className="text-[16px] font-semibold text-on-surface-10">
+            <DialogTitle>
               기본 일러스트 썸네일 선택
             </DialogTitle>
             <div className="text-sm text-on-surface-30 mt-1">
@@ -8882,7 +8881,6 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
             <Button
               type="button"
               variant="outline"
-              className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
               onClick={() => setShareThumbPresetPickerFor(null)}
             >
               닫기
@@ -8892,9 +8890,9 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
       </Dialog>
 
       <Dialog open={greetingThumbnailPickerOpen} onOpenChange={setGreetingThumbnailPickerOpen}>
-        <DialogContent className="w-[424px] max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-16px)] rounded-2xl border border-border p-0 overflow-hidden flex flex-col">
+        <DialogContent className="w-[424px] max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-16px)] border border-border p-0 overflow-hidden flex flex-col">
           <div className="p-5 border-b border-border bg-white">
-            <DialogTitle className="text-[16px] font-semibold text-on-surface-10">
+            <DialogTitle>
               인사말 이미지 선택
             </DialogTitle>
             <div className="text-sm text-on-surface-30 mt-1">
@@ -8934,7 +8932,6 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
             <Button
               type="button"
               variant="outline"
-              className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
               onClick={() => setGreetingThumbnailPickerOpen(false)}
             >
               닫기
@@ -8944,9 +8941,9 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
       </Dialog>
 
       <Dialog open={mainPresetPickerOpen} onOpenChange={setMainPresetPickerOpen}>
-        <DialogContent className="w-[424px] max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-16px)] rounded-2xl border border-border p-0 overflow-hidden flex flex-col">
+        <DialogContent className="w-[424px] max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-16px)] border border-border p-0 overflow-hidden flex flex-col">
           <div className="p-5 border-b border-border bg-white">
-            <DialogTitle className="text-[16px] font-semibold text-on-surface-10">
+            <DialogTitle>
               메인 기본 이미지 선택
             </DialogTitle>
             <div className="text-sm text-on-surface-30 mt-1">
@@ -8991,7 +8988,6 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
             <Button
               type="button"
               variant="outline"
-              className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
               onClick={() => setMainPresetPickerOpen(false)}
             >
               닫기

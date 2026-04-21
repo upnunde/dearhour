@@ -50,7 +50,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed left-1/2 top-1/2 z-[10000] -translate-x-1/2 -translate-y-1/2 bg-background border border-border shadow-lg outline-none",
+          "fixed left-1/2 top-1/2 z-[10000] -translate-x-1/2 -translate-y-1/2 bg-background border border-border rounded-2xl shadow-lg outline-none",
           className
         )}
         {...props}
@@ -74,7 +74,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("text-[15px] font-semibold text-on-surface-10", className)}
+      className={cn("text-[16px] leading-6 font-semibold text-on-surface-10", className)}
       {...props}
     />
   )

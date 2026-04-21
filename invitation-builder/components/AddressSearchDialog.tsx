@@ -77,7 +77,7 @@ export default function AddressSearchDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-md rounded-2xl bg-white border border-[color:var(--border-10)] p-6 flex flex-col gap-5 h-[min(680px,calc(100vh-48px))] overflow-hidden">
+      <DialogContent className="w-full max-w-md bg-white border border-[color:var(--border-10)] p-6 flex flex-col gap-5 h-[min(680px,calc(100vh-48px))] overflow-hidden">
         <div className="flex items-center justify-between">
           <DialogTitle>주소 검색</DialogTitle>
         </div>
@@ -123,14 +123,12 @@ export default function AddressSearchDialog({
           <Button
             type="button"
             variant="outline"
-            className="w-fit h-11 px-5 rounded-lg text-[14px] font-semibold border-[color:var(--border-30)] bg-white text-on-surface-20 hover:bg-slate-50 hover:text-on-surface-10"
             onClick={() => onOpenChange(false)}
           >
             취소
           </Button>
           <Button
             type="button"
-            className="w-fit h-11 px-5 rounded-lg text-[14px] font-semibold"
             disabled={!selected}
             onClick={() => {
               if (!selected) return;
