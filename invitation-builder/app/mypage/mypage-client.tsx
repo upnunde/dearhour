@@ -202,7 +202,7 @@ export default function MyPageClient({
                         {payment.status === "결제 완료" ? (
                           <button
                             type="button"
-                            className="mt-2 inline-flex h-8 items-center rounded-md border border-[#dedede] bg-white px-3 text-sm font-medium text-[#111] hover:bg-[#f7f7f7]"
+                            className="mt-2 inline-flex h-9 items-center rounded-md border border-[#dedede] bg-white px-3 text-sm font-medium text-[#111] hover:bg-[#f7f7f7]"
                             onClick={() => window.alert("환불 요청이 접수되었습니다. 영업일 기준 순차 처리됩니다.")}
                           >
                             환불 요청

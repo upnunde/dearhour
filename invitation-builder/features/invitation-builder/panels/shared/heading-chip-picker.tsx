@@ -31,7 +31,7 @@ export function HeadingChipPicker({
             <button
               key={option}
               type="button"
-              className={`h-8 px-3 rounded-lg inline-flex items-center text-sm font-medium border transition-colors ${
+              className={`h-9 px-3 rounded-lg inline-flex items-center text-sm font-medium border transition-colors ${
                 active
                   ? "bg-transparent text-on-surface-10 border-[color:var(--on-surface-10)] hover:bg-slate-50"
                   : "bg-[color:var(--surface-disabled)] text-[color:var(--on-surface-30)] opacity-70 border-transparent hover:bg-slate-50"
@@ -47,7 +47,7 @@ export function HeadingChipPicker({
         })}
         <button
           type="button"
-          className={`h-8 px-3 rounded-lg inline-flex items-center text-sm font-medium border transition-colors ${
+          className={`h-9 px-3 rounded-lg inline-flex items-center text-sm font-medium border transition-colors ${
             customMode
               ? "bg-transparent text-on-surface-10 border-[color:var(--on-surface-10)] hover:bg-slate-50"
               : "bg-[color:var(--surface-disabled)] text-[color:var(--on-surface-30)] opacity-70 border-transparent hover:bg-slate-50"

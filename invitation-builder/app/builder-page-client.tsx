@@ -624,7 +624,7 @@ function OptionChip({
     <button
       type="button"
       onClick={onClick}
-      className={`h-8 px-3 rounded-lg inline-flex items-center text-sm font-medium border transition-colors ${
+      className={`h-9 px-3 rounded-lg inline-flex items-center text-sm font-medium border transition-colors ${
         active
           ? 'bg-transparent text-on-surface-10 border-[color:var(--on-surface-10)] hover:bg-slate-50'
           : 'bg-[color:var(--surface-disabled)] text-[color:var(--on-surface-30)] opacity-70 border-transparent hover:bg-slate-50'
@@ -650,7 +650,7 @@ function ThemeColorChip({
     <button
       type="button"
       onClick={onClick}
-      className={`h-8 px-3 rounded-lg inline-flex items-center gap-2 text-sm font-medium border transition-colors ${
+      className={`h-9 px-3 rounded-lg inline-flex items-center gap-2 text-sm font-medium border transition-colors ${
         active
           ? "bg-transparent text-on-surface-10 border-[color:var(--on-surface-10)] hover:bg-slate-50"
           : "bg-[color:var(--surface-disabled)] text-[color:var(--on-surface-30)] opacity-70 border-transparent hover:bg-slate-50"
@@ -3789,7 +3789,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                         <div className="inline-flex items-center gap-1.5 shrink-0">
                           <a
                             href={`tel:${phone}`}
-                            className="w-8 h-8 rounded-full inline-flex items-center justify-center bg-[color:var(--key)]/12 text-[color:var(--key)] hover:text-[color:var(--key-dark)] hover:bg-[color:var(--key)]/20"
+                            className="w-9 h-9 rounded-full inline-flex items-center justify-center bg-[color:var(--key)]/12 text-[color:var(--key)] hover:text-[color:var(--key-dark)] hover:bg-[color:var(--key)]/20"
                             aria-label={`${row.name} 전화하기`}
                             onClick={(event) => {
                               if (!phone) {
@@ -3806,7 +3806,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                           </a>
                           <a
                             href={`sms:${phone}`}
-                            className="w-8 h-8 rounded-full inline-flex items-center justify-center bg-[color:var(--key)]/12 text-[color:var(--key)] hover:text-[color:var(--key-dark)] hover:bg-[color:var(--key)]/20"
+                            className="w-9 h-9 rounded-full inline-flex items-center justify-center bg-[color:var(--key)]/12 text-[color:var(--key)] hover:text-[color:var(--key-dark)] hover:bg-[color:var(--key)]/20"
                             aria-label={`${row.name} 문자 보내기`}
                             onClick={(event) => {
                               if (!phone) {
@@ -4531,7 +4531,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                         >
                           <button
                             type="button"
-                            className="w-full h-8 px-3 text-left text-sm text-on-surface-20 hover:bg-slate-50"
+                            className="w-full h-9 px-3 text-left text-sm text-on-surface-20 hover:bg-slate-50"
                             onClick={() => {
                               setGuestbookEditingEntryId(entryId);
                               setGuestbookDraftName(String(entry.name ?? ""));
@@ -4546,7 +4546,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                           </button>
                           <button
                             type="button"
-                            className="w-full h-8 px-3 text-left text-sm text-red-600 hover:bg-red-50"
+                            className="w-full h-9 px-3 text-left text-sm text-red-600 hover:bg-red-50"
                             onClick={() => {
                               setGuestbookDeleteTargetEntryId(entryId);
                               setGuestbookDeletePassword("");
@@ -5043,7 +5043,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                       type="button"
                       onClick={() => handleMobileTabSelect(item.id)}
                       className={cn(
-                        'h-8 rounded-lg border px-3 text-sm font-medium whitespace-nowrap transition-colors',
+                        'h-9 rounded-lg border px-3 text-sm font-medium whitespace-nowrap transition-colors',
                         isDisabled
                           ? 'border-border text-on-surface-disabled bg-[color:var(--surface-20)]'
                           : isActive
@@ -5191,11 +5191,11 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                               setEditingInvitationTabName("");
                             }
                           }}
-                          className="h-8 w-[120px] rounded-lg border border-[color:var(--key)] bg-white px-2 text-sm font-semibold text-[color:var(--key)] outline-none"
+                          className="h-9 w-[120px] rounded-lg border border-[color:var(--key)] bg-white px-2 text-sm font-semibold text-[color:var(--key)] outline-none"
                         />
                       ) : (
                         <div
-                          className={`inline-flex h-8 shrink-0 items-center rounded-lg border bg-white transition-all ${
+                          className={`inline-flex h-9 shrink-0 items-center rounded-lg border bg-white transition-all ${
                             isActive ? "border-[color:var(--key)] text-[color:var(--key)]" : "border-border text-on-surface-20"
                           }`}
                         >
@@ -5241,7 +5241,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                 <button
                   type="button"
                   onClick={addInvitationTab}
-                  className="inline-flex h-8 shrink-0 items-center rounded-lg border border-dashed border-border bg-white px-3 text-sm font-semibold text-on-surface-20 hover:bg-slate-50"
+                  className="inline-flex h-9 shrink-0 items-center rounded-lg border border-dashed border-border bg-white px-3 text-sm font-semibold text-on-surface-20 hover:bg-slate-50"
                 >
                   + 탭 추가
                 </button>
@@ -5829,7 +5829,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                 {!isPlaying ? (
                                   <button
                                     type="button"
-                                    className="w-8 h-8 flex items-center justify-center flex-shrink-0 rounded-full border border-border bg-transparent text-on-surface-30 hover:bg-white/60 hover:text-on-surface-10 transition-colors"
+                                    className="w-9 h-9 flex items-center justify-center flex-shrink-0 rounded-full border border-border bg-transparent text-on-surface-30 hover:bg-white/60 hover:text-on-surface-10 transition-colors"
                                     onClick={handleBgmPlay}
                                     aria-label="재생"
                                   >
@@ -5838,7 +5838,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                 ) : (
                                   <button
                                     type="button"
-                                    className="w-8 h-8 flex items-center justify-center flex-shrink-0 rounded-full border border-border bg-transparent text-on-surface-30 hover:bg-white/60 hover:text-on-surface-10 transition-colors"
+                                    className="w-9 h-9 flex items-center justify-center flex-shrink-0 rounded-full border border-border bg-transparent text-on-surface-30 hover:bg-white/60 hover:text-on-surface-10 transition-colors"
                                     onClick={handleBgmStop}
                                     aria-label="정지"
                                   >
@@ -5893,7 +5893,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                               {/* 볼륨 아이콘 (우측) */}
                               <button
                                 type="button"
-                                className="w-8 h-8 flex items-center justify-center flex-shrink-0 rounded-full border border-border bg-transparent text-on-surface-30 hover:bg-white/60 hover:text-on-surface-10 transition-colors"
+                                className="w-9 h-9 flex items-center justify-center flex-shrink-0 rounded-full border border-border bg-transparent text-on-surface-30 hover:bg-white/60 hover:text-on-surface-10 transition-colors"
                                 onClick={() => setMuted((v) => !v)}
                                 aria-label={muted ? "음소거 해제" : "음소거"}
                               >

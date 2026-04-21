@@ -43,7 +43,7 @@ function PaginationLink({ className, isActive, ...props }: PaginationLinkProps) 
       className={cn(
         buttonVariants({
           variant: isActive ? "default" : "ghost",
-          size: "icon-sm",
+          size: "icon",
         }),
         isActive && "border-[color:var(--key)] bg-[color:var(--key)] text-white hover:bg-[color:var(--key)]/90",
         className
@@ -55,7 +55,7 @@ function PaginationLink({ className, isActive, ...props }: PaginationLinkProps) 
 
 function PaginationPrevious(props: React.ComponentProps<typeof PaginationLink>) {
   return (
-    <PaginationLink aria-label="Go to previous page" className={cn("h-8 w-8 p-0")} {...props}>
+    <PaginationLink aria-label="Go to previous page" className={cn("h-9 w-9 p-0")} {...props}>
       <ChevronLeft className="h-4 w-4" />
     </PaginationLink>
   )
@@ -63,7 +63,7 @@ function PaginationPrevious(props: React.ComponentProps<typeof PaginationLink>) 
 
 function PaginationNext(props: React.ComponentProps<typeof PaginationLink>) {
   return (
-    <PaginationLink aria-label="Go to next page" className={cn("h-8 w-8 p-0")} {...props}>
+    <PaginationLink aria-label="Go to next page" className={cn("h-9 w-9 p-0")} {...props}>
       <ChevronRight className="h-4 w-4" />
     </PaginationLink>
   )
@@ -74,7 +74,7 @@ function PaginationEllipsis({ className, ...props }: React.ComponentProps<"span"
     <span
       aria-hidden
       data-slot="pagination-ellipsis"
-      className={cn("flex h-8 w-8 items-center justify-center", className)}
+      className={cn("flex h-9 w-9 items-center justify-center", className)}
       {...props}
     >
       <MoreHorizontal className="h-4 w-4" />
