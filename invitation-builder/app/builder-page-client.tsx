@@ -1188,7 +1188,7 @@ function IntroEditor({
             <div className="h-full flex flex-col justify-start gap-2 min-w-0">
               <button
                 type="button"
-                className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
+                className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
                 onClick={() => inputRef.current?.click()}
               >
                 {hasImage ? '사진 변경' : '사진 업로드'}
@@ -1196,7 +1196,7 @@ function IntroEditor({
               {hasImage && !isServiceProvidedThumbnailUrl(String(profile.image ?? '')) && (
                 <button
                   type="button"
-                  className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
+                  className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
                   onClick={() => onEditImage(role, String(profile.image ?? ''))}
                 >
                   이미지 편집
@@ -1205,7 +1205,7 @@ function IntroEditor({
               {hasImage && !isServiceProvidedThumbnailUrl(String(profile.image ?? '')) && (
                 <button
                   type="button"
-                  className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-30 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
+                  className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-30 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
                   onClick={() => updateData(`intro.${role}.image`, '')}
                 >
                   사진 제거
@@ -1287,7 +1287,7 @@ function IntroEditor({
                   type="button"
                   onClick={() => updateData('intro.layoutType', opt.value)}
                   className={cn(
-                    'flex flex-col items-center gap-1.5 rounded-lg p-1.5 transition-[color,background-color,outline-color,outline-offset]',
+                    'flex flex-col items-center gap-2 rounded-lg p-2 transition-[color,background-color,outline-color,outline-offset]',
                     active
                       ? 'bg-slate-50 outline outline-1 outline-offset-2 outline-[color:var(--on-surface-10)]'
                       : 'outline-none ring-1 ring-transparent hover:bg-slate-50',
@@ -1295,7 +1295,7 @@ function IntroEditor({
                   title={`타입 ${opt.label}`}
                 >
                   <IntroLayoutSwatch variant={opt.value} />
-                  <span className="text-[11px] font-medium text-on-surface-20">
+                  <span className="text-xs font-medium text-on-surface-20">
                     타입 {opt.label}
                   </span>
                 </button>
@@ -1374,11 +1374,11 @@ function HostContactField({
               className="flex-1 shadow-none"
             />
             {!!relationOptions?.length && !!onRelationChange && (
-              <div className="relative w-[80px] min-w-[80px] max-w-[100px]">
+              <div className="relative w-20 min-w-[80px] max-w-[96px]">
                 <select
                   value={relationValue ?? ''}
                   onChange={(e) => onRelationChange(e.target.value)}
-                  className="h-10 w-full min-w-0 rounded-lg border border-input bg-white px-3 py-1 text-[13px] text-on-surface-20 appearance-none transition-colors outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50"
+                  className="h-10 w-full min-w-0 rounded-lg border border-input bg-white px-3 py-1 text-sm text-on-surface-20 appearance-none transition-colors outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50"
                 >
                   {relationOptions.map((option) => (
                     <option key={option} value={option}>
@@ -1432,8 +1432,8 @@ function ContactPhoneField({
 }) {
   return (
     <FormItem label={label}>
-      <div className="flex flex-col gap-1.5 flex-1 w-full">
-        <span className="text-[13px] text-on-surface-10 font-medium">{name}</span>
+      <div className="flex flex-col gap-2 flex-1 w-full">
+        <span className="text-sm text-on-surface-10 font-medium">{name}</span>
         <Input
           placeholder="전화번호를 입력하세요"
           value={phoneValue ?? ''}
