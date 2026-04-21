@@ -69,10 +69,7 @@ export function DesignerCalendarPreview({
   const timeEn = formatTimeEnglish12h(timeRaw);
   const monthEn = formatMonthEnglishUpper(eventDate);
   const weekLabels = layout === "A" ? WEEKDAY_LETTERS_EN : WEEKDAY_KO;
-  const eventDay = cells.find((cell) => cell.isEvent)?.day ?? d;
-
   const cellText = useThemeColor ? "text-[#413830]" : "text-neutral-700";
-  const prevRing = useThemeColor ? "ring-[#413830]/20" : "ring-black/15";
   const eventDayBg = useThemeColor ? "bg-[color:var(--key)]" : "bg-neutral-600";
 
   const cellShell = (cell: DesignerCalendarCell) => {
@@ -81,17 +78,9 @@ export function DesignerCalendarPreview({
     if (!cell.day) {
       return <div key={cell.key} className={base} aria-hidden />;
     }
-    const isPrev = cell.day === eventDay - 1 && eventDay > 1;
     if (cell.isEvent) {
       return (
         <div key={cell.key} className={`${base} ${eventDayBg} text-white`}>
-          <span>{cell.day}</span>
-        </div>
-      );
-    }
-    if (isPrev) {
-      return (
-        <div key={cell.key} className={`${base} ${cellText} ring-1 ${prevRing} bg-transparent`}>
           <span>{cell.day}</span>
         </div>
       );
