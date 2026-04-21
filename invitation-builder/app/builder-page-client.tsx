@@ -1003,19 +1003,19 @@ function VenueSearchField({
                 <li key={`${venue.name}-${venue.address}`}>
                   <button
                     type="button"
-                    className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left hover:bg-slate-50 active:bg-slate-100"
+                    className="flex w-full flex-col items-start gap-1 px-3 py-2 text-left hover:bg-slate-50 active:bg-slate-100"
                     onMouseDown={(e) => e.preventDefault() /* blur 전 click 유지 */}
                     onClick={() => handlePick(venue)}
                   >
-                    <span className="text-[13px] text-on-surface-10">{venue.name}</span>
-                    <span className="text-[11px] text-on-surface-30">{venue.area}</span>
-                    <span className="text-[11px] text-on-surface-30/80">{venue.address}</span>
+                    <span className="text-sm text-on-surface-10">{venue.name}</span>
+                    <span className="text-xs text-on-surface-30">{venue.area}</span>
+                    <span className="text-xs text-on-surface-30/80">{venue.address}</span>
                   </button>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="px-3 py-2 text-[12px] text-on-surface-30">
+            <p className="px-3 py-2 text-xs text-on-surface-30">
               일치하는 예식장이 없습니다.
             </p>
           )}
