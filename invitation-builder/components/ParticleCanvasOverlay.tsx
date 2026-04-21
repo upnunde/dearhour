@@ -13,10 +13,10 @@ const HEART_BASE_SEED = Math.round(17 * 1.2);
 /** 하트: 매 프레임 위치 이동(낙하·흔들림) 속도 +20% */
 const HEART_MOVE_SPEED_MULT = 1.2;
 
-/** 데이지꽃 날림: 꽃잎 기본 개수(22) 대비 −20% */
-const DAISY_PETAL_COUNT_MULT = 0.8;
-/** 데이지꽃 날림: 꽃잎 기본 스케일(0.675) 대비 +20% */
-const DAISY_PETAL_SIZE_MULT = 1.2;
+/** 데이지꽃 날림: 꽃잎 기본 개수(22) 대비 −30% */
+const DAISY_PETAL_COUNT_MULT = 0.7;
+/** 데이지꽃 날림: 꽃잎 기본 스케일(0.675) 대비 +10% */
+const DAISY_PETAL_SIZE_MULT = 1.1;
 const PETAL_BASE_SEED = 22;
 
 function isPetalEffect(e: string): e is (typeof PETAL_EFFECTS)[number] {
@@ -113,6 +113,7 @@ export default function ParticleCanvasOverlay({
         y: number;
         vx: number;
         vy: number;
+        flow: number;
         size: number;
         rot: number;
         vr: number;
@@ -162,10 +163,15 @@ export default function ParticleCanvasOverlay({
     const petalSizeScale = isPetalEffect(targetEffect)
       ? 0.675 * (targetEffect === "daisyPetal" ? DAISY_PETAL_SIZE_MULT : 1)
       : 1;
+    const isDaisyPetal = targetEffect === "daisyPetal";
 
     const randomPetalSpawn = () => ({
-      x: rand(state.w * 1.02, state.w * 1.28),
-      y: rand(-state.h * 0.12, state.h * 1.12),
+      x: rand(state.w * 1.02, state.w * 1.45),
+      y: rand(-state.h * 0.35, state.h * 1.2),
+    });
+    const randomHeartSpawn = (initial = false) => ({
+      x: rand(-state.w * 0.25, state.w * 1.25),
+      y: initial ? rand(-state.h * 1.2, state.h * 1.05) : rand(-state.h * 0.45, -24),
     });
 
     for (let i = 0; i < seedCount; i += 1) {
@@ -173,15 +179,17 @@ export default function ParticleCanvasOverlay({
         rand(3, 7) * (targetEffect === "heart" ? 1.2 : petalSizeScale) * heartSizeBoost;
       const isPetal = kind === "petal";
       const spawn = isPetal ? randomPetalSpawn() : null;
+      const heartSpawn = isPetal ? null : randomHeartSpawn(true);
       state.particles.push({
-        x: isPetal ? spawn!.x : rand(-state.w * 0.1, state.w * 1.1),
-        y: isPetal ? spawn!.y : rand(-state.h, state.h),
+        x: isPetal ? spawn!.x : heartSpawn!.x,
+        y: isPetal ? spawn!.y : heartSpawn!.y,
         vx: isPetal ? rand(-1.35, -0.55) : rand(-0.35, 0.35),
         vy: isPetal ? rand(0.22, 0.78) : rand(0.22, 0.62) * heartVyMult,
+        flow: rand(0.8, 1.3),
         size: size * exposureSizeMultiplier,
         rot: rand(0, Math.PI * 2),
         vr: kind === "heart" ? rand(-0.008, 0.008) : rand(-0.02, 0.02) * 1.7,
-        alpha: rand(0.25, 0.9),
+        alpha: isDaisyPetal ? 1 : rand(0.25, 0.9),
         life: rand(0.6, 1.0),
         kind,
         hue: rand(320, 360),
@@ -281,14 +289,14 @@ export default function ParticleCanvasOverlay({
 
       for (const p of state.particles) {
         if (p.kind === "petal") {
-          const windX = Math.sin(p.tw * 0.9 + p.y * 0.008) * 0.42;
-          const swayY = Math.sin(p.tw * 1.35 + p.x * 0.01) * 0.12;
-          p.x += (p.vx + windX) * (dt * 60);
-          p.y += (p.vy + swayY) * (dt * 60);
+          const windX = Math.sin(p.tw * 0.9 + p.y * 0.008) * 0.42 * p.flow;
+          const swayY = Math.sin(p.tw * 1.35 + p.x * 0.01) * 0.12 * p.flow;
+          p.x += (p.vx + windX) * (dt * 60) * p.flow;
+          p.y += (p.vy + swayY) * (dt * 60) * p.flow;
         } else {
           const m = HEART_MOVE_SPEED_MULT;
-          p.x += p.vx * (dt * 60) * m;
-          p.y += p.vy * (dt * 60) * m;
+          p.x += p.vx * (dt * 60) * m * p.flow;
+          p.y += p.vy * (dt * 60) * m * p.flow;
         }
         p.rot += p.vr * (dt * 60);
         p.tw += dt * (p.kind === "heart" ? 1.6 : 3.2);
@@ -301,12 +309,14 @@ export default function ParticleCanvasOverlay({
             p.x = spawn.x;
             p.y = spawn.y;
           } else {
-            p.y = -rand(20, 120);
-            p.x = rand(-state.w * 0.1, state.w * 1.1);
+            const spawn = randomHeartSpawn(false);
+            p.x = spawn.x;
+            p.y = spawn.y;
           }
-          p.alpha = rand(0.25, 0.9);
+          p.alpha = isDaisyPetal ? 1 : rand(0.25, 0.9);
           p.size =
             rand(3, 7) * (targetEffect === "heart" ? 1.2 : petalSizeScale) * heartSizeBoost * exposureSizeMultiplier;
+          p.flow = rand(0.8, 1.3);
           p.rot = rand(0, Math.PI * 2);
           p.vx = p.kind === "petal" ? rand(-1.35, -0.55) : rand(-0.35, 0.35);
           p.vy =

@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { createPortal } from 'react-dom';
 import NextImage from "next/image";
 import { useRouter } from 'next/navigation';
-import { Palette, Music, Image as ImageIcon, Users, UserRound, MessageSquare, MessageCircle, Phone, CalendarHeart, MapPin, Bell, Images, Wallet, BookOpen, Youtube, Share2, Shield, CheckCircle2, GripVertical, Play, VolumeX, Volume2, X, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, RotateCw, RefreshCcw, ArrowUpDown, ClipboardCheck, Calendar, Settings, Bus, Train, Car, ParkingCircle, Route, AlertCircle } from 'lucide-react';
+import { Palette, Music, Image as ImageIcon, Users, UserRound, MessageSquare, MessageCircle, Phone, CalendarHeart, MapPin, Bell, Images, Wallet, BookOpen, Youtube, Share2, Shield, CheckCircle2, GripVertical, Play, VolumeX, Volume2, X, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, RotateCw, RefreshCcw, ArrowUpDown, ClipboardCheck, Calendar, Settings, Bus, Train, Car, ParkingCircle, Route, AlertCircle, Languages } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import {
   ensureContactBlock,
@@ -98,6 +98,100 @@ const PREVIEW_TYPOGRAPHY_GUIDE = {
   body: "whitespace-pre-line leading-[26px]",
   subtitle2: "text-sm font-normal text-on-surface-30 opacity-70 [font-stretch:120%]",
 } as const;
+
+type PreviewLanguage = "ko" | "en" | "ja" | "zh-CN" | "zh-TW" | "vi" | "th";
+
+const PREVIEW_LANGUAGE_OPTIONS: Array<{ code: PreviewLanguage; label: string }> = [
+  { code: "ko", label: "한국어" },
+  { code: "en", label: "English" },
+  { code: "ja", label: "日本語" },
+  { code: "zh-CN", label: "简体中文" },
+  { code: "zh-TW", label: "繁體中文" },
+  { code: "vi", label: "Tiếng Việt" },
+  { code: "th", label: "ไทย" },
+];
+
+const PREVIEW_I18N_MAP: Record<PreviewLanguage, Record<string, string>> = {
+  ko: {},
+  en: {
+    "신랑": "Groom",
+    "신부": "Bride",
+    "아버님": "Father",
+    "어머님": "Mother",
+    "연락하기": "Contact",
+    "저희를 소개합니다": "About Us",
+    "오시는 길": "Directions",
+    "갤러리": "Gallery",
+    "안내 내용을 입력해 주세요.": "Please enter the information.",
+    "갤러리 이미지를 추가해 주세요.": "Please add gallery images.",
+    "신랑신부 섹션에서 연락처를 입력해 주세요.": "Please enter contact info in the couple section.",
+  },
+  ja: {
+    "신랑": "新郎",
+    "신부": "新婦",
+    "아버님": "お父様",
+    "어머님": "お母様",
+    "연락하기": "連絡する",
+    "저희를 소개합니다": "私たちのご紹介",
+    "오시는 길": "アクセス",
+    "갤러리": "ギャラリー",
+    "안내 내용을 입력해 주세요.": "ご案内内容を入力してください。",
+    "갤러리 이미지를 추가해 주세요.": "ギャラリー画像を追加してください。",
+    "신랑신부 섹션에서 연락처를 입력해 주세요.": "新郎新婦セクションで連絡先を入力してください。",
+  },
+  "zh-CN": {
+    "신랑": "新郎",
+    "신부": "新娘",
+    "아버님": "父亲",
+    "어머님": "母亲",
+    "연락하기": "联系",
+    "저희를 소개합니다": "关于我们",
+    "오시는 길": "路线",
+    "갤러리": "相册",
+    "안내 내용을 입력해 주세요.": "请输入说明内容。",
+    "갤러리 이미지를 추가해 주세요.": "请添加相册图片。",
+    "신랑신부 섹션에서 연락처를 입력해 주세요.": "请在新人信息中输入联系方式。",
+  },
+  "zh-TW": {
+    "신랑": "新郎",
+    "신부": "新娘",
+    "아버님": "父親",
+    "어머님": "母親",
+    "연락하기": "聯絡",
+    "저희를 소개합니다": "關於我們",
+    "오시는 길": "交通方式",
+    "갤러리": "相簿",
+    "안내 내용을 입력해 주세요.": "請輸入說明內容。",
+    "갤러리 이미지를 추가해 주세요.": "請新增相簿圖片。",
+    "신랑신부 섹션에서 연락처를 입력해 주세요.": "請在新人區塊輸入聯絡方式。",
+  },
+  vi: {
+    "신랑": "Chú rể",
+    "신부": "Cô dâu",
+    "아버님": "Cha",
+    "어머님": "Mẹ",
+    "연락하기": "Liên hệ",
+    "저희를 소개합니다": "Giới thiệu",
+    "오시는 길": "Chỉ đường",
+    "갤러리": "Thư viện ảnh",
+    "안내 내용을 입력해 주세요.": "Vui lòng nhập nội dung 안내.",
+    "갤러리 이미지를 추가해 주세요.": "Vui lòng thêm ảnh thư viện.",
+    "신랑신부 섹션에서 연락처를 입력해 주세요.": "Vui lòng nhập liên hệ trong mục cô dâu/chú rể.",
+  },
+  th: {
+    "신랑": "เจ้าบ่าว",
+    "신부": "เจ้าสาว",
+    "아버님": "คุณพ่อ",
+    "어머님": "คุณแม่",
+    "연락하기": "ติดต่อ",
+    "저희를 소개합니다": "เกี่ยวกับเรา",
+    "오시는 길": "เส้นทาง",
+    "갤러리": "แกลเลอรี",
+    "안내 내용을 입력해 주세요.": "กรุณากรอกข้อมูล 안내",
+    "갤러리 이미지를 추가해 주세요.": "กรุณาเพิ่มรูปแกลเลอรี",
+    "신랑신부 섹션에서 연락처를 입력해 주세요.": "กรุณากรอกข้อมูลติดต่อในส่วนคู่บ่าวสาว",
+  },
+};
 
 
 function upperCaseFirst(value: string) {
@@ -1064,17 +1158,24 @@ const sidebarItems = [
   { id: 'i18n', icon: Settings, label: '설정', category: '선택', navGroup: 5 as SidebarNavGroup },
 ];
 
-/** 기본 음원: `public/audio/` 로컬 파일. 외부 스트리밍 URL 없음. */
-const builtInTracks = [
-  { id: 'march-1', label: '발랄한 행진곡', url: '/audio/neti-main-theme.mp3' },
-  { id: 'piano-1', label: '피아노 (로맨틱)', url: '/audio/piano-romantic.mp4' },
-  { id: 'bgm-all-you-need', label: '온전한 마음', url: '/audio/bgm-all-you-need.mp3' },
-  { id: 'bgm-chemistry', label: '설렘의 여운', url: '/audio/bgm-chemistry.mp3' },
-  { id: 'bgm-my-first-love', label: '첫설렘', url: '/audio/bgm-my-first-love.mp3' },
-  { id: 'bgm-perfect', label: '완벽한 순간', url: '/audio/bgm-perfect.mp3' },
-  { id: 'bgm-wedding-dress', label: '순백의 서약', url: '/audio/bgm-wedding-dress.mp3' },
-  { id: 'bgm-would-you-marry-me', label: '영원을 묻다', url: '/audio/bgm-would-you-marry-me.mp3' },
-] as const;
+type BuiltInTrack = {
+  id: string;
+  label: string;
+  url: string;
+  fallbackUrl?: string;
+};
+
+/** 기본 음원: 로컬 파일 우선, 미존재 시 샘플 스트림으로 폴백 */
+const builtInTracks: BuiltInTrack[] = [
+  { id: 'march-1', label: '설레는 행진', url: '/audio/neti-main-theme.mp3', fallbackUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
+  { id: 'piano-1', label: '로맨틱 피아노', url: '/audio/piano-romantic.mp4', fallbackUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
+  { id: 'bgm-all-you-need', label: '온전한 마음', url: '/audio/bgm-all-you-need.mp3', fallbackUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
+  { id: 'bgm-chemistry', label: '마음의 화학', url: '/audio/bgm-chemistry.mp3', fallbackUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3' },
+  { id: 'bgm-my-first-love', label: '첫사랑의 결', url: '/audio/bgm-my-first-love.mp3', fallbackUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3' },
+  { id: 'bgm-perfect', label: '완벽한 약속', url: '/audio/bgm-perfect.mp3', fallbackUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3' },
+  { id: 'bgm-wedding-dress', label: '순백의 순간', url: '/audio/bgm-wedding-dress.mp3', fallbackUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3' },
+  { id: 'bgm-would-you-marry-me', label: '영원의 청혼', url: '/audio/bgm-would-you-marry-me.mp3', fallbackUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3' },
+];
 
 function BankLogo({ name }: { name: (typeof BANK_OPTIONS)[number] }) {
   const [imgOk, setImgOk] = React.useState(true);
@@ -1580,9 +1681,21 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
     const updateViewportHeight = () => {
       const vv = window.visualViewport;
       const visualHeight = vv?.height;
-      const visualOffsetTop = vv?.offsetTop ?? 0;
-      const rawHeight = (visualHeight && visualHeight > 0 ? visualHeight : window.innerHeight) + visualOffsetTop;
-      const next = Math.round(Math.max(0, Math.min(rawHeight, window.innerHeight)));
+      const visualScale = vv?.scale ?? 1;
+
+      /**
+       * iOS Safari에서 키보드/줌 시 visualViewport offsetTop을 더하면
+       * 실제 보이는 영역보다 크게 계산되어 하단 회색 빈 공간이 노출될 수 있다.
+       * - 줌 상태(scale > 1): layout viewport 높이를 유지
+       * - 일반 상태: visualViewport.height를 사용
+       */
+      const nextRaw =
+        visualScale > 1.01
+          ? window.innerHeight
+          : visualHeight && visualHeight > 0
+            ? visualHeight
+            : window.innerHeight;
+      const next = Math.round(Math.max(0, Math.min(nextRaw, window.innerHeight)));
       setViewportHeightPx(next);
     };
 
@@ -2506,6 +2619,12 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
   const [volume, setVolume] = useState(0.8);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [previewLanguage, setPreviewLanguage] = useState<PreviewLanguage>("ko");
+  const [previewLanguageFabOpen, setPreviewLanguageFabOpen] = useState(false);
+  const [captureShieldVisible, setCaptureShieldVisible] = useState(false);
+  const [availableTrackUrlById, setAvailableTrackUrlById] = useState<Record<string, string>>({});
+  const captureShieldTimerRef = useRef<number | null>(null);
+  const viewportMetaBackupRef = useRef<string | null>(null);
 
   const progressPercent = useMemo(() => {
     if (!duration || !Number.isFinite(duration)) return 0;
@@ -2522,16 +2641,171 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
 
   const musicSrc = useMemo(() => {
     if (data.music?.uploadedFile?.url) return data.music.uploadedFile.url;
-    const track =
-      builtInTracks.find((t) => t.id === data.music?.selectedId) ?? builtInTracks[0];
-    return track.url;
-  }, [data.music?.selectedId, data.music?.uploadedFile?.url]);
+    const track = builtInTracks.find((t) => t.id === data.music?.selectedId) ?? builtInTracks[0];
+    return availableTrackUrlById[track.id] ?? track.fallbackUrl ?? track.url;
+  }, [availableTrackUrlById, data.music?.selectedId, data.music?.uploadedFile?.url]);
 
   /** 제거된 트랙 id 등 레거시 값이면 첫 번째 기본곡으로 취급 */
   const effectiveBgmSelectedId = useMemo(
     () => builtInTracks.find((t) => t.id === data.music?.selectedId)?.id ?? builtInTracks[0].id,
     [data.music?.selectedId],
   );
+  const preventCaptureEnabled = !!data.protect?.preventCapture;
+  const preventZoomEnabled = !!data.protect?.preventZoom;
+  const preventDownloadEnabled = !!data.protect?.preventDownload;
+  const i18nPreviewEnabled = !!data.i18n?.enabled;
+  const activePreviewLanguage: PreviewLanguage = i18nPreviewEnabled ? previewLanguage : "ko";
+  const showPreviewLanguageFab = i18nPreviewEnabled && isTabletViewport && mobilePanel === "preview";
+
+  const tPreview = useCallback(
+    (koText: string) => PREVIEW_I18N_MAP[activePreviewLanguage]?.[koText] ?? koText,
+    [activePreviewLanguage],
+  );
+  const tRole = useCallback(
+    (role: string) =>
+      role
+        .replaceAll("신랑", tPreview("신랑"))
+        .replaceAll("신부", tPreview("신부"))
+        .replaceAll("아버님", tPreview("아버님"))
+        .replaceAll("어머님", tPreview("어머님")),
+    [tPreview],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    const resolvePlayableTrackUrls = async () => {
+      const resolvedEntries = await Promise.all(
+        builtInTracks.map(async (track) => {
+          try {
+            const res = await fetch(track.url, { method: 'HEAD', cache: 'no-store' });
+            if (res.ok) return [track.id, track.url] as const;
+          } catch {
+            // noop
+          }
+          return [track.id, track.fallbackUrl ?? track.url] as const;
+        }),
+      );
+      if (!cancelled) {
+        setAvailableTrackUrlById(Object.fromEntries(resolvedEntries));
+      }
+    };
+    void resolvePlayableTrackUrls();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!i18nPreviewEnabled) {
+      setPreviewLanguage("ko");
+      setPreviewLanguageFabOpen(false);
+    }
+  }, [i18nPreviewEnabled]);
+
+  useEffect(() => {
+    return () => {
+      if (captureShieldTimerRef.current) {
+        window.clearTimeout(captureShieldTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!preventZoomEnabled) return;
+
+    const viewportMeta = document.querySelector('meta[name="viewport"]') as HTMLMetaElement | null;
+    if (viewportMeta) {
+      if (viewportMetaBackupRef.current === null) {
+        viewportMetaBackupRef.current = viewportMeta.getAttribute('content') ?? '';
+      }
+      viewportMeta.setAttribute(
+        'content',
+        'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no',
+      );
+    }
+
+    const preventGesture = (event: Event) => event.preventDefault();
+    const preventCtrlZoom = (event: WheelEvent) => {
+      if (event.ctrlKey) event.preventDefault();
+    };
+
+    window.addEventListener('gesturestart', preventGesture, { passive: false });
+    window.addEventListener('gesturechange', preventGesture, { passive: false });
+    window.addEventListener('gestureend', preventGesture, { passive: false });
+    window.addEventListener('wheel', preventCtrlZoom, { passive: false });
+
+    return () => {
+      window.removeEventListener('gesturestart', preventGesture);
+      window.removeEventListener('gesturechange', preventGesture);
+      window.removeEventListener('gestureend', preventGesture);
+      window.removeEventListener('wheel', preventCtrlZoom);
+      if (viewportMeta && viewportMetaBackupRef.current !== null) {
+        viewportMeta.setAttribute('content', viewportMetaBackupRef.current);
+      }
+    };
+  }, [preventZoomEnabled]);
+
+  useEffect(() => {
+    if (!preventDownloadEnabled) return;
+    const frame = previewFrameRef.current;
+    if (!frame) return;
+
+    const onContextMenu = (event: Event) => event.preventDefault();
+    const onDragStart = (event: Event) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('img,video,a')) event.preventDefault();
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+      if ((event.ctrlKey || event.metaKey) && (key === 's' || key === 'u')) {
+        event.preventDefault();
+      }
+    };
+
+    frame.addEventListener('contextmenu', onContextMenu);
+    frame.addEventListener('dragstart', onDragStart);
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      frame.removeEventListener('contextmenu', onContextMenu);
+      frame.removeEventListener('dragstart', onDragStart);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [preventDownloadEnabled]);
+
+  useEffect(() => {
+    if (!preventCaptureEnabled) {
+      setCaptureShieldVisible(false);
+      return;
+    }
+
+    const showShield = () => {
+      setCaptureShieldVisible(true);
+      if (captureShieldTimerRef.current) window.clearTimeout(captureShieldTimerRef.current);
+      captureShieldTimerRef.current = window.setTimeout(() => setCaptureShieldVisible(false), 900);
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+      const isPrintScreen =
+        event.key === 'PrintScreen' ||
+        (event.metaKey && event.shiftKey && (key === '3' || key === '4' || key === '5')) ||
+        ((event.ctrlKey || event.metaKey) && key === 'p');
+
+      if (isPrintScreen) {
+        event.preventDefault();
+        showShield();
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      if (captureShieldTimerRef.current) {
+        window.clearTimeout(captureShieldTimerRef.current);
+        captureShieldTimerRef.current = null;
+      }
+    };
+  }, [preventCaptureEnabled]);
 
   useEffect(() => {
     if (simulateTimerRef.current) {
@@ -3292,9 +3566,9 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
       }
       case 'intro': {
         const introData = data.intro ?? {};
-        const introHeading = String(introData.sectionHeading ?? '').trim() || '저희를 소개합니다';
-        const groomName = (data.hosts.groom.name ?? '').trim() || '신랑';
-        const brideName = (data.hosts.bride.name ?? '').trim() || '신부';
+        const introHeading = String(introData.sectionHeading ?? '').trim() || tPreview('저희를 소개합니다');
+        const groomName = (data.hosts.groom.name ?? '').trim() || tPreview('신랑');
+        const brideName = (data.hosts.bride.name ?? '').trim() || tPreview('신부');
         const brideFirst = !!(data.i18n?.brideFirstInfo ?? false);
         const layoutType = (introData.layoutType ?? 'A') as 'A' | 'B' | 'C' | 'D';
 
@@ -3586,7 +3860,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                 aria-hidden
               />
             ) : null}
-            <span>{parent.name || fallback}</span>
+                  <span>{parent.name || tRole(fallback)}</span>
           </span>
         );
         const renderParentNames = (
@@ -3606,18 +3880,18 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
           <div className="w-full max-w-[340px] mx-auto text-center">
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-2 rounded-xl border border-border bg-white/70 px-3 py-4">
-                <p className="text-[0.8125em] tracking-[0.08em] text-on-surface-30 leading-none">신랑</p>
+                <p className="text-[0.8125em] tracking-[0.08em] text-on-surface-30 leading-none">{tPreview('신랑')}</p>
                 <p className="text-[1.375em] font-semibold text-on-surface-10 leading-none">
-                  {groom.name || '신랑 이름'}
+                  {groom.name || `${tPreview('신랑')} ${tPreview('이름')}`}
                 </p>
                 <p className="text-[0.8125em] text-on-surface-30 leading-relaxed break-keep">
                   {groomParents} 의 {groomRelation}
                 </p>
               </div>
               <div className="space-y-2 rounded-xl border border-border bg-white/70 px-3 py-4">
-                <p className="text-[0.8125em] tracking-[0.08em] text-on-surface-30 leading-none">신부</p>
+                <p className="text-[0.8125em] tracking-[0.08em] text-on-surface-30 leading-none">{tPreview('신부')}</p>
                 <p className="text-[1.375em] font-semibold text-on-surface-10 leading-none">
-                  {bride.name || '신부 이름'}
+                  {bride.name || `${tPreview('신부')} ${tPreview('이름')}`}
                 </p>
                 <p className="text-[0.8125em] text-on-surface-30 leading-relaxed break-keep">
                   {brideParents} 의 {brideRelation}
@@ -3631,8 +3905,8 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
         const contactEnabled = isSectionEnabled('contact');
         const useContactThumbnail = data.contact?.useThumbnail ?? true;
         const brideFirstInfo = !!(data.i18n?.brideFirstInfo ?? false);
-        const groomName = (data.hosts.groom.name ?? '').trim() || '신랑';
-        const brideName = (data.hosts.bride.name ?? '').trim() || '신부';
+        const groomName = (data.hosts.groom.name ?? '').trim() || tPreview('신랑');
+        const brideName = (data.hosts.bride.name ?? '').trim() || tPreview('신부');
         const groomRelation = (data.hosts.groom.relation ?? '').trim() || '아들';
         const brideRelation = (data.hosts.bride.relation ?? '').trim() || '딸';
         const groomFatherName = (data.hosts.groom.father.name ?? '').trim();
@@ -3725,7 +3999,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
         if (contactRows.length === 0) {
           return (
             <div className="max-w-[340px] mx-auto w-full rounded-xl border border-dashed border-border py-8 text-[0.8125em] text-on-surface-30">
-              신랑신부 섹션에서 연락처를 입력해 주세요.
+              {tPreview('신랑신부 섹션에서 연락처를 입력해 주세요.')}
             </div>
           );
         }
@@ -3765,9 +4039,9 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
               </div>
             ) : (
               <p className="min-h-[27px] flex items-center justify-center text-[18px] text-on-surface-20 tracking-tight text-center">
-                {orderedCoupleRows[0].role} <span className="font-semibold text-on-surface-10 ml-1">{orderedCoupleRows[0].name}</span>
+                {tRole(orderedCoupleRows[0].role)} <span className="font-semibold text-on-surface-10 ml-1">{orderedCoupleRows[0].name}</span>
                 <span className="mx-2 text-on-surface-30">·</span>
-                {orderedCoupleRows[1].role} <span className="font-semibold text-on-surface-10 ml-1">{orderedCoupleRows[1].name}</span>
+                {tRole(orderedCoupleRows[1].role)} <span className="font-semibold text-on-surface-10 ml-1">{orderedCoupleRows[1].name}</span>
               </p>
             )}
 
@@ -3781,7 +4055,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                   aria-label="연락처 상세 열기"
                 >
                   <Phone className="w-4.5 h-4.5" />
-                  <span>연락하기</span>
+                  <span>{tPreview('연락하기')}</span>
                   <ChevronDown className={`w-4 h-4 transition-transform ${contactPreviewExpanded ? 'rotate-180' : ''}`} />
                 </button>
 
@@ -3792,7 +4066,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                       return (
                       <div key={row.role} className="rounded-xl mb-0 bg-white px-4 py-2.5 flex items-center justify-between gap-2">
                         <div className="min-w-0 text-left">
-                          <p className="text-[15px] font-medium tracking-[0.06em] text-on-surface-30">{row.role}</p>
+                          <p className="text-[15px] font-medium tracking-[0.06em] text-on-surface-30">{tRole(row.role)}</p>
                         </div>
                         <div className="inline-flex items-center gap-1.5 shrink-0">
                           <a
@@ -3849,32 +4123,53 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
         const calendarUseThemeColor = true;
         const timeTrimmed = (data.eventInfo.time ?? "").trim();
         let ddayStatusText = "";
+        let ddayDiffDays: number | null = null;
         if (showDday && isValidEventDate) {
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           const target = new Date(eventDate!);
           target.setHours(0, 0, 0, 0);
           const diffDays = Math.round((target.getTime() - today.getTime()) / 86400000);
+          ddayDiffDays = diffDays;
           const absDays = Math.abs(diffDays);
           if (diffDays > 0) ddayStatusText = `${absDays}일 남았습니다`;
           else if (diffDays < 0) ddayStatusText = `${absDays}일 지났습니다`;
           else ddayStatusText = "오늘입니다";
         }
-        const ddayMatch = ddayStatusText.match(/^(\d+)(일 .+)$/);
+        const ddayStatusByLang: Record<PreviewLanguage, { today: string; left: (n: number) => string; passed: (n: number) => string }> = {
+          ko: { today: "오늘입니다", left: (n) => `${n}일 남았습니다`, passed: (n) => `${n}일 지났습니다` },
+          en: { today: "is today", left: (n) => `${n} days left`, passed: (n) => `${n} days passed` },
+          ja: { today: "は本日です", left: (n) => `あと${n}日です`, passed: (n) => `${n}日が経過しました` },
+          "zh-CN": { today: "就是今天", left: (n) => `还有${n}天`, passed: (n) => `已过去${n}天` },
+          "zh-TW": { today: "就是今天", left: (n) => `還有${n}天`, passed: (n) => `已過${n}天` },
+          vi: { today: "là hôm nay", left: (n) => `còn ${n} ngày`, passed: (n) => `đã qua ${n} ngày` },
+          th: { today: "คือวันนี้", left: (n) => `เหลืออีก ${n} วัน`, passed: (n) => `ผ่านมาแล้ว ${n} วัน` },
+        };
+        const ddayStatusCopy =
+          ddayDiffDays === null
+            ? ""
+            : ddayDiffDays > 0
+              ? ddayStatusByLang[activePreviewLanguage].left(Math.abs(ddayDiffDays))
+              : ddayDiffDays < 0
+                ? ddayStatusByLang[activePreviewLanguage].passed(Math.abs(ddayDiffDays))
+                : ddayStatusByLang[activePreviewLanguage].today;
+
+        const ddayMatch = activePreviewLanguage === "ko" ? ddayStatusText.match(/^(\d+)(일 .+)$/) : null;
         const ddayNumber = ddayMatch?.[1] ?? "";
         const ddaySuffix = ddayMatch?.[2] ?? ddayStatusText;
         const ddayHeartCls = "text-[color:var(--key)]";
         const ddayNumCls = "text-[color:var(--key-dark)] font-medium";
-        const ddayMessage = ddayStatusText ? (
+        const ddayMessage = (activePreviewLanguage === "ko" ? ddayStatusText : ddayStatusCopy) ? (
           <>
-            {brideFirstInfo ? '신부' : '신랑'} <span className={ddayHeartCls}>&hearts;</span> {brideFirstInfo ? '신랑' : '신부'}의 결혼식이{" "}
-            {ddayNumber ? (
+            {tPreview(brideFirstInfo ? '신부' : '신랑')} <span className={ddayHeartCls}>&hearts;</span> {tPreview(brideFirstInfo ? '신랑' : '신부')}{" "}
+            {activePreviewLanguage === "ko" ? "의 결혼식이 " : ""}
+            {activePreviewLanguage === "ko" && ddayNumber ? (
               <>
                 <span className={ddayNumCls}>{ddayNumber}</span>
                 {ddaySuffix}
               </>
             ) : (
-              ddayStatusText
+              activePreviewLanguage === "ko" ? ddayStatusText : ddayStatusCopy
             )}
             .
           </>
@@ -3961,8 +4256,9 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
             const compactParts = (locationLikeParts.length > 0 ? locationLikeParts : parts).slice(-3);
             return compactParts.join(' ').trim();
           })();
-          const title =
+          const rawLocationTitle =
             String(data.location.title ?? LOCATION_TITLE_OPTIONS[0]).trim() || LOCATION_TITLE_OPTIONS[0];
+          const title = rawLocationTitle === LOCATION_TITLE_OPTIONS[0] ? tPreview('오시는 길') : rawLocationTitle;
           const enc = encodeURIComponent(address);
           const naverWeb = address ? `https://map.naver.com/v5/search/${enc}` : '';
 
@@ -4010,7 +4306,9 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
           return (
             <div className="w-full px-0 text-[0.8125em] text-on-surface-20 text-center">
               <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle} mb-1`}>{title}</p>
-              <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle2} mb-0`}>Directions</p>
+              <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle2} mb-0`}>
+                {activePreviewLanguage === 'ko' ? 'Directions' : tPreview('오시는 길')}
+              </p>
 
               <>
                 <div className="mx-auto mt-[10px] mb-[10px] h-10 w-px bg-border" aria-hidden="true" />
@@ -4134,7 +4432,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
         const activeTabIndex = Math.min(noticePreviewTabIndex, noticeSections.length - 1);
         const activeSection = noticeSections[activeTabIndex] ?? noticeSections[0];
         const rawContent = String(activeSection?.content ?? "");
-        const content = rawContent.trim().length > 0 ? rawContent : "안내 내용을 입력해 주세요.";
+        const content = rawContent.trim().length > 0 ? rawContent : tPreview("안내 내용을 입력해 주세요.");
         const noticeHeading =
           String(data.notice?.sectionHeading ?? "").trim() || NOTICE_HEADING_OPTIONS[0];
         const noticeTitle = (
@@ -4200,13 +4498,13 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
         if (!images.length) {
           return (
             <div className="max-w-[320px] mx-auto w-full rounded-xl border border-dashed border-border py-10 text-[0.8125em] text-on-surface-30">
-              갤러리 이미지를 추가해 주세요.
+              {tPreview('갤러리 이미지를 추가해 주세요.')}
             </div>
           );
         }
         const galleryTitle = (
           <div className="space-y-1">
-            <div className={PREVIEW_TYPOGRAPHY_GUIDE.subtitle}>갤러리</div>
+            <div className={PREVIEW_TYPOGRAPHY_GUIDE.subtitle}>{tPreview('갤러리')}</div>
             <div className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle2} pb-5`}>
               Gallery
             </div>
@@ -4947,7 +5245,10 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
 
   return (
     <div
-      className="flex flex-col gap-0 w-full bg-gray-50 overflow-hidden"
+      className={cn(
+        "flex flex-col gap-0 w-full overflow-hidden",
+        isTabletViewport ? "bg-white" : "bg-gray-50",
+      )}
       style={{ height: viewportHeightPx ? `${viewportHeightPx}px` : '100dvh' }}
     >
       <AppHeader
@@ -8261,7 +8562,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                 />
                                 다국어 지원
                               </span>
-                              <div className="text-sm text-on-surface-30 leading-relaxed">
+                              <div className="text-[12px] leading-4 text-on-surface-30">
                                 기본 제공 국가: 대한민국, 미국, 일본, 중국(간체), 대만(번체), 베트남, 태국. (추가/삭제 불가)
                               </div>
                             </div>
@@ -8352,6 +8653,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
               className={cn(
                 "preview-font-floor min-w-80 w-full bg-white flex flex-col items-stretch text-center overflow-hidden relative",
                 isTabletViewport ? "h-full border-0 rounded-none" : "border border-border rounded-lg",
+                preventDownloadEnabled && "select-none",
               )}
               style={
                 {
@@ -8370,9 +8672,28 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                   '--on-surface-20': `color-mix(in srgb, #424242 95%, ${selectedKeyColorPreset.key} 5%)`,
                   '--on-surface-30': `color-mix(in srgb, #616161 95%, ${selectedKeyColorPreset.key} 5%)`,
                   '--on-surface-disabled': `color-mix(in srgb, rgba(0, 0, 0, 0.22) 95%, ${selectedKeyColorPreset.key} 5%)`,
+                  ...(preventDownloadEnabled
+                    ? {
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none',
+                        WebkitTouchCallout: 'none',
+                      }
+                    : {}),
                 } as React.CSSProperties
               }
             >
+              {preventCaptureEnabled && (
+                <div className="pointer-events-none absolute inset-0 z-30 bg-[repeating-linear-gradient(135deg,rgba(0,0,0,0.03)_0px,rgba(0,0,0,0.03)_2px,transparent_2px,transparent_18px)]">
+                  <div className="absolute right-2 top-2 rounded-md bg-black/45 px-2 py-1 text-[11px] font-semibold text-white">
+                    캡처 방지 활성화
+                  </div>
+                </div>
+              )}
+              {captureShieldVisible && (
+                <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center bg-black/75 px-4 text-center text-sm font-semibold text-white">
+                  보호 화면입니다. 캡처가 제한됩니다.
+                </div>
+              )}
               <ParticleCanvasOverlay
                 effect={data.theme?.particleEffect ?? 'none'}
                 themeColor={selectedKeyColorPreset.key}
@@ -8432,6 +8753,49 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                   );
                   })}
               </div>
+              {showPreviewLanguageFab && (
+                <>
+                  {previewLanguageFabOpen && (
+                    <div className="absolute bottom-20 right-4 z-30 w-[168px] rounded-xl border border-white/30 bg-white/95 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.18)] backdrop-blur-sm">
+                      <div className="max-h-[220px] overflow-y-auto no-scrollbar">
+                        {PREVIEW_LANGUAGE_OPTIONS.map((opt) => {
+                          const active = opt.code === activePreviewLanguage;
+                          return (
+                            <button
+                              key={opt.code}
+                              type="button"
+                              className={cn(
+                                "mb-1 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors last:mb-0",
+                                active
+                                  ? "bg-[color:var(--key)]/12 text-[color:var(--key-dark)] font-semibold"
+                                  : "text-on-surface-20 hover:bg-[color:var(--surface-10)]",
+                              )}
+                              onClick={() => {
+                                setPreviewLanguage(opt.code);
+                                setPreviewLanguageFabOpen(false);
+                              }}
+                            >
+                              <span>{opt.label}</span>
+                              {active ? <CheckCircle2 className="h-4 w-4" /> : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setPreviewLanguageFabOpen((prev) => !prev)}
+                    className={[
+                      "absolute bottom-20 right-4 z-20 h-12 w-12 rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.18)] flex items-center justify-center border border-white/25 transition-[transform,filter,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--key)] focus-visible:ring-offset-2",
+                      "bg-[color:var(--key)] text-white hover:brightness-110 active:scale-[0.98]",
+                    ].join(" ")}
+                    aria-label="미리보기 언어 선택"
+                  >
+                    <Languages className="h-5 w-5" />
+                  </button>
+                </>
+              )}
               {isBgmEnabled && (
                 <button
                   type="button"
