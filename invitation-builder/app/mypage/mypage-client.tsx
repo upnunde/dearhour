@@ -192,17 +192,17 @@ export default function MyPageClient({
                     >
                       <div>
                         <p className="text-sm font-semibold text-[#111]">{payment.product}</p>
-                        <p className="mt-1 text-xs text-[#6b7280]">
+                        <p className="mt-1 text-sm text-[#6b7280]">
                           주문번호 {payment.id} · {payment.date}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-semibold text-[#111]">{payment.amount}</p>
-                        <p className="mt-1 text-xs text-[#6b7280]">{payment.status}</p>
+                        <p className="mt-1 text-sm text-[#6b7280]">{payment.status}</p>
                         {payment.status === "결제 완료" ? (
                           <button
                             type="button"
-                            className="mt-2 inline-flex h-8 items-center rounded-md border border-[#dedede] bg-white px-3 text-xs font-medium text-[#111] hover:bg-[#f7f7f7]"
+                            className="mt-2 inline-flex h-8 items-center rounded-md border border-[#dedede] bg-white px-3 text-sm font-medium text-[#111] hover:bg-[#f7f7f7]"
                             onClick={() => window.alert("환불 요청이 접수되었습니다. 영업일 기준 순차 처리됩니다.")}
                           >
                             환불 요청
@@ -236,8 +236,8 @@ export default function MyPageClient({
                         <video src={item.url} className="h-32 w-full object-cover" controls preload="metadata" />
                       )}
                       <div className="px-2 py-2">
-                        <p className="truncate text-[11px] text-[#4b5563]">{item.fileName}</p>
-                        <p className="mt-0.5 text-[10px] text-[#9ca3af]">
+                        <p className="truncate text-sm text-[#4b5563]">{item.fileName}</p>
+                        <p className="mt-0.5 text-sm text-[#9ca3af]">
                           {item.uploadedAt} · {item.invitationId}
                         </p>
                       </div>

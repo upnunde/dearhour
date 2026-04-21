@@ -47,14 +47,14 @@ function DesktopNav({
           <>
             <Link
               href="/mypage"
-              className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-xs font-medium text-on-surface-20 hover:bg-slate-50"
+              className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-sm font-medium text-on-surface-20 hover:bg-slate-50"
             >
               마이페이지
             </Link>
             <button
               type="button"
               onClick={() => void onSignOut()}
-              className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-xs font-medium text-on-surface-20 hover:bg-slate-50"
+              className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-sm font-medium text-on-surface-20 hover:bg-slate-50"
             >
               로그아웃
             </button>
@@ -62,7 +62,7 @@ function DesktopNav({
         ) : (
           <Link
             href="/login"
-            className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-xs font-medium text-on-surface-20 hover:bg-slate-50"
+            className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-sm font-medium text-on-surface-20 hover:bg-slate-50"
           >
             {authState === "loading" ? "로그인 확인중" : "로그인"}
           </Link>
@@ -103,14 +103,14 @@ function MobileNavPanel({
             <>
               <Link
                 href="/mypage"
-                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-3 text-xs font-medium text-on-surface-20 hover:bg-slate-50"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-3 text-sm font-medium text-on-surface-20 hover:bg-slate-50"
                 onClick={onNavigate}
               >
                 마이페이지
               </Link>
               <button
                 type="button"
-                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-3 text-xs font-medium text-on-surface-20 hover:bg-slate-50"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-3 text-sm font-medium text-on-surface-20 hover:bg-slate-50"
                 onClick={async () => {
                   await onSignOut();
                   onNavigate();
@@ -122,7 +122,7 @@ function MobileNavPanel({
           ) : (
             <Link
               href="/login"
-              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-3 text-xs font-medium text-on-surface-20 hover:bg-slate-50"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-3 text-sm font-medium text-on-surface-20 hover:bg-slate-50"
               onClick={onNavigate}
             >
               {authState === "loading" ? "로그인 확인중" : "로그인"}

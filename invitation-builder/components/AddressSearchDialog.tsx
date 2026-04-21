@@ -87,7 +87,7 @@ export default function AddressSearchDialog({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="도로명/지번/건물명으로 검색"
-            className="pl-9 pr-3 text-[13px] h-10 bg-[color:var(--surface-10)]"
+            className="pl-9 pr-3 text-sm h-10 bg-[color:var(--surface-10)]"
           />
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-30">🔍</span>
         </div>
@@ -100,7 +100,7 @@ export default function AddressSearchDialog({
                 type="button"
                 onClick={() => setSelected(addr)}
                 className={[
-                  "px-3 py-3 text-left text-[13px] rounded-lg border transition-colors",
+                  "px-3 py-3 text-left text-sm rounded-lg border transition-colors",
                   selected === addr
                     ? "bg-slate-50 border-black/20 text-on-surface-10"
                     : "bg-transparent border-transparent text-on-surface-20 hover:bg-slate-50",
@@ -111,10 +111,10 @@ export default function AddressSearchDialog({
             ))}
 
             {loading && (
-              <div className="px-3 py-6 text-center text-[13px] text-on-surface-30">검색 중…</div>
+              <div className="px-3 py-6 text-center text-sm text-on-surface-30">검색 중…</div>
             )}
             {!loading && query.replace(/\u3000/g, " ").replace(/\s+/g, " ").trim().length > 0 && results.length === 0 && (
-              <div className="px-3 py-6 text-center text-[13px] text-on-surface-30">검색 결과가 없어요.</div>
+              <div className="px-3 py-6 text-center text-sm text-on-surface-30">검색 결과가 없어요.</div>
             )}
           </div>
         </div>

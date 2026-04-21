@@ -135,7 +135,7 @@ export default function GuestPhotoUploadForm({
           void handleUploadSubmit();
         }}
         disabled={isSubmitting || senderName.trim().length === 0}
-        className="h-10 w-full px-3 rounded-lg text-[13px] font-medium shadow-none bg-[color:var(--key)] text-white hover:brightness-95 disabled:bg-[color:var(--key)]/40 disabled:text-white"
+        className="h-10 w-full px-3 rounded-lg text-sm font-medium shadow-none bg-[color:var(--key)] text-white hover:brightness-95 disabled:bg-[color:var(--key)]/40 disabled:text-white"
       >
         {isSubmitting ? "업로드 중..." : "사진, 영상 선택하기"}
       </Button>

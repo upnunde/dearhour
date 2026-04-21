@@ -99,7 +99,7 @@ export default function HomePage() {
             <div className="mt-8 grid gap-4 md:grid-cols-4">
               {processSteps.map((step) => (
                 <div key={step.step} className="rounded-xl bg-white/10 p-4">
-                  <p className="text-xs font-semibold text-white/70">{step.step}</p>
+                  <p className="text-sm font-semibold text-white/70">{step.step}</p>
                   <p className="mt-2 text-base font-semibold">{step.title}</p>
                   <p className="mt-2 text-sm text-white/80">{step.desc}</p>
                 </div>

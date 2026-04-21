@@ -96,7 +96,7 @@ const KEY_COLOR_PRESETS: KeyColorPreset[] = [
 const PREVIEW_TYPOGRAPHY_GUIDE = {
   subtitle: "text-[22px] font-medium text-on-surface-10",
   body: "whitespace-pre-line leading-[26px]",
-  subtitle2: "text-[13px] font-normal text-on-surface-30 opacity-70 [font-stretch:120%]",
+  subtitle2: "text-sm font-normal text-on-surface-30 opacity-70 [font-stretch:120%]",
 } as const;
 
 
@@ -133,7 +133,7 @@ function getTransportModeIcon(modeRaw: string): React.ReactNode {
   if (mode.includes("버스")) return <Bus className={cls} strokeWidth={1.8} />;
   if (mode.includes("지하철")) {
     return (
-      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-current text-[10px] font-semibold leading-none">
+      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-current text-sm font-semibold leading-none">
         M
       </span>
     );
@@ -770,9 +770,9 @@ import { useBuilderUiStore } from "@/store/useBuilderUiStore";
 function NaverMapPreviewFallbackHint({ visible }: { visible: boolean }) {
   if (!visible) return null;
   return (
-    <p className="mx-auto mt-2 max-w-[340px] rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-left text-xs leading-snug text-amber-950">
+    <p className="mx-auto mt-2 max-w-[340px] rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-left text-sm leading-snug text-amber-950">
       <span className="font-semibold">네이버 지도</span> 미리보기: NCP Maps → Application에서 <span className="font-semibold">Static Map</span> 을 켜고,{" "}
-      <code className="rounded bg-white/80 px-1 py-0.5 text-[10px]">.env.local</code> 에{" "}
+      <code className="rounded bg-white/80 px-1 py-0.5 text-sm">.env.local</code> 에{" "}
       <span className="font-semibold">NAVER_MAPS_CLIENT_SECRET</span> 과 Client ID(
       <span className="font-semibold">NEXT_PUBLIC_NAVER_MAPS_CLIENT_ID</span>)를 넣은 뒤 <span className="font-semibold">개발 서버를 재시작</span>
       하세요. (브라우저 JS SDK 대신 서버에서 정적 지도를 받아 표시합니다.)
@@ -1008,14 +1008,14 @@ function VenueSearchField({
                     onClick={() => handlePick(venue)}
                   >
                     <span className="text-sm text-on-surface-10">{venue.name}</span>
-                    <span className="text-xs text-on-surface-30">{venue.area}</span>
-                    <span className="text-xs text-on-surface-30/80">{venue.address}</span>
+                    <span className="text-sm text-on-surface-30">{venue.area}</span>
+                    <span className="text-sm text-on-surface-30/80">{venue.address}</span>
                   </button>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="px-3 py-2 text-xs text-on-surface-30">
+            <p className="px-3 py-2 text-sm text-on-surface-30">
               일치하는 예식장이 없습니다.
             </p>
           )}
@@ -1095,7 +1095,7 @@ function BankLogo({ name }: { name: (typeof BANK_OPTIONS)[number] }) {
           unoptimized
         />
       ) : (
-        <span className="text-xs font-semibold text-on-surface-20">{name.charAt(0)}</span>
+        <span className="text-sm font-semibold text-on-surface-20">{name.charAt(0)}</span>
       )}
     </div>
   );
@@ -1295,7 +1295,7 @@ function IntroEditor({
                   title={`타입 ${opt.label}`}
                 >
                   <IntroLayoutSwatch variant={opt.value} />
-                  <span className="text-xs font-medium text-on-surface-20">
+                  <span className="text-sm font-medium text-on-surface-20">
                     타입 {opt.label}
                   </span>
                 </button>
@@ -3337,21 +3337,21 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
           return (
             <article className="w-full flex flex-col text-left">
               {renderPhoto(p.image, _role, 'w-full aspect-[3/4]')}
-              <div className="mt-4 text-[10px] tracking-[0.28em] uppercase text-on-surface-30 font-medium">
+              <div className="mt-4 text-sm tracking-[0.28em] uppercase text-on-surface-30 font-medium">
                 {roleLabelEn}
               </div>
               <div className="mt-1.5 text-[18px] leading-[1.2] font-semibold text-on-surface-10 tracking-[0.02em] break-keep">
                 {name}
               </div>
               {(birthDate || mbti) && (
-                <div className="mt-2 text-[11px] leading-[16px] text-on-surface-20 tabular-nums">
+                <div className="mt-2 text-sm leading-[16px] text-on-surface-20 tabular-nums">
                   {birthDate}
                   {birthDate && mbti && <span className="mx-1 text-on-surface-30">·</span>}
                   <span className="tracking-[0.1em]">{mbti}</span>
                 </div>
               )}
               {traits && (
-                <p className="mt-1.5 text-[11px] leading-[16px] text-on-surface-30 break-keep">
+                <p className="mt-1.5 text-sm leading-[16px] text-on-surface-30 break-keep">
                   {traits}
                 </p>
               )}
@@ -3380,7 +3380,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                   {renderPhoto(p.image, _role, 'w-[160px] aspect-[3/4]')}
                 </div>
                 <div className={`flex-1 min-w-0 flex flex-col justify-center ${textAlign}`}>
-                  <div className="text-[10px] tracking-[0.28em] uppercase text-on-surface-30 font-medium">
+                  <div className="text-sm tracking-[0.28em] uppercase text-on-surface-30 font-medium">
                     {roleLabelEn}
                   </div>
                   <div className="mt-2.5 text-[20px] leading-[1.2] font-medium text-on-surface-10 tracking-[0.03em] break-keep">
@@ -3420,7 +3420,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
               <div className="w-[58%]">
                 {renderPhoto(p.image, _role, 'w-full aspect-[3/4]')}
               </div>
-              <div className="mt-5 text-[10px] tracking-[0.32em] uppercase text-on-surface-30 font-medium">
+              <div className="mt-5 text-sm tracking-[0.32em] uppercase text-on-surface-30 font-medium">
                 {roleLabelEn}
               </div>
               <div className="mt-2 text-[24px] leading-[1.1] font-medium text-on-surface-10 tracking-[0.06em] break-keep">
@@ -3458,7 +3458,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
               {renderPhoto(p.image, _role, 'w-full aspect-[3/4]')}
               <div className="mt-4 flex items-end justify-between gap-4">
                 <div className="flex-1 min-w-0">
-                  <div className="text-[10px] tracking-[0.28em] uppercase text-on-surface-30 font-medium">
+                  <div className="text-sm tracking-[0.28em] uppercase text-on-surface-30 font-medium">
                     {roleLabelEn}
                   </div>
                   <div className="mt-1.5 text-[24px] leading-[1.1] font-medium text-on-surface-10 tracking-[0.04em] break-keep">
@@ -3550,7 +3550,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
           <div className="max-w-full mx-auto w-full">
             <div className="w-full px-0 text-[0.8125em] text-on-surface-20 text-center pb-[30px]">
               <p className="text-[22px] font-medium text-on-surface-10 mb-1">{introHeading}</p>
-              <p className="text-[13px] font-normal text-on-surface-30 opacity-70 [font-stretch:120%] mb-0">
+              <p className="text-sm font-normal text-on-surface-30 opacity-70 [font-stretch:120%] mb-0">
                 About Us
               </p>
             </div>
@@ -3744,7 +3744,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                       <div className="flex items-center gap-1">
                         {row.parentsInline}
                         <span
-                          className="text-[13px]"
+                          className="text-sm"
                           style={{ color: 'color-mix(in srgb, var(--on-surface-disabled) 60%, var(--on-surface-30) 40%)' }}
                         >
                           의 {row.relation}
@@ -4061,14 +4061,14 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
 
                   {/* 하단 앱 전송 바 (캡처 스타일) */}
                   {appLinks && (
-                    <div className="preview-map-app-links w-full bg-[color:var(--surface-10)] border-t border-black/5 grid grid-cols-3 divide-x divide-black/10 text-[13px]">
+                    <div className="preview-map-app-links w-full bg-[color:var(--surface-10)] border-t border-black/5 grid grid-cols-3 divide-x divide-black/10 text-sm">
                       <a
                         href={appLinks.naver.scheme}
                         onClick={openAppOrWeb(appLinks.naver.scheme, appLinks.naver.web)}
-                        className="h-12 flex items-center justify-center gap-1 text-[13px] text-on-surface-10 min-w-0 px-2"
+                        className="h-12 flex items-center justify-center gap-1 text-sm text-on-surface-10 min-w-0 px-2"
                         style={{ fontSize: "13px" }}
                       >
-                        <span className="w-5 h-5 rounded-md bg-white border border-black/10 flex items-center justify-center text-[13px] font-bold text-green-600">
+                        <span className="w-5 h-5 rounded-md bg-white border border-black/10 flex items-center justify-center text-sm font-bold text-green-600">
                           N
                         </span>
                         {appLinks.naver.label}
@@ -4076,10 +4076,10 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                       <a
                         href={appLinks.kakao.scheme}
                         onClick={openAppOrWeb(appLinks.kakao.scheme, appLinks.kakao.web)}
-                        className="h-12 flex items-center justify-center gap-1 text-[13px] text-on-surface-10 min-w-0 px-2"
+                        className="h-12 flex items-center justify-center gap-1 text-sm text-on-surface-10 min-w-0 px-2"
                         style={{ fontSize: "13px" }}
                       >
-                        <span className="w-5 h-5 rounded-md bg-[#FEE500] border border-black/10 flex items-center justify-center text-[13px] font-black text-black">
+                        <span className="w-5 h-5 rounded-md bg-[#FEE500] border border-black/10 flex items-center justify-center text-sm font-black text-black">
                           K
                         </span>
                         {appLinks.kakao.label}
@@ -4087,10 +4087,10 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                       <a
                         href={appLinks.tmap.scheme}
                         onClick={openAppOrWeb(appLinks.tmap.scheme, appLinks.tmap.web)}
-                        className="h-12 flex items-center justify-center gap-1 text-[13px] text-on-surface-10 min-w-0 px-2"
+                        className="h-12 flex items-center justify-center gap-1 text-sm text-on-surface-10 min-w-0 px-2"
                         style={{ fontSize: "13px" }}
                       >
-                        <span className="w-5 h-5 rounded-md bg-white border border-black/10 flex items-center justify-center text-[13px] font-black text-[#4B6BFF]">
+                        <span className="w-5 h-5 rounded-md bg-white border border-black/10 flex items-center justify-center text-sm font-black text-[#4B6BFF]">
                           T
                         </span>
                         {appLinks.tmap.label}
@@ -4138,7 +4138,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
           </div>
         );
         return (
-          <div className="max-w-full mx-auto w-full text-[13px] text-on-surface-20 space-y-2">
+          <div className="max-w-full mx-auto w-full text-sm text-on-surface-20 space-y-2">
             {noticeTitle}
             <div className="mb-[10px] flex items-center justify-center w-full gap-0">
               {noticeSections.map((section, idx) => {
@@ -4328,7 +4328,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
+                  className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
                   onClick={() => {
                     if (visibleRows < totalRows) {
                       setGalleryGridVisibleRows((prev) => Math.min(prev + 3, totalRows));
@@ -4389,7 +4389,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                           <div className="font-semibold text-[color:var(--on-primary-container)]">{acc.bank || "은행"} {acc.accountNumber || "계좌번호"}</div>
                           <button
                             type="button"
-                            className="h-7 px-2 rounded-md border border-[color:var(--key)]/30 bg-white/70 text-[11px] font-medium text-[color:var(--on-primary-container)] hover:bg-white transition-colors"
+                            className="h-7 px-2 rounded-md border border-[color:var(--key)]/30 bg-white/70 text-sm font-medium text-[color:var(--on-primary-container)] hover:bg-white transition-colors"
                             onClick={() => {
                               const accountNumber = String(acc.accountNumber ?? "").trim();
                               if (!accountNumber) return;
@@ -4475,7 +4475,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-fit rounded-[999px] px-6 h-10 text-[13px] border-transparent bg-[color:var(--key)] text-white hover:bg-[color:var(--key-dark)] hover:text-white"
+                    className="w-fit rounded-[999px] px-6 h-10 text-sm border-transparent bg-[color:var(--key)] text-white hover:bg-[color:var(--key-dark)] hover:text-white"
                     onClick={() => setGuestbookComposerOpen(true)}
                   >
                     축하글 작성하기
@@ -4483,7 +4483,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                 </div>
                 <div className="rounded-xl border border-border bg-white h-[160px] flex flex-col items-center justify-center gap-4 text-on-surface-30">
                   <Pencil className="h-6 w-6" />
-                  <p className="text-[13px] leading-none">첫 번째 축하 글을 남겨주세요</p>
+                  <p className="text-sm leading-none">첫 번째 축하 글을 남겨주세요</p>
                 </div>
               </>
             ) : (
@@ -4491,7 +4491,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-fit rounded-lg px-4 h-10 text-[13px] border-transparent bg-[color:var(--key)] text-white hover:bg-[color:var(--key-dark)] hover:text-white"
+                  className="w-fit rounded-lg px-4 h-10 text-sm border-transparent bg-[color:var(--key)] text-white hover:bg-[color:var(--key-dark)] hover:text-white"
                   onClick={() => setGuestbookComposerOpen(true)}
                 >
                   축하메시지 남기기
@@ -4509,7 +4509,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                         {entry.name || "작성자"}
                       </span>
                       {showCreatedAt && getEntryDateText(entry) && (
-                        <span className="text-[11px] text-on-surface-30 leading-none mt-0.5">
+                        <span className="text-sm text-on-surface-30 leading-none mt-0.5">
                           {getEntryDateText(entry)}
                         </span>
                       )}
@@ -4531,7 +4531,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                         >
                           <button
                             type="button"
-                            className="w-full h-8 px-3 text-left text-[12px] text-on-surface-20 hover:bg-slate-50"
+                            className="w-full h-8 px-3 text-left text-sm text-on-surface-20 hover:bg-slate-50"
                             onClick={() => {
                               setGuestbookEditingEntryId(entryId);
                               setGuestbookDraftName(String(entry.name ?? ""));
@@ -4546,7 +4546,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                           </button>
                           <button
                             type="button"
-                            className="w-full h-8 px-3 text-left text-[12px] text-red-600 hover:bg-red-50"
+                            className="w-full h-8 px-3 text-left text-sm text-red-600 hover:bg-red-50"
                             onClick={() => {
                               setGuestbookDeleteTargetEntryId(entryId);
                               setGuestbookDeletePassword("");
@@ -4635,7 +4635,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                         placeholder="축하 메시지를 입력해 주세요."
                         className="min-h-[200px] max-h-[400px] resize-none shadow-none"
                       />
-                      <div className="text-[12px] text-on-surface-30 text-right">{draftMessageLength}/200</div>
+                      <div className="text-sm text-on-surface-30 text-right">{draftMessageLength}/200</div>
                     </div>
                     <div className="space-y-1">
                       <Input
@@ -4649,11 +4649,11 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                         className="shadow-none"
                       />
                       {guestbookComposerPasswordError ? (
-                        <p className="text-[12px] text-destructive leading-relaxed text-right">
+                        <p className="text-sm text-destructive leading-relaxed text-right">
                           {guestbookComposerPasswordError}
                         </p>
                       ) : (
-                        <p className="text-[12px] text-on-surface-30 leading-relaxed text-right">
+                        <p className="text-sm text-on-surface-30 leading-relaxed text-right">
                           수정/삭제 시 필요해요.
                         </p>
                       )}
@@ -4662,14 +4662,14 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-9 px-4 text-[12px]"
+                        className="h-9 px-4 text-sm"
                         onClick={closeGuestbookComposer}
                       >
                         취소
                       </Button>
                       <Button
                         type="button"
-                        className="h-9 px-4 text-[12px]"
+                        className="h-9 px-4 text-sm"
                         disabled={!guestbookDraftMessage.trim() || !guestbookDraftPassword.trim()}
                         onClick={() => {
                           const message = guestbookDraftMessage.trim();
@@ -4736,20 +4736,20 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                       className="shadow-none"
                     />
                     {!!guestbookDeletePasswordError && (
-                      <p className="text-[12px] text-red-600 mt-1">{guestbookDeletePasswordError}</p>
+                      <p className="text-sm text-red-600 mt-1">{guestbookDeletePasswordError}</p>
                     )}
                     <div className="pt-1 flex justify-end gap-2">
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-9 px-4 text-[12px]"
+                        className="h-9 px-4 text-sm"
                         onClick={closeGuestbookDeleteDialog}
                       >
                         취소
                       </Button>
                       <Button
                         type="button"
-                        className="h-9 px-4 text-[12px] bg-red-600 hover:bg-red-700"
+                        className="h-9 px-4 text-sm bg-red-600 hover:bg-red-700"
                         disabled={!guestbookDeletePassword.trim()}
                         onClick={() => {
                           const targetEntry = orderedEntries.find((it: GuestbookEntry) => String(it.id) === guestbookDeleteTargetEntryId);
@@ -4842,7 +4842,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
               <button
                 type="button"
                 onClick={() => setRsvpPreviewModalOpen(true)}
-                className="h-10 w-full rounded-lg bg-[color:var(--key)] text-white text-[13px] font-semibold inline-flex items-center justify-center hover:brightness-95 transition"
+                className="h-10 w-full rounded-lg bg-[color:var(--key)] text-white text-sm font-semibold inline-flex items-center justify-center hover:brightness-95 transition"
               >
                 참석여부 전달하기
               </button>
@@ -4959,7 +4959,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                   shouldRestoreEditorScrollRef.current = true;
                   setMobilePanel('editor');
                 }}
-                className="h-9 shrink-0 rounded-lg border border-[color:var(--key)] bg-white px-3 text-[12px] font-semibold text-[color:var(--key)] hover:bg-[color:var(--primary-container)]/30"
+                className="h-9 shrink-0 rounded-lg border border-[color:var(--key)] bg-white px-3 text-sm font-semibold text-[color:var(--key)] hover:bg-[color:var(--primary-container)]/30"
               >
                 {mobilePanel === 'editor' ? '미리보기 전환' : '에디터 전환'}
               </button>
@@ -5043,7 +5043,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                       type="button"
                       onClick={() => handleMobileTabSelect(item.id)}
                       className={cn(
-                        'h-8 rounded-lg border px-3 text-[12px] font-medium whitespace-nowrap transition-colors',
+                        'h-8 rounded-lg border px-3 text-sm font-medium whitespace-nowrap transition-colors',
                         isDisabled
                           ? 'border-border text-on-surface-disabled bg-[color:var(--surface-20)]'
                           : isActive
@@ -5085,7 +5085,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
             return (
               <div key={navGroup} className="w-full flex flex-col items-center mb-1">
                 <div className="w-full text-center mb-1.5 px-0.5">
-                  <span className="text-[12px] font-bold text-on-surface-30 leading-tight block">{title}</span>
+                  <span className="text-sm font-bold text-on-surface-30 leading-tight block">{title}</span>
                 </div>
                 <div className="flex flex-col gap-y-2 w-full items-center">
                   {itemsForNav.map((item) => {
@@ -5116,7 +5116,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                             strokeWidth={1.5}
                           />
                           <span
-                            className={`text-[12px] font-normal text-center leading-tight px-0.5 ${isDisabled ? "text-on-surface-30" : isActive ? "text-[color:var(--key)]" : "text-on-surface-20"}`}
+                            className={`text-sm font-normal text-center leading-tight px-0.5 ${isDisabled ? "text-on-surface-30" : isActive ? "text-[color:var(--key)]" : "text-on-surface-20"}`}
                           >
                             {item.label}
                           </span>
@@ -5141,7 +5141,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                           strokeWidth={1.5}
                         />
                         <span
-                          className={`text-[12px] font-normal text-center leading-tight px-0.5 ${isDisabled ? "text-on-surface-30" : isActive ? "text-[color:var(--key)]" : "text-on-surface-20"}`}
+                          className={`text-sm font-normal text-center leading-tight px-0.5 ${isDisabled ? "text-on-surface-30" : isActive ? "text-[color:var(--key)]" : "text-on-surface-20"}`}
                         >
                           {item.label}
                         </span>
@@ -5191,7 +5191,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                               setEditingInvitationTabName("");
                             }
                           }}
-                          className="h-8 w-[120px] rounded-lg border border-[color:var(--key)] bg-white px-2 text-xs font-semibold text-[color:var(--key)] outline-none"
+                          className="h-8 w-[120px] rounded-lg border border-[color:var(--key)] bg-white px-2 text-sm font-semibold text-[color:var(--key)] outline-none"
                         />
                       ) : (
                         <div
@@ -5202,7 +5202,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                           <button
                             type="button"
                             onClick={() => switchInvitationTab(tab.id)}
-                            className={`h-full px-3 text-xs font-semibold ${isActive ? "text-[color:var(--key)]" : "text-on-surface-20"}`}
+                            className={`h-full px-3 text-sm font-semibold ${isActive ? "text-[color:var(--key)]" : "text-on-surface-20"}`}
                           >
                             {tab.label}
                           </button>
@@ -5241,7 +5241,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                 <button
                   type="button"
                   onClick={addInvitationTab}
-                  className="inline-flex h-8 shrink-0 items-center rounded-lg border border-dashed border-border bg-white px-3 text-xs font-semibold text-on-surface-20 hover:bg-slate-50"
+                  className="inline-flex h-8 shrink-0 items-center rounded-lg border border-dashed border-border bg-white px-3 text-sm font-semibold text-on-surface-20 hover:bg-slate-50"
                 >
                   + 탭 추가
                 </button>
@@ -5264,7 +5264,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                     {idx > 0 && (
                       <div className="border-t border-dashed border-[color:var(--border-20)] my-2 mt-10" />
                     )}
-                    <div className="text-[13px] font-bold text-on-surface-30 pt-2">
+                    <div className="text-sm font-bold text-on-surface-30 pt-2">
                       {SIDEBAR_NAV_SECTIONS.find((s) => s.navGroup === item.navGroup)?.title ?? ""}
                     </div>
                   </>
@@ -5400,7 +5400,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                             <span
                               role="button"
                               tabIndex={0}
-                              className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                              className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                               onClick={() => updateData('theme.scrollEffect', !data.theme.scrollEffect)}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
@@ -5447,7 +5447,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                     title={`타입 ${opt.label}`}
                                   >
                                     <IntroTypeSwatch variant={opt.value} />
-                                    <span className="text-[11px] font-medium text-on-surface-20">
+                                    <span className="text-sm font-medium text-on-surface-20">
                                       타입 {opt.label}
                                     </span>
                                   </button>
@@ -5500,7 +5500,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                               unoptimized
                                             />
                                           ) : (
-                                            <span className="text-[12px] text-on-surface-40 text-center px-2">
+                                            <span className="text-sm text-on-surface-40 text-center px-2">
                                               기본 이미지 없음
                                             </span>
                                           )}
@@ -5508,7 +5508,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                         <div className="h-full flex flex-col justify-start gap-2 min-w-0">
                                           <button
                                             type="button"
-                                            className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
+                                            className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
                                             onClick={() => setMainPresetPickerOpen(true)}
                                           >
                                             이미지 고르기
@@ -5545,7 +5545,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                         <div className="h-full flex flex-col justify-start gap-2 min-w-0">
                                           <button
                                             type="button"
-                                            className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
+                                            className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
                                             onClick={() => mainImageInputRef.current?.click()}
                                           >
                                             {hasMainImage ? '사진 변경' : '사진 업로드'}
@@ -5554,14 +5554,14 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                             <>
                                               <button
                                                 type="button"
-                                                className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
+                                                className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
                                                 onClick={() => openImageEditor({ kind: 'single' }, data.main.image)}
                                               >
                                                 이미지 편집
                                               </button>
                                               <button
                                                 type="button"
-                                                className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-30 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
+                                                className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-30 hover:bg-slate-50 whitespace-nowrap leading-none w-fit"
                                                 onClick={() => {
                                                   if (mainImageObjectUrlRef.current) {
                                                     URL.revokeObjectURL(mainImageObjectUrlRef.current);
@@ -5613,7 +5613,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                     }}
                                     touchMode={isTabletViewport}
                                   />
-                                  <div className="text-[12px] text-on-surface-30">* 이미지를 한 번에 최대 4장까지 선택해서 추가할 수 있어요.</div>
+                                  <div className="text-sm text-on-surface-30">* 이미지를 한 번에 최대 4장까지 선택해서 추가할 수 있어요.</div>
                                   <input
                                     ref={mainMultiBatchInputRef}
                                     type="file"
@@ -5682,7 +5682,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                     title={opt.label}
                                   >
                                     <MainFrameSwatch variant={opt.id} />
-                                    <span className="text-[11px] font-medium text-on-surface-20">
+                                    <span className="text-sm font-medium text-on-surface-20">
                                       {opt.label}
                                     </span>
                                   </button>
@@ -5734,7 +5734,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                             <span
                               role="button"
                               tabIndex={0}
-                              className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                              className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                               onClick={() => updateData('main.blackAndWhite', !(data.main.blackAndWhite ?? false))}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
@@ -5778,7 +5778,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                             <button
                               type="button"
                               onClick={() => updateData('main.titleColor', '#333333')}
-                              className="flex-shrink-0 text-[12px] text-on-surface-30 hover:text-on-surface-10 transition-colors"
+                              className="flex-shrink-0 text-sm text-on-surface-30 hover:text-on-surface-10 transition-colors"
                             >
                               초기화
                             </button>
@@ -5809,7 +5809,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                             <button
                               type="button"
                               onClick={() => updateData('main.bodyColor', '#666666')}
-                              className="flex-shrink-0 text-[12px] text-on-surface-30 hover:text-on-surface-10 transition-colors"
+                              className="flex-shrink-0 text-sm text-on-surface-30 hover:text-on-surface-10 transition-colors"
                             >
                               초기화
                             </button>
@@ -5885,7 +5885,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                     className="absolute inset-0 w-full opacity-0 cursor-pointer"
                                   />
                                 </div>
-                                <div className="text-xs text-on-surface-30/70">
+                                <div className="text-sm text-on-surface-30/70">
                                   {formatTime(currentTime)} / {formatTime(duration)}
                                 </div>
                               </div>
@@ -5933,7 +5933,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                         updateData('music.selectedId', t.id);
                                       }}
                                       className={[
-                                        'h-10 rounded-lg px-4 text-[13px] font-medium transition-colors border text-left truncate',
+                                        'h-10 rounded-lg px-4 text-sm font-medium transition-colors border text-left truncate',
                                         disabled
                                           ? 'bg-input/50 text-on-surface-30/70 border-input cursor-not-allowed'
                                           : selected
@@ -5974,7 +5974,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                               {data.music?.uploadedFile ? (
                                 <button
                                   type="button"
-                                  className="w-full h-10 rounded-lg border border-border bg-white px-4 flex items-center gap-3 text-[13px] text-on-surface-10 text-left"
+                                  className="w-full h-10 rounded-lg border border-border bg-white px-4 flex items-center gap-3 text-sm text-on-surface-10 text-left"
                                   onClick={() => fileInputRef.current?.click()}
                                   aria-label="첨부 음원 변경"
                                 >
@@ -6008,14 +6008,14 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                     <Button
                                       type="button"
                                       variant="outline"
-                                      className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
+                                      className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
                                       onClick={() => fileInputRef.current?.click()}
                                     >
                                       파일 선택
                                     </Button>
                                   </div>
 
-                                  <span className="text-[12px] text-on-surface-30">
+                                  <span className="text-sm text-on-surface-30">
                                     mp3, wav, m4a 형식의 음원 파일을 첨부할 수 있습니다.
                                   </span>
                                 </>
@@ -6029,7 +6029,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                             <span
                               role="button"
                               tabIndex={0}
-                              className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                              className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                               onClick={() => updateData('music.isLoop', !data.music?.isLoop)}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') updateData('music.isLoop', !data.music?.isLoop);
@@ -6114,7 +6114,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                               <span
                                 role="button"
                                 tabIndex={0}
-                                className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                                className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                                 onClick={() => updateData('contact.useThumbnail', !(data.contact?.useThumbnail ?? true))}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter' || e.key === ' ') {
@@ -6153,7 +6153,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                     </div>
                                   </div>
                                   <div className="flex min-w-0 w-full flex-col items-start gap-2 sm:flex-1 sm:max-w-[min(100%,200px)] sm:flex-nowrap">
-                                    <label className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit max-w-full whitespace-nowrap leading-none flex-shrink-0">
+                                    <label className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit max-w-full whitespace-nowrap leading-none flex-shrink-0">
                                       사진 업로드
                                       <input
                                         type="file"
@@ -6172,7 +6172,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                       isServiceProvidedThumbnailUrl(String(data.contact.thumbnail))) && (
                                       <button
                                         type="button"
-                                        className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none flex-shrink-0 w-fit max-w-full"
+                                        className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none flex-shrink-0 w-fit max-w-full"
                                         onClick={() => setShareThumbPresetPickerFor('contact')}
                                       >
                                         이미지 고르기
@@ -6183,14 +6183,14 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                       <div className="flex items-center gap-2">
                                         <button
                                           type="button"
-                                          className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit max-w-full whitespace-nowrap leading-none flex-shrink-0"
+                                          className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit max-w-full whitespace-nowrap leading-none flex-shrink-0"
                                           onClick={() => openImageEditor({ kind: 'contactThumbnail' }, data.contact.thumbnail)}
                                         >
                                           편집
                                         </button>
                                         <button
                                           type="button"
-                                          className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit max-w-full whitespace-nowrap leading-none flex-shrink-0"
+                                          className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit max-w-full whitespace-nowrap leading-none flex-shrink-0"
                                           onClick={() => updateData('contact.thumbnail', '')}
                                         >
                                           삭제
@@ -6206,7 +6206,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                             <span
                               role="button"
                               tabIndex={0}
-                              className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                              className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                               onClick={() => {
                                 const nextChecked = !isSectionEnabled('contactParents');
                                 setSectionEnabled((prev) => ({ ...prev, contactParents: nextChecked }));
@@ -6346,7 +6346,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                     <select
                                       value={hourValue}
                                       onChange={(e) => setHourValue(e.target.value)}
-                                      className="h-10 w-full min-w-0 rounded-lg border border-input bg-white px-3 py-1 text-[13px] text-on-surface-20 appearance-none transition-colors outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50"
+                                      className="h-10 w-full min-w-0 rounded-lg border border-input bg-white px-3 py-1 text-sm text-on-surface-20 appearance-none transition-colors outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50"
                                     >
                                       <option value="">시 선택</option>
                                       {(["오전", "오후"] as const).flatMap((p) =>
@@ -6371,7 +6371,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                       value={hourValue ? minuteValue : ""}
                                       onChange={(e) => setMinuteValue(e.target.value)}
                                       disabled={!hourValue}
-                                      className="h-10 w-full min-w-0 rounded-lg border border-input bg-white px-3 py-1 text-[13px] text-on-surface-20 appearance-none transition-colors outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50"
+                                      className="h-10 w-full min-w-0 rounded-lg border border-input bg-white px-3 py-1 text-sm text-on-surface-20 appearance-none transition-colors outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50"
                                     >
                                       <option value="">분 선택</option>
                                       {["00", "10", "20", "30", "40", "50"].map((mm) => (
@@ -6433,7 +6433,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                               <span
                                 role="button"
                                 tabIndex={0}
-                                className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                                className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                                 onClick={() =>
                                   updateData(
                                     'eventInfo.showDday',
@@ -6468,7 +6468,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                               <span
                                 role="button"
                                 tabIndex={0}
-                                className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                                className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                                 onClick={() =>
                                   updateData('greeting.useImage', !((data.greeting?.useImage) ?? true))
                                 }
@@ -6502,7 +6502,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                     <div className="h-full flex flex-col justify-start gap-2">
                                       <button
                                         type="button"
-                                        className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none flex-shrink-0 w-fit self-start"
+                                        className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none flex-shrink-0 w-fit self-start"
                                         onClick={() => setGreetingThumbnailPickerOpen(true)}
                                       >
                                         이미지 고르기
@@ -6538,7 +6538,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                             setGreetingEntries(next);
                                           }}
                                           aria-label="인사말 삭제"
-                                          className="flex-shrink-0 text-[12px] text-on-surface-30 hover:text-on-surface-10 transition-colors"
+                                          className="flex-shrink-0 text-sm text-on-surface-30 hover:text-on-surface-10 transition-colors"
                                         >
                                           삭제
                                         </button>
@@ -6576,7 +6576,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                     <Button
                                       type="button"
                                       variant="outline"
-                                      className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
+                                      className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
                                       onClick={() => {
                                         setGreetingEditorIndex(idx);
                                         setGreetingSampleTab('general');
@@ -6684,7 +6684,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                             : 'border-[color:var(--border-10)] hover:border-[color:var(--border-20)]',
                                         ].join(' ')}
                                       >
-                                        <div className="text-[13px] font-semibold text-on-surface-10 text-center mb-2">
+                                        <div className="text-sm font-semibold text-on-surface-10 text-center mb-2">
                                           {sample.title}
                                         </div>
                                         <div className="text-[14px] leading-relaxed text-on-surface-10 text-center whitespace-pre-wrap">
@@ -6786,7 +6786,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                 <Button
                                   type="button"
                                   variant="outline"
-                                  className="h-10 px-3 rounded-lg text-[13px] flex-shrink-0 border-[color:var(--border-30)] bg-white text-on-surface-20 hover:bg-slate-50 hover:text-on-surface-10"
+                                  className="h-10 px-3 rounded-lg text-sm flex-shrink-0 border-[color:var(--border-30)] bg-white text-on-surface-20 hover:bg-slate-50 hover:text-on-surface-10"
                                   onClick={() => {
                                     setLocationSearchOpen(true);
                                   }}
@@ -6818,7 +6818,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                         const next = transportItems.filter((_, i) => i !== idx);
                                         setTransportItems(next);
                                       }}
-                                      className="flex-shrink-0 text-[12px] text-on-surface-30 hover:text-on-surface-10 transition-colors"
+                                      className="flex-shrink-0 text-sm text-on-surface-30 hover:text-on-surface-10 transition-colors"
                                     >
                                       삭제
                                     </button>
@@ -6855,7 +6855,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                     setSelectedTransportMode('');
                                   }}
                                   disabled={availableTransportModeOptions.length === 0}
-                                  className="group/button inline-flex h-10 w-max max-w-full min-w-0 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-background bg-clip-padding px-4 pr-9 text-center text-[13px] font-medium text-foreground whitespace-nowrap appearance-none select-none transition-all outline-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:border-input dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
+                                  className="group/button inline-flex h-10 w-max max-w-full min-w-0 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-background bg-clip-padding px-4 pr-9 text-center text-sm font-medium text-foreground whitespace-nowrap appearance-none select-none transition-all outline-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:border-input dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
                                 >
                                   <option value="">
                                     {availableTransportModeOptions.length > 0 ? "+ 교통수단 추가" : "추가 가능한 항목 없음"}
@@ -6918,7 +6918,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                               />
                             </FormItem>
                             <FormItem label="옵션">
-                              <div className="flex flex-col gap-1 text-[13px] text-on-surface-20">
+                              <div className="flex flex-col gap-1 text-sm text-on-surface-20">
                                 <div className="flex items-center gap-2">
                                   <CircleCheckbox
                                     checked={((data.accounts?.displayMode ?? 'accordion') === 'expanded')}
@@ -6952,7 +6952,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                       updateData('accounts.list', next);
                                     }}
                                     placeholder="예: 신랑측 계좌"
-                                    className="text-[13px]"
+                                    className="text-sm"
                                   />
                                   <button
                                     type="button"
@@ -6960,7 +6960,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                       const next = data.accounts.list.filter((_, i) => i !== index);
                                       updateData('accounts.list', next);
                                     }}
-                                    className="flex-shrink-0 text-[12px] text-on-surface-30 hover:text-on-surface-10 transition-colors"
+                                    className="flex-shrink-0 text-sm text-on-surface-30 hover:text-on-surface-10 transition-colors"
                                   >
                                     삭제
                                   </button>
@@ -6975,7 +6975,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                         setBankSearch('');
                                         setBankModalIndex(index);
                                       }}
-                                      className="h-10 w-[120px] flex-shrink-0 rounded-lg border border-input bg-white px-3 py-1 text-[13px] flex items-center justify-between text-left text-on-surface-20 hover:bg-slate-50"
+                                      className="h-10 w-[120px] flex-shrink-0 rounded-lg border border-input bg-white px-3 py-1 text-sm flex items-center justify-between text-left text-on-surface-20 hover:bg-slate-50"
                                     >
                                       <span className={item.bank ? 'truncate' : 'truncate text-on-surface-30'}>
                                         {item.bank || '은행 선택'}
@@ -6990,7 +6990,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                         updateData('accounts.list', next);
                                       }}
                                       placeholder="계좌번호"
-                                      className="text-[13px] basis-0 flex-[2] min-w-0"
+                                      className="text-sm basis-0 flex-[2] min-w-0"
                                     />
                                   </div>
                                 </FormItem>
@@ -7005,7 +7005,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                       updateData('accounts.list', next);
                                     }}
                                     placeholder="예금주"
-                                    className="text-[13px] flex-1"
+                                    className="text-sm flex-1"
                                   />
                                 </FormItem>
                               </div>
@@ -7018,7 +7018,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                               <Button
                                 type="button"
                                 variant="outline"
-                                className="rounded-lg px-4 h-10 text-[13px]"
+                                className="rounded-lg px-4 h-10 text-sm"
                                 onClick={() => {
                                   if (data.accounts.list.length >= 6) return;
                                   const next = [
@@ -7055,7 +7055,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                       value={bankSearch}
                                       onChange={(e) => setBankSearch(e.target.value)}
                                       placeholder="은행검색"
-                                      className="pl-9 pr-3 text-[13px] h-10 bg-[color:var(--surface-10)]"
+                                      className="pl-9 pr-3 text-sm h-10 bg-[color:var(--surface-10)]"
                                     />
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-30">
                                       🔍
@@ -7064,7 +7064,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                 </div>
 
                                 <div className="max-h-[360px] overflow-y-auto pr-1">
-                                  <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-[13px] text-on-surface-20">
+                                  <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm text-on-surface-20">
                                     {BANK_OPTIONS.filter((name) =>
                                       name.toLowerCase().includes(bankSearch.toLowerCase().trim()),
                                     ).map((name) => (
@@ -7117,7 +7117,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                 max={50}
                                 touchMode={isTabletViewport}
                               />
-                              <div className="text-[12px] text-on-surface-30">
+                              <div className="text-sm text-on-surface-30">
                                 * 이미지를 한 번에 최대 50장까지 선택해서 추가할 수 있어요.
                               </div>
                             </div>
@@ -7162,7 +7162,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                   <span
                                     role="button"
                                     tabIndex={0}
-                                    className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                                    className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                                     onClick={() => updateData('gallery.autoSlide', !(data.gallery?.autoSlide))}
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter' || e.key === ' ') {
@@ -7231,7 +7231,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                   <span
                                     role="button"
                                     tabIndex={0}
-                                    className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                                    className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                                     onClick={() => updateData('gallery.useLoadMore', !((data.gallery?.useLoadMore ?? true)))}
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter' || e.key === ' ') {
@@ -7248,7 +7248,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                   <span
                                     role="button"
                                     tabIndex={0}
-                                    className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                                    className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                                     onClick={() => updateData('gallery.enableDetailView', !((data.gallery?.enableDetailView ?? true)))}
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter' || e.key === ' ') {
@@ -7306,7 +7306,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                           updateNoticeSections(nextSections);
                                         }}
                                         aria-label="안내사항 삭제"
-                                        className="flex-shrink-0 text-[12px] text-on-surface-30 hover:text-on-surface-10 transition-colors"
+                                        className="flex-shrink-0 text-sm text-on-surface-30 hover:text-on-surface-10 transition-colors"
                                       >
                                         삭제
                                       </button>
@@ -7343,7 +7343,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                   <Button
                                     type="button"
                                     variant="outline"
-                                    className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
+                                    className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
                                     onClick={() => {
                                       setNoticeEditorTabIndex(idx);
                                       setNoticeSampleTab('general');
@@ -7449,7 +7449,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                             : 'border-[color:var(--border-10)] hover:border-[color:var(--border-20)]',
                                         ].join(' ')}
                                       >
-                                        <div className="text-[13px] font-semibold text-on-surface-10 text-center mb-2">
+                                        <div className="text-sm font-semibold text-on-surface-10 text-center mb-2">
                                           {sample.title}
                                         </div>
                                         <div className="text-[14px] leading-relaxed text-on-surface-10 text-center whitespace-pre-wrap">
@@ -7504,7 +7504,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                               <Button
                                 type="button"
                                 variant="outline"
-                                className="rounded-lg px-4 h-10 text-[13px]"
+                                className="rounded-lg px-4 h-10 text-sm"
                                 onClick={() => {
                                   if (noticeSections.length >= 3) return;
                                   const nextIndex = noticeSections.length;
@@ -7558,7 +7558,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                 placeholder="비밀번호를 입력하세요."
                                 className="shadow-none flex-1"
                               />
-                              <div className="text-[12px] text-on-surface-30">
+                              <div className="text-sm text-on-surface-30">
                                 관리자 비밀번호는 모든 글 관리용 마스터 비밀번호이며, 각 작성자는 글 비밀번호로 본인 글 수정/삭제를 할 수 있습니다.
                               </div>
                             </div>
@@ -7579,7 +7579,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                             <span
                               role="button"
                               tabIndex={0}
-                              className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                              className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                               onClick={() => updateData('guestbook.showCreatedAt', !((data.guestbook?.showCreatedAt ?? true)))}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
@@ -7645,13 +7645,13 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                         playsInline
                                       />
                                     ) : (
-                                      <div className="w-full h-full flex items-center justify-center text-[12px] text-on-surface-30">
+                                      <div className="w-full h-full flex items-center justify-center text-sm text-on-surface-30">
                                         영상 파일이 없습니다.
                                       </div>
                                     )}
                                   </div>
                                   <div className="flex w-full flex-wrap items-center gap-2 sm:h-full sm:w-auto sm:flex-col sm:items-start sm:justify-start">
-                                    <label className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50">
+                                    <label className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50">
                                       파일 선택
                                       <input
                                         type="file"
@@ -7669,7 +7669,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                     {!!(data.youtube?.fileUrl ?? '') && (
                                       <button
                                         type="button"
-                                        className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-30 hover:text-on-surface-10 hover:bg-slate-50"
+                                        className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-30 hover:text-on-surface-10 hover:bg-slate-50"
                                         onClick={() => updateData('youtube.fileUrl', '')}
                                       >
                                         삭제
@@ -7693,7 +7693,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                             <span
                               role="button"
                               tabIndex={0}
-                              className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                              className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                               onClick={() => updateData('youtube.isLoop', !(data.youtube?.isLoop))}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
@@ -7744,7 +7744,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                 <Button
                                   type="button"
                                   variant="outline"
-                                  className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
+                                  className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
                                   onClick={() => {
                                     setRsvpSampleTab('general');
                                     setRsvpSelectedSample(null);
@@ -7760,7 +7760,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                             <span
                               role="button"
                               tabIndex={0}
-                              className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                              className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                               onClick={() =>
                                 updateData("rsvp.collectGuestCount", !(data.rsvp?.collectGuestCount ?? true))
                               }
@@ -7788,7 +7788,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                 onChange={(e) => updateData("rsvp.deadline", e.target.value)}
                                 className="shadow-none max-w-[240px]"
                               />
-                              <div className="text-[12px] text-on-surface-30 leading-relaxed">
+                              <div className="text-sm text-on-surface-30 leading-relaxed">
                                 비워 두면 마감일 없이 받습니다.
                               </div>
                             </div>
@@ -7957,7 +7957,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                 <Button
                                   type="button"
                                   variant="outline"
-                                  className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
+                                  className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
                                   onClick={() => {
                                     setGuestUploadSelectedSample(null);
                                     setGuestUploadSampleOpen(true);
@@ -7973,7 +7973,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                               <span
                                 role="button"
                                 tabIndex={0}
-                                className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                                className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                                 onClick={() =>
                                   updateData(
                                     "guestUpload.showAfterEventModal",
@@ -7997,14 +7997,14 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                 />
                                 예식일 이후 모달 띄우기
                               </span>
-                              <div className="text-[12px] text-on-surface-30 leading-relaxed">
+                              <div className="text-sm text-on-surface-30 leading-relaxed">
                                 예식 후 접속한 하객에게 사진 업로드를 바로 할 수 있도록 안내창을 띄웁니다
                               </div>
                             </div>
                           </FormItem>
                           <div className="rounded-2xl bg-[color:var(--surface-20)] px-4 py-3.5 flex items-start gap-3">
                             <AlertCircle className="w-5 h-5 shrink-0 text-on-surface-30 mt-0.5" />
-                            <p className="text-[13px] text-on-surface-30 leading-relaxed">
+                            <p className="text-sm text-on-surface-30 leading-relaxed">
                               기본 제공 용량(2GB)을 초과하는 업로드 용량을 이용할 경우 추가 결제가 발생할 수 있습니다.
                             </p>
                           </div>
@@ -8086,7 +8086,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                             <span
                               role="button"
                               tabIndex={0}
-                              className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                              className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                               onClick={() => updateData('share.useThumbnail', !(data.share?.useThumbnail ?? true))}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
@@ -8122,7 +8122,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                     )}
                                   </div>
                                   <div className="flex w-full flex-col items-start gap-2 sm:h-full sm:w-auto sm:justify-start">
-                                    <label className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit self-start whitespace-nowrap leading-none flex-shrink-0">
+                                    <label className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit self-start whitespace-nowrap leading-none flex-shrink-0">
                                       사진 업로드
                                       <input
                                         type="file"
@@ -8141,7 +8141,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                       isServiceProvidedThumbnailUrl(String(data.share.thumbnail))) && (
                                       <button
                                         type="button"
-                                        className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none flex-shrink-0 w-fit self-start"
+                                        className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-20 hover:bg-slate-50 whitespace-nowrap leading-none flex-shrink-0 w-fit self-start"
                                         onClick={() => setShareThumbPresetPickerFor('share')}
                                       >
                                         이미지 고르기
@@ -8152,14 +8152,14 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                       <>
                                         <button
                                           type="button"
-                                          className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit self-start whitespace-nowrap leading-none flex-shrink-0"
+                                          className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit self-start whitespace-nowrap leading-none flex-shrink-0"
                                           onClick={() => openImageEditor({ kind: 'shareThumbnail' }, data.share.thumbnail)}
                                         >
                                           편집
                                         </button>
                                         <button
                                           type="button"
-                                          className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit self-start whitespace-nowrap leading-none flex-shrink-0"
+                                          className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50 w-fit self-start whitespace-nowrap leading-none flex-shrink-0"
                                           onClick={() => updateData('share.thumbnail', '')}
                                         >
                                           삭제
@@ -8201,7 +8201,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                             <Button
                               type="button"
                               variant="outline"
-                              className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
+                              className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
                               onClick={() => setSharePreviewOpen(true)}
                             >
                               미리보기
@@ -8218,7 +8218,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                               <span
                                 role="button"
                                 tabIndex={0}
-                                className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                                className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                                 onClick={() => updateData('protect.preventCapture', !data.protect?.preventCapture)}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter' || e.key === ' ') updateData('protect.preventCapture', !data.protect?.preventCapture);
@@ -8233,7 +8233,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                               <span
                                 role="button"
                                 tabIndex={0}
-                                className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                                className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                                 onClick={() => updateData('protect.preventZoom', !data.protect?.preventZoom)}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter' || e.key === ' ') updateData('protect.preventZoom', !data.protect?.preventZoom);
@@ -8248,7 +8248,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                               <span
                                 role="button"
                                 tabIndex={0}
-                                className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                                className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                                 onClick={() => updateData('protect.preventDownload', !data.protect?.preventDownload)}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter' || e.key === ' ') updateData('protect.preventDownload', !data.protect?.preventDownload);
@@ -8275,7 +8275,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                 onChange={(e) => updateData("publish.publicStartDate", e.target.value)}
                                 className="shadow-none max-w-[240px]"
                               />
-                              <div className="text-[12px] text-on-surface-30 leading-relaxed">
+                              <div className="text-sm text-on-surface-30 leading-relaxed">
                                 설정한 날짜 0시부터 공개돼요.
                               </div>
                             </div>
@@ -8290,7 +8290,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                               <span
                                 role="button"
                                 tabIndex={0}
-                                className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                                className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                                 onClick={() => updateData("i18n.enabled", !(data.i18n?.enabled ?? false))}
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter" || e.key === " ") {
@@ -8304,7 +8304,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                 />
                                 다국어 지원
                               </span>
-                              <div className="text-[12px] text-on-surface-30 leading-relaxed">
+                              <div className="text-sm text-on-surface-30 leading-relaxed">
                                 기본 제공 국가: 대한민국, 미국, 일본, 중국(간체), 대만(번체), 베트남, 태국. (추가/삭제 불가)
                               </div>
                             </div>
@@ -8313,7 +8313,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                             <span
                               role="button"
                               tabIndex={0}
-                              className="inline-flex items-center gap-2 text-[13px] text-on-surface-20 select-none cursor-pointer"
+                              className="inline-flex items-center gap-2 text-sm text-on-surface-20 select-none cursor-pointer"
                               onClick={() => updateData("i18n.brideFirstInfo", !(data.i18n?.brideFirstInfo ?? false))}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter" || e.key === " ") {
@@ -8566,7 +8566,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
               )}
               {copyToastVisible && (
                 <div className="absolute left-1/2 bottom-6 -translate-x-1/2 z-30 pointer-events-none">
-                  <div className="rounded-full bg-black/85 px-4 py-2 text-[13px] font-medium text-white shadow-lg whitespace-nowrap">
+                  <div className="rounded-full bg-black/85 px-4 py-2 text-sm font-medium text-white shadow-lg whitespace-nowrap">
                     {copyToastMessage}
                   </div>
                 </div>
@@ -8585,20 +8585,20 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
           </div>
           <div className="p-4 sm:p-5 bg-[color:var(--surface-10)] text-[14px] leading-relaxed text-on-surface-20 flex-1 min-h-0 overflow-y-auto">
             {pendingDeleteTab ? `‘${pendingDeleteTab.label}’ 탭을 정말 삭제하시겠어요?` : "탭을 정말 삭제하시겠어요?"}
-            <div className="mt-2 text-[12px] text-on-surface-30">삭제하면 탭 안의 작성 내용도 함께 제거됩니다.</div>
+            <div className="mt-2 text-sm text-on-surface-30">삭제하면 탭 안의 작성 내용도 함께 제거됩니다.</div>
           </div>
           <div className="p-4 border-t border-border bg-white flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
-              className="h-9 px-4 text-[12px]"
+              className="h-9 px-4 text-sm"
               onClick={() => setPendingDeleteTab(null)}
             >
               취소
             </Button>
             <Button
               type="button"
-              className="h-9 px-4 text-[12px] bg-red-600 hover:bg-red-700"
+              className="h-9 px-4 text-sm bg-red-600 hover:bg-red-700"
               onClick={confirmRemoveInvitationTab}
             >
               삭제
@@ -8797,7 +8797,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                     />
                   </div>
                 ) : (
-                  <div className="flex aspect-[1.91/1] w-full items-center justify-center bg-[color:var(--surface-20)] text-[12px] text-on-surface-30">
+                  <div className="flex aspect-[1.91/1] w-full items-center justify-center bg-[color:var(--surface-20)] text-sm text-on-surface-30">
                     썸네일 이미지가 없습니다.
                   </div>
                 ))}
@@ -8805,7 +8805,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                 <p className="text-[14px] font-semibold text-on-surface-10 line-clamp-1">
                   {data.share?.title?.trim() || "모바일 청첩장"}
                 </p>
-                <p className="text-[12px] text-on-surface-20 line-clamp-2">
+                <p className="text-sm text-on-surface-20 line-clamp-2">
                   {data.share?.description?.trim() || "소중한 날에 초대합니다."}
                 </p>
               </div>
@@ -8815,7 +8815,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
             <Button
               type="button"
               variant="outline"
-              className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
+              className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
               onClick={() => setSharePreviewOpen(false)}
             >
               닫기
@@ -8835,7 +8835,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
             <DialogTitle className="text-[16px] font-semibold text-on-surface-10">
               기본 일러스트 썸네일 선택
             </DialogTitle>
-            <div className="text-[12px] text-on-surface-30 mt-1">
+            <div className="text-sm text-on-surface-30 mt-1">
               {shareThumbPresetPickerFor === 'contact'
                 ? '원하는 썸네일을 클릭하면 연락처 섹션 상단 배너로 적용됩니다.'
                 : '원하는 썸네일을 클릭하면 공유(미리보기) 썸네일로 적용됩니다.'}
@@ -8882,7 +8882,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
             <Button
               type="button"
               variant="outline"
-              className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
+              className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
               onClick={() => setShareThumbPresetPickerFor(null)}
             >
               닫기
@@ -8897,7 +8897,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
             <DialogTitle className="text-[16px] font-semibold text-on-surface-10">
               인사말 이미지 선택
             </DialogTitle>
-            <div className="text-[12px] text-on-surface-30 mt-1">
+            <div className="text-sm text-on-surface-30 mt-1">
               원하는 이미지를 클릭하면 인사말 이미지로 적용됩니다.
             </div>
           </div>
@@ -8934,7 +8934,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
             <Button
               type="button"
               variant="outline"
-              className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
+              className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
               onClick={() => setGreetingThumbnailPickerOpen(false)}
             >
               닫기
@@ -8949,7 +8949,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
             <DialogTitle className="text-[16px] font-semibold text-on-surface-10">
               메인 기본 이미지 선택
             </DialogTitle>
-            <div className="text-[12px] text-on-surface-30 mt-1">
+            <div className="text-sm text-on-surface-30 mt-1">
               원하는 이미지를 클릭하면 메인 영역 기본 이미지로 적용됩니다.
             </div>
           </div>
@@ -8991,7 +8991,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
             <Button
               type="button"
               variant="outline"
-              className="h-9 px-3 rounded-lg border border-border bg-white text-[13px] text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
+              className="h-9 px-3 rounded-lg border border-border bg-white text-sm text-on-surface-10 inline-flex items-center cursor-pointer hover:bg-slate-50"
               onClick={() => setMainPresetPickerOpen(false)}
             >
               닫기
@@ -9007,14 +9007,14 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
           </div>
           <div className="p-4 sm:p-5 bg-[color:var(--surface-10)] space-y-4 flex-1 min-h-0 overflow-y-auto">
             <div className="space-y-2">
-              <p className="text-[12px] font-medium text-on-surface-20">구분</p>
+              <p className="text-sm font-medium text-on-surface-20">구분</p>
               <div className="grid grid-cols-2 gap-2">
                 {(['신랑측', '신부측'] as const).map((side) => (
                   <button
                     key={side}
                     type="button"
                     onClick={() => setRsvpPreviewSide(side)}
-                    className={`h-10 rounded-lg border text-[13px] font-medium ${
+                    className={`h-10 rounded-lg border text-sm font-medium ${
                       rsvpPreviewSide === side
                         ? 'border-[color:var(--key)] bg-white text-on-surface-10'
                         : 'border-border bg-white text-on-surface-20'
@@ -9027,14 +9027,14 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
             </div>
 
             <div className="space-y-2">
-              <p className="text-[12px] font-medium text-on-surface-20">참석의사</p>
+              <p className="text-sm font-medium text-on-surface-20">참석의사</p>
               <div className="grid grid-cols-2 gap-2">
                 {(['참석', '불참'] as const).map((intent) => (
                   <button
                     key={intent}
                     type="button"
                     onClick={() => setRsvpPreviewIntent(intent)}
-                    className={`h-10 rounded-lg border text-[13px] font-medium ${
+                    className={`h-10 rounded-lg border text-sm font-medium ${
                       rsvpPreviewIntent === intent
                         ? 'border-[color:var(--key)] bg-white text-on-surface-10'
                         : 'border-border bg-white text-on-surface-20'
@@ -9047,29 +9047,29 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
             </div>
 
             <div className="space-y-2">
-              <p className="text-[12px] font-medium text-on-surface-20">성함</p>
+              <p className="text-sm font-medium text-on-surface-20">성함</p>
               <input
                 value={rsvpPreviewName}
                 onChange={(e) => setRsvpPreviewName(e.target.value)}
                 placeholder="성함을 입력해 주세요"
-                className="h-10 w-full rounded-lg border border-border bg-white px-3 text-[13px] outline-none focus:border-[color:var(--key)]"
+                className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm outline-none focus:border-[color:var(--key)]"
               />
             </div>
 
             {rsvpPreviewIntent === '참석' ? (
               <div className="space-y-2">
-                <p className="text-[12px] font-medium text-on-surface-20">동반 인원 (본인 제외)</p>
+                <p className="text-sm font-medium text-on-surface-20">동반 인원 (본인 제외)</p>
                 <input
                   type="number"
                   min={0}
                   value={rsvpPreviewGuestCount}
                   onChange={(e) => setRsvpPreviewGuestCount(e.target.value)}
-                  className="h-10 w-full rounded-lg border border-border bg-white px-3 text-[13px] outline-none focus:border-[color:var(--key)]"
+                  className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm outline-none focus:border-[color:var(--key)]"
                 />
               </div>
             ) : null}
 
-            <label className="flex items-start gap-2 text-[12px] text-on-surface-20">
+            <label className="flex items-start gap-2 text-sm text-on-surface-20">
               <input
                 type="checkbox"
                 checked={rsvpPreviewPrivacyAgreed}
@@ -9083,14 +9083,14 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
             <Button
               type="button"
               variant="outline"
-              className="h-9 px-3 rounded-lg border-[color:var(--key)] bg-white text-[13px] text-[color:var(--key)] hover:bg-slate-50"
+              className="h-9 px-3 rounded-lg border-[color:var(--key)] bg-white text-sm text-[color:var(--key)] hover:bg-slate-50"
               onClick={() => setRsvpPreviewModalOpen(false)}
             >
               취소
             </Button>
             <Button
               type="button"
-              className="h-9 px-3 rounded-lg bg-[color:var(--key)] hover:brightness-95 text-white text-[13px]"
+              className="h-9 px-3 rounded-lg bg-[color:var(--key)] hover:brightness-95 text-white text-sm"
               disabled={!rsvpPreviewName.trim() || !rsvpPreviewPrivacyAgreed}
               onClick={() => setRsvpPreviewModalOpen(false)}
             >

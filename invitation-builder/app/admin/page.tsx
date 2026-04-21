@@ -28,15 +28,15 @@ export default async function AdminPage() {
 
           <section className="grid gap-3 sm:grid-cols-3">
             <div className="rounded-lg border border-[#ececec] bg-white p-4">
-              <p className="text-xs text-[#6b7280]">전체 회원</p>
+              <p className="text-sm text-[#6b7280]">전체 회원</p>
               <p className="mt-1 text-2xl font-semibold text-[#111]">{userCount.toLocaleString("ko-KR")}</p>
             </div>
             <div className="rounded-lg border border-[#ececec] bg-white p-4">
-              <p className="text-xs text-[#6b7280]">전체 초대장</p>
+              <p className="text-sm text-[#6b7280]">전체 초대장</p>
               <p className="mt-1 text-2xl font-semibold text-[#111]">{invitationCount.toLocaleString("ko-KR")}</p>
             </div>
             <div className="rounded-lg border border-[#ececec] bg-white p-4">
-              <p className="text-xs text-[#6b7280]">결제 완료 건수</p>
+              <p className="text-sm text-[#6b7280]">결제 완료 건수</p>
               <p className="mt-1 text-2xl font-semibold text-[#111]">{paidCount.toLocaleString("ko-KR")}</p>
             </div>
           </section>
@@ -54,13 +54,13 @@ export default async function AdminPage() {
                   >
                     <div>
                       <p className="text-sm font-semibold text-[#111]">{payment.user.email}</p>
-                      <p className="mt-1 text-xs text-[#6b7280]">
+                      <p className="mt-1 text-sm text-[#6b7280]">
                         주문번호 {payment.orderId} · {payment.createdAt.toISOString().slice(0, 10)}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-semibold text-[#111]">{payment.amount.toLocaleString("ko-KR")}원</p>
-                      <p className="mt-1 text-xs text-[#6b7280]">{payment.status}</p>
+                      <p className="mt-1 text-sm text-[#6b7280]">{payment.status}</p>
                     </div>
                   </div>
                 ))

@@ -73,7 +73,7 @@ function PaymentPageContent() {
                     <p className={`mt-1 text-xl font-bold ${selectedDurationId === option.id ? "text-white" : "text-[#111]"}`}>
                       {option.price}
                     </p>
-                    <p className={`mt-1 text-xs ${selectedDurationId === option.id ? "text-white/80" : "text-[#6b7280]"}`}>
+                    <p className={`mt-1 text-sm ${selectedDurationId === option.id ? "text-white/80" : "text-[#6b7280]"}`}>
                       링크 유지 {option.months}개월
                     </p>
                   </button>
@@ -86,7 +86,7 @@ function PaymentPageContent() {
                   <span className="font-semibold text-[#111]">{selectedDuration.months}개월</span>
                 </p>
                 <div className="w-full rounded-lg border border-[#e5e7eb] bg-white p-3">
-                  <p className="mb-2 text-xs font-semibold text-[#374151]">이벤트 코드</p>
+                  <p className="mb-2 text-sm font-semibold text-[#374151]">이벤트 코드</p>
                   <div className="flex flex-wrap gap-2">
                     <input
                       value={eventCode}
@@ -111,11 +111,11 @@ function PaymentPageContent() {
                     </button>
                   </div>
                   {appliedEventCode ? (
-                    <p className="mt-2 text-xs text-emerald-700">
+                    <p className="mt-2 text-sm text-emerald-700">
                       {appliedEventCode} 적용됨 · -{discountAmount.toLocaleString("ko-KR")}원
                     </p>
                   ) : (
-                    <p className="mt-2 text-xs text-[#6b7280]">예시 코드: DEARHOUR2000</p>
+                    <p className="mt-2 text-sm text-[#6b7280]">예시 코드: DEARHOUR2000</p>
                   )}
                 </div>
                 <button

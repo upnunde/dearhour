@@ -38,6 +38,8 @@
   --text-heading-section--line-height: var(--ds-lh-heading-section);
   --text-heading-page: var(--ds-text-heading-page);
   --text-heading-page--line-height: var(--ds-lh-heading-page);
+  --text-input: var(--ds-text-input);
+  --text-input--line-height: var(--ds-lh-input);
 
   /* Font weight 토큰 */
   --font-weight-regular: 400;
@@ -146,16 +148,19 @@
 :root {
   /* ========================================= */
   /* 디자인 시스템 v0.2: Typography 원본 스펙      */
-  /*  - 본문 16/400, 서브 14, 캡션 12              */
+  /*  - 본문 16/400, 서브 14 (floor: UI에서 14 미만 금지)  */
+  /*  - 입력 필드: 15 고정                          */
   /*  - 헤더 계층(B): block 20 / card 24 / section 32 / page 48 */
-  /*  - 라인하이트는 가능하면 4배수(16/20/28/32/40/56) */
+  /*  - 라인하이트는 가능하면 4배수(20/24/28/32/40/56) */
   /* ========================================= */
-  --ds-text-caption: 12px;
-  --ds-lh-caption: 16px;
+  --ds-text-caption: 14px;   /* 14 floor 원칙에 따라 sub와 동일 크기 */
+  --ds-lh-caption: 20px;
   --ds-text-sub: 14px;
   --ds-lh-sub: 20px;
   --ds-text-body: 16px;
   --ds-lh-body: 24px;
+  --ds-text-input: 15px;     /* 입력/텍스트 필드 전용 고정 크기 */
+  --ds-lh-input: 24px;
   --ds-text-heading-block: 20px;
   --ds-lh-heading-block: 28px;
   --ds-text-heading-card: 24px;

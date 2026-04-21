@@ -55,7 +55,7 @@ function Row({
       onClick={onClick}
       className="w-full flex items-center justify-between gap-3"
     >
-      <span className="w-[90px] flex-shrink-0 text-[13px] font-medium text-[#45556C] mt-0 text-left">
+      <span className="w-[90px] flex-shrink-0 text-sm font-medium text-[#45556C] mt-0 text-left">
         {stateLabel}
       </span>
       <div

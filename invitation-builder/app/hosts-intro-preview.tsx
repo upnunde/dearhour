@@ -213,7 +213,7 @@ function HostsIntroPreviewSoloB({ base }: { base: HostsIntroPreviewBase }) {
         </span>
       </div>
       {hasValidDate && (
-        <p className="text-[10px] tracking-[0.35em] uppercase opacity-70" style={{ color: bodyColor }}>
+        <p className="text-sm tracking-[0.35em] uppercase opacity-70" style={{ color: bodyColor }}>
           {weekdayKo}요일
         </p>
       )}
@@ -333,7 +333,7 @@ function HostsIntroPreviewSoloD({ base }: { base: HostsIntroPreviewBase }) {
   return (
     <div className="w-full max-w-[340px] mx-auto flex flex-col items-stretch text-center gap-5">
       <div className="flex flex-row items-center justify-center gap-2 px-1">
-        <p className="text-[13px] flex-1 text-left leading-snug break-keep" style={{ color: bodyColor }}>
+        <p className="text-sm flex-1 text-left leading-snug break-keep" style={{ color: bodyColor }}>
           {firstName}
         </p>
         <div className="flex flex-col items-center justify-end shrink-0 px-1 min-w-[52px]">
@@ -345,7 +345,7 @@ function HostsIntroPreviewSoloD({ base }: { base: HostsIntroPreviewBase }) {
             {dd}
           </span>
         </div>
-        <p className="text-[13px] flex-1 text-right leading-snug break-keep" style={{ color: bodyColor }}>
+        <p className="text-sm flex-1 text-right leading-snug break-keep" style={{ color: bodyColor }}>
           {secondName}
         </p>
       </div>
@@ -633,7 +633,7 @@ function HostsIntroPreviewHeroI({ base, hero }: { base: HostsIntroPreviewBase; h
       <div className="max-w-[340px] mx-auto w-full h-fit px-4 pt-[60px] pb-[40px]">
         <div className="grid w-full grid-cols-[1fr_auto_1fr] items-end gap-0 text-center">
           <div className="flex min-w-0 flex-col items-center gap-2">
-            <p className="text-[13px] font-light tracking-[0.3em]" style={subtleColor}>
+            <p className="text-sm font-light tracking-[0.3em]" style={subtleColor}>
               {firstRoleEn}
             </p>
             <p className="text-[28px] font-extralight leading-[0.92] tracking-[4px] pl-0" style={{ color: titleColor }}>
@@ -642,7 +642,7 @@ function HostsIntroPreviewHeroI({ base, hero }: { base: HostsIntroPreviewBase; h
           </div>
           <div className="mb-0 w-px self-stretch opacity-70" style={dividerColor} aria-hidden />
           <div className="flex min-w-0 flex-col items-center gap-2">
-            <p className="text-[13px] font-light tracking-[0.3em]" style={subtleColor}>
+            <p className="text-sm font-light tracking-[0.3em]" style={subtleColor}>
               {secondRoleEn}
             </p>
             <p className="text-[28px] font-extralight leading-[0.92] tracking-[4px] pl-0" style={{ color: titleColor }}>
@@ -671,7 +671,7 @@ function HostsIntroPreviewSoloI({ base }: { base: HostsIntroPreviewBase }) {
     <div className="w-full max-w-[340px] mx-auto px-4 pt-8 pb-6 flex flex-col items-center text-center">
       <div className="grid w-full grid-cols-[1fr_auto_1fr] items-end gap-4">
         <div className="flex min-w-0 flex-col items-center gap-3">
-          <p className="text-[11px] font-light tracking-[0.28em]" style={subtleColor}>
+          <p className="text-sm font-light tracking-[0.28em]" style={subtleColor}>
             {firstRoleEn}
           </p>
           <p className="text-[52px] font-light leading-[0.92] tracking-[0.15em] pl-[0.15em]" style={{ color: titleColor }}>
@@ -680,7 +680,7 @@ function HostsIntroPreviewSoloI({ base }: { base: HostsIntroPreviewBase }) {
         </div>
         <div className="mb-2 h-[90px] w-px opacity-70" style={dividerColor} aria-hidden />
         <div className="flex min-w-0 flex-col items-center gap-3">
-          <p className="text-[11px] font-light tracking-[0.28em]" style={subtleColor}>
+          <p className="text-sm font-light tracking-[0.28em]" style={subtleColor}>
             {secondRoleEn}
           </p>
           <p className="text-[52px] font-light leading-[0.92] tracking-[0.15em] pl-[0.15em]" style={{ color: titleColor }}>

@@ -106,12 +106,12 @@ export default async function LoginPage({
           </div>
 
           {errorMessage ? (
-            <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {errorMessage}
             </p>
           ) : null}
 
-          <p className="mt-6 text-center text-xs leading-relaxed text-[#9ca3af]">
+          <p className="mt-6 text-center text-sm leading-relaxed text-[#9ca3af]">
             로그인 시 서비스 이용약관과 개인정보 처리방침에 동의한 것으로
             간주됩니다.
           </p>
