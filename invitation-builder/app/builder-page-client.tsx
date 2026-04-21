@@ -772,7 +772,7 @@ function NaverMapPreviewFallbackHint({ visible }: { visible: boolean }) {
   return (
     <p className="mx-auto mt-2 max-w-[340px] rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-left text-sm leading-snug text-amber-950">
       <span className="font-semibold">네이버 지도</span> 미리보기: NCP Maps → Application에서 <span className="font-semibold">Static Map</span> 을 켜고,{" "}
-      <code className="rounded bg-white/80 px-1 py-0.5 text-sm">.env.local</code> 에{" "}
+      <code className="rounded bg-white/80 px-1 py-1 text-sm">.env.local</code> 에{" "}
       <span className="font-semibold">NAVER_MAPS_CLIENT_SECRET</span> 과 Client ID(
       <span className="font-semibold">NEXT_PUBLIC_NAVER_MAPS_CLIENT_ID</span>)를 넣은 뒤 <span className="font-semibold">개발 서버를 재시작</span>
       하세요. (브라우저 JS SDK 대신 서버에서 정적 지도를 받아 표시합니다.)
@@ -5030,7 +5030,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
       />
 
       {isTabletViewport && mobilePanel === 'editor' && (
-        <div className="bg-white border-b border-border px-3 py-2.5">
+        <div className="bg-white border-b border-border px-3 py-3">
           <div className="flex items-center gap-2">
             <div className="flex-1 min-w-0 overflow-x-auto no-scrollbar">
               <div className="flex items-center gap-2 w-max">
@@ -5067,7 +5067,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
         <aside
           ref={sidebarRef}
           className={cn(
-            "w-[100px] flex-shrink-0 bg-white border-r border-border flex flex-col items-center py-6 z-20 overflow-y-auto no-scrollbar",
+            "w-24 flex-shrink-0 bg-white border-r border-border flex flex-col items-center py-6 z-20 overflow-y-auto no-scrollbar",
             isTabletViewport && "hidden",
           )}
         >
@@ -5084,7 +5084,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                       : otherOptionItems;
             return (
               <div key={navGroup} className="w-full flex flex-col items-center mb-1">
-                <div className="w-full text-center mb-1.5 px-0.5">
+                <div className="w-full text-center mb-2 px-0">
                   <span className="text-sm font-bold text-on-surface-30 leading-tight block">{title}</span>
                 </div>
                 <div className="flex flex-col gap-y-2 w-full items-center">
@@ -5098,7 +5098,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                           key={item.id}
                           {...wrapperProps}
                           data-sidebar-item-id={item.id}
-                          className={`${wrapperProps.className} relative flex flex-col items-center justify-center gap-y-1 w-[80px] min-h-[64px] py-1 rounded-lg shadow-none cursor-grab active:cursor-grabbing ${
+                          className={`${wrapperProps.className} relative flex flex-col items-center justify-center gap-y-1 w-20 min-h-[64px] py-1 rounded-lg shadow-none cursor-grab active:cursor-grabbing ${
                             isDisabled
                               ? "opacity-50 text-on-surface-30 hover:bg-slate-100"
                               : `${isActive ? "bg-slate-100" : "text-on-surface-20 hover:bg-slate-100"}`
@@ -5116,7 +5116,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                             strokeWidth={1.5}
                           />
                           <span
-                            className={`text-sm font-normal text-center leading-tight px-0.5 ${isDisabled ? "text-on-surface-30" : isActive ? "text-[color:var(--key)]" : "text-on-surface-20"}`}
+                            className={`text-sm font-normal text-center leading-tight px-0 ${isDisabled ? "text-on-surface-30" : isActive ? "text-[color:var(--key)]" : "text-on-surface-20"}`}
                           >
                             {item.label}
                           </span>
@@ -5128,7 +5128,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                         key={item.id}
                         onClick={() => handleSidebarSelect(item.id)}
                         data-sidebar-item-id={item.id}
-                        className={`flex flex-col items-center justify-center gap-y-1 w-[80px] min-h-[64px] py-1 rounded-lg cursor-pointer transition-colors shadow-none ${
+                        className={`flex flex-col items-center justify-center gap-y-1 w-20 min-h-[64px] py-1 rounded-lg cursor-pointer transition-colors shadow-none ${
                           isDisabled
                             ? "opacity-50 text-on-surface-30 hover:bg-slate-100"
                             : isActive
@@ -5141,7 +5141,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                           strokeWidth={1.5}
                         />
                         <span
-                          className={`text-sm font-normal text-center leading-tight px-0.5 ${isDisabled ? "text-on-surface-30" : isActive ? "text-[color:var(--key)]" : "text-on-surface-20"}`}
+                          className={`text-sm font-normal text-center leading-tight px-0 ${isDisabled ? "text-on-surface-30" : isActive ? "text-[color:var(--key)]" : "text-on-surface-20"}`}
                         >
                           {item.label}
                         </span>
@@ -5439,7 +5439,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                     type="button"
                                     onClick={() => updateData('main.introType', opt.value)}
                                     className={cn(
-                                      'flex flex-col items-center gap-1.5 rounded-lg p-1.5 transition-[color,background-color,outline-color,outline-offset]',
+                                      'flex flex-col items-center gap-2 rounded-lg p-2 transition-[color,background-color,outline-color,outline-offset]',
                                       active
                                         ? 'bg-slate-50 outline outline-1 outline-offset-2 outline-[color:var(--on-surface-10)]'
                                         : 'outline-none ring-1 ring-transparent hover:bg-slate-50',
@@ -5674,7 +5674,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                     type="button"
                                     onClick={() => updateData('main.imageFrame', opt.id)}
                                     className={cn(
-                                      'flex flex-col items-center gap-1.5 rounded-lg p-1.5 transition-[color,background-color,outline-color,outline-offset]',
+                                      'flex flex-col items-center gap-2 rounded-lg p-2 transition-[color,background-color,outline-color,outline-offset]',
                                       active
                                         ? 'bg-slate-50 outline outline-1 outline-offset-2 outline-[color:var(--on-surface-10)]'
                                         : 'outline-none ring-1 ring-transparent hover:bg-slate-50',
@@ -8002,8 +8002,8 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                               </div>
                             </div>
                           </FormItem>
-                          <div className="rounded-2xl bg-[color:var(--surface-20)] px-4 py-3.5 flex items-start gap-3">
-                            <AlertCircle className="w-5 h-5 shrink-0 text-on-surface-30 mt-0.5" />
+                          <div className="rounded-2xl bg-[color:var(--surface-20)] px-4 py-4 flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 shrink-0 text-on-surface-30 mt-1" />
                             <p className="text-sm text-on-surface-30 leading-relaxed">
                               기본 제공 용량(2GB)을 초과하는 업로드 용량을 이용할 경우 추가 결제가 발생할 수 있습니다.
                             </p>
@@ -8801,7 +8801,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                     썸네일 이미지가 없습니다.
                   </div>
                 ))}
-              <div className="p-4 flex flex-col gap-1.5 text-left">
+              <div className="p-4 flex flex-col gap-2 text-left">
                 <p className="text-[14px] font-semibold text-on-surface-10 line-clamp-1">
                   {data.share?.title?.trim() || "모바일 청첩장"}
                 </p>
@@ -8962,7 +8962,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                   <button
                     key={`main-preset-${t.id}`}
                     type="button"
-                    className="flex w-full max-w-[168px] flex-col items-center gap-1.5"
+                    className="flex w-full max-w-[168px] flex-col items-center gap-2"
                     onClick={() => {
                       updateData('main.presetImage', t.url);
                       setMainPresetPickerOpen(false);
@@ -9074,7 +9074,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                 type="checkbox"
                 checked={rsvpPreviewPrivacyAgreed}
                 onChange={(e) => setRsvpPreviewPrivacyAgreed(e.target.checked)}
-                className="mt-0.5 h-4 w-4 accent-[color:var(--key)]"
+                className="mt-1 h-4 w-4 accent-[color:var(--key)]"
               />
               <span>개인정보 수집 및 이용에 동의합니다.</span>
             </label>
