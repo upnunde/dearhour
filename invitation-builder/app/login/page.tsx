@@ -65,7 +65,7 @@ export default async function LoginPage({
       case "provider":
         return "지원하지 않는 로그인 방식입니다.";
       case "missing_env":
-        return "서버 환경변수 설정이 누락되었습니다. 운영자에게 문의해 주세요.";
+        return "배포 서버에 Supabase 공개 환경변수가 없습니다. 호스팅(Vercel 등)에 NEXT_PUBLIC_SUPABASE_URL 과 NEXT_PUBLIC_SUPABASE_ANON_KEY 를 설정한 뒤 재배포해 주세요.";
       case "oauth":
         return "소셜 로그인 요청 중 문제가 발생했습니다. 다시 시도해 주세요.";
       case "callback":
