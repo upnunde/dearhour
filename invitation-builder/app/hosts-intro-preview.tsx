@@ -1,5 +1,6 @@
 "use client";
 
+import NextImage from "next/image";
 import React, { useMemo } from "react";
 import type { CardData } from "@/features/invitation-builder/model/types";
 import { parseEventDateLocal } from "@/lib/designer-calendar";
@@ -40,8 +41,8 @@ function buildHostsIntroBase(data: CardData): HostsIntroPreviewBase {
     ? `${eventDate!.getFullYear()}년 ${eventDate!.getMonth() + 1}월 ${eventDate!.getDate()}일 ${weekdayKo}요일`
     : eventDateText;
   const summaryTimeLine = (data.eventInfo.time ?? "").trim();
-  const venueName = String((data.eventInfo as any)?.venueName ?? "").trim();
-  const venueDetail = String((data.eventInfo as any)?.venueDetail ?? "").trim();
+  const venueName = (data.eventInfo.venueName ?? "").trim();
+  const venueDetail = (data.eventInfo.venueDetail ?? "").trim();
   const venueDisplay = venueName
     ? venueDetail && !venueName.includes(venueDetail)
       ? `${venueName} ${venueDetail}`
@@ -367,7 +368,7 @@ function HostsIntroPreviewHeroE({ base, hero }: { base: HostsIntroPreviewBase; h
     <div className="w-full flex flex-col items-stretch pt-0">
       <div className="mx-3 sm:mx-4 my-4 border border-gray-200">
         <div className="px-8 pt-16 pb-5 flex flex-col items-center text-center">
-          <img
+          <NextImage
             src="/flower14.svg"
             alt=""
             width={40}
@@ -703,8 +704,8 @@ function HostsIntroPreviewSoloI({ base }: { base: HostsIntroPreviewBase }) {
  * 한 타입의 마진·패딩을 바꿔도 다른 타입 JSX에는 손대지 않으면 영향 없음.
  */
 export function HostsIntroPreview({ data, hero }: { data: CardData; hero?: React.ReactNode }) {
-  const introType = ((data.main as any).introType ?? "A") as "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I";
-  const imageFrame = String((data.main as any)?.imageFrame ?? "full");
+  const introType = data.main.introType ?? "A";
+  const imageFrame = data.main.imageFrame ?? "full";
   const base = useMemo(() => buildHostsIntroBase(data), [data]);
 
   if (hero) {

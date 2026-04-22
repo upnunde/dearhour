@@ -71,22 +71,22 @@ export function DesignerCalendarPreview({
   const weekLabels = layout === "A" ? WEEKDAY_LETTERS_EN : WEEKDAY_KO;
   const cellText = useThemeColor ? "text-[#413830]" : "text-neutral-700";
   const eventDayBg = useThemeColor ? "bg-[color:var(--key)]" : "bg-neutral-600";
+  const dayCellBaseClass =
+    "w-10 h-10 shrink-0 rounded-[999px] p-2.5 inline-flex flex-col items-center justify-center text-center text-sm font-normal font-sans";
 
   const cellShell = (cell: DesignerCalendarCell) => {
-    const base =
-      "w-10 h-10 shrink-0 rounded-[999px] p-2.5 inline-flex flex-col items-center justify-center text-center text-sm font-normal font-sans";
     if (!cell.day) {
-      return <div key={cell.key} className={base} aria-hidden />;
+      return <div key={cell.key} className={dayCellBaseClass} aria-hidden />;
     }
     if (cell.isEvent) {
       return (
-        <div key={cell.key} className={`${base} ${eventDayBg} text-white`}>
+        <div key={cell.key} className={`${dayCellBaseClass} ${eventDayBg} text-white`}>
           <span>{cell.day}</span>
         </div>
       );
     }
     return (
-      <div key={cell.key} className={`${base} ${cellText}`}>
+      <div key={cell.key} className={`${dayCellBaseClass} ${cellText}`}>
         <span>{cell.day}</span>
       </div>
     );
@@ -95,7 +95,7 @@ export function DesignerCalendarPreview({
   const weekRow = weekLabels.map((label, index) => (
     <div
       key={`w-${index}-${label}`}
-      className={`w-10 h-10 shrink-0 rounded-[999px] p-2.5 inline-flex flex-col items-center justify-center text-center text-sm font-normal font-sans ${cellText}`}
+      className={`${dayCellBaseClass} ${cellText}`}
     >
       <span>{label}</span>
     </div>
