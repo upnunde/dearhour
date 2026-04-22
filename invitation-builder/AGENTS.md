@@ -29,6 +29,7 @@ Once an external integration is marked Completed here, do NOT ask the user to re
 | Maps (static preview) | Naver Cloud Platform Maps | Completed | `app/api/naver-map-preview/route.ts`, `lib/naver-maps-credentials.ts` |
 | Geocoding | Naver Cloud Platform Geocoding | Completed | `app/api/geocode/route.ts` |
 | Address search | Domestic address API | Completed | `app/api/address-search/route.ts`, `components/AddressSearchDialog.tsx` |
+| 결제 (워터마크 제거 등) | Toss Payments (결제위젯 v2) | Completed | 클라이언트: `app/payment/page.tsx`, `app/payment/toss-watermark-checkout.tsx`; 승인: `app/api/payments/toss/prepare/route.ts`, `app/api/payments/toss/confirm/route.ts`; 콜백 UI: `app/payment/success/page.tsx`, `app/payment/fail/page.tsx`; DB: `prisma/schema.prisma` `Payment`. Env: `NEXT_PUBLIC_TOSS_PAYMENTS_CLIENT_KEY`, `TOSS_PAYMENTS_WIDGET_SECRET_KEY` |
 
 ## External Integration Policy (All Future Integrations)
 

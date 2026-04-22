@@ -55,6 +55,8 @@ npx prisma db push
 
 개발자용 한 줄 요약: 카카오 Redirect URI = `https://<SUPABASE_PROJECT_REF>.supabase.co/auth/v1/callback` · Supabase Providers → Kakao에 REST API 키(Client ID)와 Secret · Redirect URLs에 `<APP_URL>/auth/callback`
 
+6. (선택) 토스페이먼츠 워터마크 제거 결제: `.env.local` 에 `NEXT_PUBLIC_TOSS_PAYMENTS_CLIENT_KEY`, `TOSS_PAYMENTS_WIDGET_SECRET_KEY` 를 넣습니다. [토스 개발자센터](https://developers.tosspayments.com/) 결제위젯 연동 키(테스트/라이브)를 사용합니다. 배포(Vercel)에도 동일 변수를 등록하고, DB에 `Payment` 스키마가 반영됐는지 확인하세요.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

@@ -1,38 +1,36 @@
- "use client";
+"use client";
 
 import Link from "next/link";
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import AppHeader from "@/components/AppHeader";
+import TossWatermarkCheckout from "@/app/payment/toss-watermark-checkout";
+import {
+  WATERMARK_DURATION_OPTIONS,
+  computeWatermarkAmount,
+  type WatermarkDurationId,
+} from "@/lib/payments/watermark-pricing";
 
 const plans = [
   { name: "기본", price: "무료", desc: "초대장 생성 및 공유" },
   { name: "프리미엄", price: "9,900원", desc: "도메인/통계/추가 커스텀 기능" },
 ];
 
-const watermarkDurationOptions = [
-  { id: "3m", label: "3달", months: 3, price: "9,900원" },
-  { id: "5m", label: "5달", months: 5, price: "14,900원" },
-  { id: "12m", label: "1년", months: 12, price: "29,000원" },
-] as const;
-
 function PaymentPageContent() {
   const searchParams = useSearchParams();
   const invitationId = searchParams.get("invitationId") ?? "";
   const intent = searchParams.get("intent") ?? "";
-  const [selectedDurationId, setSelectedDurationId] = useState<(typeof watermarkDurationOptions)[number]["id"]>("3m");
+  const [selectedDurationId, setSelectedDurationId] = useState<WatermarkDurationId>("3m");
   const [eventCode, setEventCode] = useState("");
   const [appliedEventCode, setAppliedEventCode] = useState<string | null>(null);
   const selectedDuration = useMemo(
-    () => watermarkDurationOptions.find((option) => option.id === selectedDurationId) ?? watermarkDurationOptions[0],
+    () => WATERMARK_DURATION_OPTIONS.find((option) => option.id === selectedDurationId) ?? WATERMARK_DURATION_OPTIONS[0],
     [selectedDurationId],
   );
-  const baseAmount = useMemo(
-    () => Number(selectedDuration.price.replace(/[^0-9]/g, "")),
-    [selectedDuration.price],
+  const { amount: finalAmount } = useMemo(
+    () => computeWatermarkAmount(selectedDurationId, appliedEventCode),
+    [selectedDurationId, appliedEventCode],
   );
-  const discountAmount = appliedEventCode ? Math.min(2000, baseAmount) : 0;
-  const finalAmount = Math.max(0, baseAmount - discountAmount);
 
   return (
     <>
@@ -41,7 +39,7 @@ function PaymentPageContent() {
         <div className="mx-auto w-full max-w-4xl">
           <h1 className="text-2xl font-semibold text-[#111]">결제</h1>
           <p className="mt-2 text-sm text-[#6b7280]">
-            추후 PG 연동을 고려한 기본 결제 페이지 구조입니다.
+            토스페이먼츠 결제위젯으로 안전하게 결제합니다. 테스트 시 토스 개발자센터의 <strong>테스트 키</strong>를 환경변수에 넣어 주세요.
           </p>
           {invitationId && (
             <div className="mt-4 rounded-lg border border-[#e7dcc8] bg-[#faf6ee] px-4 py-3 text-sm text-[#5e4a2f]">
@@ -58,7 +56,7 @@ function PaymentPageContent() {
               </p>
 
               <div className="mt-4 grid gap-3 md:grid-cols-3">
-                {watermarkDurationOptions.map((option) => (
+                {WATERMARK_DURATION_OPTIONS.map((option) => (
                   <button
                     key={option.id}
                     type="button"
@@ -71,7 +69,7 @@ function PaymentPageContent() {
                   >
                     <p className="text-sm font-semibold">{option.label}</p>
                     <p className={`mt-1 text-xl font-bold ${selectedDurationId === option.id ? "text-white" : "text-[#111]"}`}>
-                      {option.price}
+                      {option.priceLabel}
                     </p>
                     <p className={`mt-1 text-sm ${selectedDurationId === option.id ? "text-white/80" : "text-[#6b7280]"}`}>
                       링크 유지 {option.months}개월
@@ -112,19 +110,27 @@ function PaymentPageContent() {
                   </div>
                   {appliedEventCode ? (
                     <p className="mt-2 text-sm text-emerald-700">
-                      {appliedEventCode} 적용됨 · -{discountAmount.toLocaleString("ko-KR")}원
+                      {appliedEventCode} 적용됨 · 최대 2,000원 할인 반영
                     </p>
                   ) : (
                     <p className="mt-2 text-sm text-[#6b7280]">예시 코드: DEARHOUR2000</p>
                   )}
                 </div>
-                <button
-                  type="button"
-                  className="inline-flex h-10 items-center rounded-lg bg-[#111] px-4 text-sm font-semibold text-white hover:bg-black"
-                >
-                  {finalAmount.toLocaleString("ko-KR")}원 결제하기
-                </button>
               </div>
+
+              {!invitationId ? (
+                <p className="mt-4 text-sm text-amber-800">
+                  마이페이지에서 초대장의 <strong>워터마크 제거</strong>를 눌러 이 페이지로 들어오면 해당 초대장에 결제가 연결됩니다.
+                </p>
+              ) : (
+                <TossWatermarkCheckout
+                  key={`${invitationId}-${selectedDurationId}-${appliedEventCode ?? ""}`}
+                  invitationId={invitationId}
+                  durationId={selectedDurationId}
+                  promoCode={appliedEventCode}
+                  finalAmount={finalAmount}
+                />
+              )}
             </section>
           ) : (
             <div className="mt-8 grid gap-4 md:grid-cols-2">
