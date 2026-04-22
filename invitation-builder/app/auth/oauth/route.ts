@@ -44,6 +44,12 @@ export async function GET(request: NextRequest) {
     provider: provider as "google" | "kakao",
     options: {
       redirectTo: callbackUrl,
+      // 카카오 KOE205(invalid_scope): Supabase 기본 요청에 account_email 등이 포함될 수 있어
+      // 동의항목에 없는 scope가 나가지 않도록 닉네임·프로필만 명시한다.
+      // Supabase Kakao Provider에서 "Allow users without an email" 도 켜 두는 것을 권장.
+      ...(provider === "kakao"
+        ? { scopes: "profile_nickname profile_image" }
+        : {}),
       // 구글은 refresh token을 강제로 받기 위해 prompt=consent + access_type=offline 필요
       queryParams:
         provider === "google"
