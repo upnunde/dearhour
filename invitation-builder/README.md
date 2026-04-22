@@ -49,19 +49,11 @@ npx prisma db push
 
 ### Kakao login (Kakao Developers + Supabase)
 
-앱 라우트는 이미 `/auth/oauth?provider=kakao` → Supabase `signInWithOAuth({ provider: "kakao" })` 로 연결되어 있습니다. **카카오 개발자 콘솔과 Supabase에서 아래만 맞추면 됩니다.**
+앱 코드는 이미 연결되어 있습니다. 콘솔 설정은 단계가 많아 **비개발자용 상세 가이드**를 따로 두었습니다.
 
-1. [Kakao Developers](https://developers.kakao.com) → 내 애플리케이션 → (앱 선택 또는 생성)
-2. **제품 설정 → 카카오 로그인** 활성화
-3. **카카오 로그인 → Redirect URI** 에 다음을 등록 (Supabase가 구글과 동일하게 OAuth를 받는 주소입니다):
+- **[카카오 로그인 설정 가이드 (디자이너·기획용, 한국어)](docs/카카오-로그인-설정-가이드.md)** — 용어 설명, Supabase·카카오 화면 순서, 복사할 주소, 오류 때 확인할 것
 
-   `https://<SUPABASE_PROJECT_REF>.supabase.co/auth/v1/callback`
-
-   `<SUPABASE_PROJECT_REF>` 는 Supabase 대시보드 URL(`https://xxxxx.supabase.co`)의 `xxxxx` 와 같습니다.
-
-4. **앱 키**: REST API 키를 Supabase Kakao 제공자의 **Client ID** 로 사용합니다. **Client Secret** 은 카카오 로그인 보안에서 발급·활성화한 값을 Supabase에 넣습니다(카카오 콘솔 안내에 따름).
-5. [Supabase Dashboard](https://supabase.com/dashboard) → **Authentication → Providers → Kakao** → Enable 후 Client ID / Secret 저장
-6. Supabase **Authentication → URL Configuration** 의 Redirect URLs 에 앱 콜백이 이미 있다면 유지: `https://<your-domain>/auth/callback` (로컬은 `http://localhost:3000/auth/callback` 등 실제 origin)
+개발자용 한 줄 요약: 카카오 Redirect URI = `https://<SUPABASE_PROJECT_REF>.supabase.co/auth/v1/callback` · Supabase Providers → Kakao에 REST API 키(Client ID)와 Secret · Redirect URLs에 `<APP_URL>/auth/callback`
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
