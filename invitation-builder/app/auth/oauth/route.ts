@@ -44,12 +44,9 @@ export async function GET(request: NextRequest) {
     provider: provider as "google" | "kakao",
     options: {
       redirectTo: callbackUrl,
-      // 카카오 KOE205(invalid_scope): Supabase 기본 요청에 account_email 등이 포함될 수 있어
-      // 동의항목에 없는 scope가 나가지 않도록 닉네임·프로필만 명시한다.
-      // Supabase Kakao Provider에서 "Allow users without an email" 도 켜 두는 것을 권장.
-      ...(provider === "kakao"
-        ? { scopes: "profile_nickname profile_image" }
-        : {}),
+      // 카카오: Supabase Auth(GoTrue)가 항상 scope에 account_email·profile_image·profile_nickname 을 넣음.
+      // KOE205 는 카카오 동의항목에 account_email(또는 OpenID 시 openid)이 없을 때 난다.
+      // 클라이언트 scopes 로는 account_email 을 빼지 못하므로, 카카오 콘솔 동의항목·비즈 설정으로 맞출 것.
       // 구글은 refresh token을 강제로 받기 위해 prompt=consent + access_type=offline 필요
       queryParams:
         provider === "google"
