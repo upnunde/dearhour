@@ -1077,6 +1077,28 @@ function FormItem({ label, children }: { label: string; children: React.ReactNod
   );
 }
 
+/** MBTI 16유형 (에디터 드롭다운) */
+const MBTI_TYPES = [
+  "INTJ",
+  "INTP",
+  "INFJ",
+  "INFP",
+  "ISTJ",
+  "ISTP",
+  "ISFJ",
+  "ISFP",
+  "ENTJ",
+  "ENTP",
+  "ENFJ",
+  "ENFP",
+  "ESTJ",
+  "ESTP",
+  "ESFJ",
+  "ESFP",
+] as const;
+
+const MBTI_TYPE_SET = new Set<string>(MBTI_TYPES);
+
 /** 소개(About Us) 편집 영역: 신랑/신부 프로필 이미지·생년월일·MBTI·취미·특징 */
 function IntroEditor({
   data,
@@ -1194,16 +1216,32 @@ function IntroEditor({
           />
         </FormItem>
         <FormItem label="MBTI">
-          <Input
-            value={profile.mbti ?? ''}
-            onChange={(e) => {
-              const v = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
-              updateData(`intro.${role}.mbti`, v);
-            }}
-            placeholder="예: ISTP"
-            className="shadow-none flex-1 tracking-[0.1em]"
-            maxLength={4}
-          />
+          {(() => {
+            const raw = String(profile.mbti ?? "").trim().toUpperCase();
+            const isKnown = MBTI_TYPE_SET.has(raw);
+            return (
+              <div className="relative flex-1 min-w-0 max-w-[220px]">
+                <select
+                  value={raw}
+                  onChange={(e) => updateData(`intro.${role}.mbti`, e.target.value)}
+                  className="h-10 w-full min-w-0 rounded-lg border border-input bg-white px-3 py-1 pr-9 text-sm text-on-surface-20 tracking-[0.08em] appearance-none transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50"
+                >
+                  <option value="">선택 안 함</option>
+                  {raw && !isKnown ? (
+                    <option value={raw}>{raw} (현재 저장값)</option>
+                  ) : null}
+                  {MBTI_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+                <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+                  <ChevronDown className="w-4 h-4 text-on-surface-30" aria-hidden />
+                </span>
+              </div>
+            );
+          })()}
         </FormItem>
         <FormItem label="한줄 소개">
           <Textarea
