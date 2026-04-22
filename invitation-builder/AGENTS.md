@@ -22,7 +22,7 @@ Once an external integration is marked Completed here, do NOT ask the user to re
 
 | Area | Provider | Status | Notes |
 | --- | --- | --- | --- |
-| Simple login (social/OAuth) | Supabase Auth | Completed | OAuth callback: `app/auth/callback/route.ts`, session middleware: `lib/supabase/middleware.ts`, `middleware.ts` |
+| Simple login (social/OAuth) | Supabase Auth (Google, Kakao) | Completed | 시작: `app/login/page.tsx` → `app/auth/oauth/route.ts` (`provider=google` \| `kakao`) → 콜백 `app/auth/callback/route.ts`; 세션: `lib/supabase/middleware.ts`, `middleware.ts`. 카카오는 Kakao Developers Redirect URI 로 `https://<ref>.supabase.co/auth/v1/callback` 필수. |
 | Auth session API | Supabase | Completed | `app/api/auth/me/route.ts`, `app/api/auth/logout/route.ts` |
 | Admin login | Supabase | Completed | `app/admin/login/admin-login-form.tsx`, `app/admin/page.tsx` |
 | Database | Supabase Postgres (via Prisma) | Completed | Env: `DATABASE_URL`, `DIRECT_URL`; schema: `prisma/schema.prisma` |
