@@ -1540,8 +1540,10 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
   const [isTabletViewport, setIsTabletViewport] = useState(false);
   const [keyboardInsetPx, setKeyboardInsetPx] = useState(0);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [isMobileHeaderHidden, setIsMobileHeaderHidden] = useState(false);
   const focusScrollTimerRef = useRef<number | null>(null);
   const baseViewportHeightRef = useRef<number>(0);
+  const lastEditorScrollTopRef = useRef<number>(0);
   const isResizingEditorRef = useRef(false);
   const editorResizeStartRef = useRef<{ x: number; width: number } | null>(null);
   const editorResizePointerIdRef = useRef<number | null>(null);
@@ -1590,6 +1592,68 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
       container.scrollTop = editorScrollTopRef.current;
       shouldRestoreEditorScrollRef.current = false;
     });
+  }, [isTabletViewport, mobilePanel]);
+
+  /**
+   * 모바일 에디터에서 아래로 스크롤하면 헤더를 숨기고, 위로 스크롤하면 다시 노출한다.
+   * 헤더가 사라지면 그 아래의 탭 영역이 자연스럽게 최상단으로 이동해 sticky 처럼 동작한다.
+   */
+  useEffect(() => {
+    if (!isTabletViewport || mobilePanel !== 'editor') {
+      setIsMobileHeaderHidden(false);
+      return;
+    }
+    const scroller = editorScrollRef.current;
+    if (!scroller) return;
+
+    lastEditorScrollTopRef.current = scroller.scrollTop;
+    const HIDE_AFTER = 32;
+    const DOWN_DELTA = 6;
+    const UP_DELTA = 6;
+
+    const onScroll = () => {
+      const currentTop = scroller.scrollTop;
+      const delta = currentTop - lastEditorScrollTopRef.current;
+
+      if (currentTop <= 4) {
+        setIsMobileHeaderHidden(false);
+      } else if (delta > DOWN_DELTA && currentTop > HIDE_AFTER) {
+        setIsMobileHeaderHidden(true);
+      } else if (delta < -UP_DELTA) {
+        setIsMobileHeaderHidden(false);
+      }
+
+      lastEditorScrollTopRef.current = currentTop;
+    };
+
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    return () => scroller.removeEventListener('scroll', onScroll);
+  }, [isTabletViewport, mobilePanel]);
+
+  /**
+   * 모바일 빌더 화면에서는 document 자체가 스크롤되지 않도록 html/body 를 잠가
+   * iOS Safari 가 키보드 활성화 시 document 를 임의로 스크롤해 화면이 누적해서
+   * 위로 밀리는 현상을 차단한다.
+   */
+  useEffect(() => {
+    if (!isTabletViewport || mobilePanel !== 'editor') return;
+    const html = document.documentElement;
+    const body = document.body;
+    const previousHtmlOverflow = html.style.overflow;
+    const previousBodyOverflow = body.style.overflow;
+    const previousBodyPosition = body.style.position;
+    const previousBodyWidth = body.style.width;
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.width = '100%';
+    window.scrollTo(0, 0);
+    return () => {
+      html.style.overflow = previousHtmlOverflow;
+      body.style.overflow = previousBodyOverflow;
+      body.style.position = previousBodyPosition;
+      body.style.width = previousBodyWidth;
+    };
   }, [isTabletViewport, mobilePanel]);
 
   useEffect(() => {
@@ -1651,28 +1715,34 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
       }
 
       focusScrollTimerRef.current = window.setTimeout(() => {
+        /**
+         * iOS Safari가 키보드 활성화 시 document를 자동 스크롤해 화면이 누적해서
+         * 위로 밀리는 현상을 막기 위해, 매 포커스마다 window 스크롤을 0으로 되돌린다.
+         */
+        if (window.scrollY !== 0 || window.scrollX !== 0) {
+          window.scrollTo(0, 0);
+        }
+
         const anchorBaseHeight =
-          baseViewportHeightRef.current > 0 ? baseViewportHeightRef.current : scroller.clientHeight;
-        const containerRect = scroller.getBoundingClientRect();
+          baseViewportHeightRef.current > 0 ? baseViewportHeightRef.current : window.innerHeight;
         const fieldRect = focusableField.getBoundingClientRect();
-        const fieldTopInScroller = fieldRect.top - containerRect.top + scroller.scrollTop;
-        const fieldCenterInScroller = fieldTopInScroller + fieldRect.height / 2;
-        const anchorTop = anchorBaseHeight * 0.35;
-        const desiredTop = fieldCenterInScroller - anchorTop;
-        const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
-        const nextTop = Math.min(maxTop, Math.max(0, desiredTop));
-        const delta = nextTop - scroller.scrollTop;
+        const fieldCenterInViewport = fieldRect.top + fieldRect.height / 2;
+        const targetCenterInViewport = anchorBaseHeight * 0.35;
+        const delta = fieldCenterInViewport - targetCenterInViewport;
 
         /**
-         * 키보드 애니메이션/viewport 미세 변화로 focusin이 연속 발생해도
-         * 앵커 근처에서는 재스크롤하지 않아 누를 때마다 위로 밀리는 체감을 막는다.
+         * 화면 좌표 기준으로 차이를 계산하기 때문에 컨테이너 위치 변화나 키보드
+         * 상태와 무관하게 항상 디바이스 35% 위치로 수렴한다. 작은 오차는
+         * 재스크롤하지 않아 연속 탭에서 누적 이동이 발생하지 않는다.
          */
-        if (Math.abs(delta) < 24) {
+        if (Math.abs(delta) < 8) {
           focusScrollTimerRef.current = null;
           return;
         }
 
-        // 기존 smooth 스크롤 잔여 모션을 끊고 최신 포커스 기준으로 다시 정렬
+        const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+        const nextTop = Math.min(maxTop, Math.max(0, scroller.scrollTop + delta));
+
         scroller.scrollTo({ top: scroller.scrollTop, behavior: 'auto' });
         scroller.scrollTo({ top: nextTop, behavior: 'smooth' });
         focusScrollTimerRef.current = null;
@@ -5075,6 +5145,14 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
         isTabletViewport ? "bg-white" : "bg-gray-50",
       )}
     >
+      <div
+        className={cn(
+          'shrink-0 overflow-hidden transition-[max-height,opacity] duration-200 ease-out',
+          isTabletViewport && mobilePanel === 'editor' && isMobileHeaderHidden
+            ? 'max-h-0 opacity-0'
+            : 'max-h-16 opacity-100',
+        )}
+      >
       <AppHeader
         hideSiteNav
         rightSlot={
@@ -5161,9 +5239,15 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
           </div>
         }
       />
+      </div>
 
       {isTabletViewport && mobilePanel === 'editor' && (
-        <div className="bg-white border-b border-border px-3 py-3">
+        <div
+          className={cn(
+            'bg-white border-b border-border px-3 py-3 shrink-0 z-20 transition-shadow duration-200',
+            isMobileHeaderHidden ? 'shadow-[0_2px_8px_rgba(0,0,0,0.06)]' : 'shadow-none',
+          )}
+        >
           <div className="flex items-center gap-2">
             <div className="flex-1 min-w-0 overflow-x-auto no-scrollbar">
               <div className="flex items-center gap-2 w-max">
