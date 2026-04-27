@@ -1743,8 +1743,8 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
         const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
         const nextTop = Math.min(maxTop, Math.max(0, scroller.scrollTop + delta));
 
-        scroller.scrollTo({ top: scroller.scrollTop, behavior: 'auto' });
-        scroller.scrollTo({ top: nextTop, behavior: 'smooth' });
+        // 즉시 이동: smooth 애니메이션으로 인한 추적/재정렬 효과를 제거
+        scroller.scrollTop = nextTop;
         focusScrollTimerRef.current = null;
       }, 140);
     };
