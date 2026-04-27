@@ -1,3 +1,5 @@
+import InvitationPreviewViewTracker from "@/components/InvitationPreviewViewTracker";
+
 type PageProps = {
   params: Promise<{ invitationId: string }> | { invitationId: string };
 };
@@ -7,6 +9,7 @@ export default async function InvitationPreviewPage({ params }: PageProps) {
 
   return (
     <main className="min-h-screen bg-[#f4f4f4] px-4 py-10">
+      <InvitationPreviewViewTracker invitationId={invitationId} />
       <div className="mx-auto w-full max-w-[420px] overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-sm">
         <div className="bg-[#111] px-5 py-3 text-center text-sm font-medium text-white/90">
           공유 전 미리보기 화면

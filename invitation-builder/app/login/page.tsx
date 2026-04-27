@@ -64,6 +64,12 @@ export default async function LoginPage({
     switch (params.error) {
       case "provider":
         return "지원하지 않는 로그인 방식입니다.";
+      case "dev_forbidden":
+        return "임시 로그인은 개발 서버(npm run dev) 또는 ENABLE_DEV_TEMP_LOGIN 설정 시에만 사용할 수 있습니다.";
+      case "dev_login":
+        return "임시 로그인에 실패했습니다. Supabase 대시보드에서 익명 로그인을 켜거나, DEV_TEMP_LOGIN_EMAIL·PASSWORD 테스트 계정을 확인해 주세요.";
+      case "dev_login_config":
+        return "Supabase 환경변수(NEXT_PUBLIC_SUPABASE_URL 등)가 없거나 로그인에 필요한 설정이 비어 있습니다.";
       case "missing_env":
         return "배포 서버에 Supabase 공개 환경변수가 없습니다. 호스팅(Vercel 등)에 NEXT_PUBLIC_SUPABASE_URL 과 NEXT_PUBLIC_SUPABASE_ANON_KEY 를 설정한 뒤 재배포해 주세요.";
       case "oauth":
@@ -123,6 +129,47 @@ export default async function LoginPage({
             >
               홈으로 돌아가기
             </Link>
+          </div>
+
+          <div className="mt-8 border-t border-dashed border-[#e5e7eb] pt-6">
+            <Link
+              href={`/auth/dev-temp-login?next=${encodeURIComponent(next)}`}
+              className="inline-flex h-10 w-full items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-sm font-medium text-amber-900 hover:bg-amber-100"
+            >
+              임시 로그인
+            </Link>
+            <details className="mt-3 rounded-lg border border-[#f0f0f0] bg-[#fafafa] px-3 py-2 text-left">
+              <summary className="cursor-pointer text-[12px] font-medium text-[#4b5563]">
+                임시 로그인이 안 될 때 (Supabase 설정)
+              </summary>
+              <div className="mt-2 space-y-2 text-[11px] leading-relaxed text-[#6b7280]">
+                <p>
+                  <strong className="text-[#374151]">익명 로그인</strong>은 Providers 목록(카카오·구글)에 항목으로 안 나옵니다. 대시보드{" "}
+                  <strong>Authentication</strong> → 왼쪽 또는 상단의 <strong>Settings</strong> /{" "}
+                  <strong>Configuration</strong> 같은 메뉴에서{" "}
+                  <strong>Allow anonymous sign-ins</strong>(또는 Enable Anonymous) 스위치를 켜 주세요. 페이지에서{" "}
+                  <kbd className="rounded border border-[#ddd] bg-white px-1">Ctrl+F</kbd>로{" "}
+                  <code className="text-[10px]">anonymous</code> 검색하면 빠릅니다.
+                </p>
+                <p>
+                  <strong className="text-[#374151]">익명 없이</strong> 쓰려면:{" "}
+                  <strong>Authentication → Users</strong>에서 이메일·비밀번호 사용자를 추가(가능하면 이메일 자동 확인)한 뒤, 프로젝트{" "}
+                  <code className="text-[10px]">.env.local</code>에{" "}
+                  <code className="text-[10px]">DEV_TEMP_LOGIN_EMAIL</code>,{" "}
+                  <code className="text-[10px]">DEV_TEMP_LOGIN_PASSWORD</code>를 넣으면 임시 로그인은 그 계정으로만 시도합니다.
+                </p>
+                <p>
+                  <a
+                    href="https://supabase.com/docs/guides/auth/auth-anonymous"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#2563eb] underline hover:text-[#1d4ed8]"
+                  >
+                    Supabase 문서: Anonymous Sign-Ins
+                  </a>
+                </p>
+              </div>
+            </details>
           </div>
         </div>
       </main>

@@ -8,6 +8,7 @@ import MyPageClient, {
 import { readdir, stat } from "fs/promises";
 import type { Dirent } from "fs";
 import path from "path";
+import { getSeoulYmd, seoulYmdMinusDays } from "@/lib/invitation-view-stats";
 
 const MEDIA_EXTENSIONS = new Set([
   ".jpg",
@@ -52,13 +53,17 @@ async function collectGuestMedia(invitationIds: string[]): Promise<GuestMediaIte
         const filePath = path.join(folderPath, file.name);
         const fileStat = await stat(filePath).catch(() => null);
         if (!fileStat) continue;
+        const uploadedByRaw = folder.name.split("-")[0] ?? "";
+        const uploadedBy = uploadedByRaw.trim() || "이름 미확인";
 
         result.push({
           invitationId,
           fileName: file.name,
-          uploadedAt: fileStat.mtime.toISOString().slice(0, 10),
+          uploadedAt: fileStat.mtime.toISOString(),
           url: `/uploads/${invitationId}/${folder.name}/${file.name}`,
           kind: VIDEO_EXTENSIONS.has(ext) ? "video" : "image",
+          uploadedBy,
+          sizeBytes: fileStat.size,
         });
       }
     }
@@ -72,6 +77,21 @@ async function collectGuestMedia(invitationIds: string[]): Promise<GuestMediaIte
 export default async function MyPage() {
   const authUser = await requireUser("/mypage");
   const user = await syncUserProfile(authUser);
+  const providerLabels: Record<string, string> = {
+    kakao: "카카오",
+    google: "구글",
+    naver: "네이버",
+  };
+  const rawProviders = Array.isArray(authUser.app_metadata?.providers)
+    ? (authUser.app_metadata.providers as string[])
+    : [];
+  const normalizedProviders = rawProviders
+    .map((p) => String(p).toLowerCase())
+    .filter((p) => p === "kakao" || p === "google" || p === "naver");
+  const providerDisplay =
+    normalizedProviders.length > 0
+      ? normalizedProviders.map((p) => providerLabels[p] ?? p).join(", ")
+      : "확인 불가";
 
   const [invitations, payments] = await Promise.all([
     prisma.invitation.findMany({
@@ -86,13 +106,58 @@ export default async function MyPage() {
     }),
   ]);
 
-  const invitationItems: MyInvitationItem[] = invitations.map((invitation) => ({
-    id: invitation.id,
-    title: invitation.title,
-    code: invitation.code,
-    deleteAt: invitation.expiresAt ? invitation.expiresAt.toISOString().slice(0, 10) : "미정",
-    status: invitation.status === "PUBLISHED" ? "결제 완료" : "결제 전",
-  }));
+  const invitationIds = invitations.map((i) => i.id);
+  const todayYmd = getSeoulYmd();
+  const last7StatDates = Array.from({ length: 7 }, (_, i) => seoulYmdMinusDays(todayYmd, i));
+
+  const dailyRows =
+    invitationIds.length === 0
+      ? []
+      : await prisma.invitationDailyView.findMany({
+          where: {
+            invitationId: { in: invitationIds },
+            statDate: { in: last7StatDates },
+          },
+        });
+
+  const viewsByInvitation = new Map<string, { today: number; last7: number }>();
+  for (const id of invitationIds) {
+    viewsByInvitation.set(id, { today: 0, last7: 0 });
+  }
+  for (const row of dailyRows) {
+    const cur = viewsByInvitation.get(row.invitationId);
+    if (!cur) continue;
+    cur.last7 += row.views;
+    if (row.statDate === todayYmd) cur.today += row.views;
+  }
+
+  const invitationItems: MyInvitationItem[] = invitations.map((invitation) => {
+    const v = viewsByInvitation.get(invitation.id) ?? { today: 0, last7: 0 };
+    const content =
+      invitation.content && typeof invitation.content === "object"
+        ? (invitation.content as Record<string, unknown>)
+        : null;
+    const guestUpload =
+      content && content.guestUpload && typeof content.guestUpload === "object"
+        ? (content.guestUpload as Record<string, unknown>)
+        : null;
+    const storageGbRaw = Number(guestUpload?.storageGb ?? 2);
+    const storageGb = Number.isFinite(storageGbRaw) && storageGbRaw > 0 ? storageGbRaw : 2;
+    return {
+      id: invitation.id,
+      title: invitation.title,
+      code: invitation.code,
+      deleteAt: invitation.expiresAt ? invitation.expiresAt.toISOString().slice(0, 10) : "미정",
+      status: invitation.status === "PUBLISHED" ? "결제 완료" : "결제 전",
+      publicViewCount: invitation.publicViewCount,
+      viewsToday: v.today,
+      viewsLast7Days: v.last7,
+      lastPublicViewAt: invitation.lastPublicViewAt
+        ? invitation.lastPublicViewAt.toISOString()
+        : null,
+      guestUploadStorageGb: storageGb,
+    };
+  });
 
   const paymentItems: MyPaymentItem[] = payments.map((payment) => ({
     id: payment.orderId,
@@ -111,7 +176,11 @@ export default async function MyPage() {
     date: payment.createdAt.toISOString().slice(0, 10),
   }));
 
-  const guestMedia = await collectGuestMedia(invitations.map((item) => item.id));
+  const guestMedia = await collectGuestMedia(invitationIds);
+  const accountPhone =
+    (typeof authUser.phone === "string" && authUser.phone.trim()) ||
+    (typeof authUser.user_metadata?.phone === "string" && authUser.user_metadata.phone.trim()) ||
+    "";
 
   return (
     <MyPageClient
@@ -119,6 +188,9 @@ export default async function MyPage() {
       payments={paymentItems}
       guestMedia={guestMedia}
       displayName={user.name || authUser.email || "사용자"}
+      accountEmail={user.email || authUser.email || ""}
+      accountProvider={providerDisplay}
+      accountPhone={accountPhone}
     />
   );
 }

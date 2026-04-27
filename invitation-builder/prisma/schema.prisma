@@ -46,19 +46,48 @@ model User {
 }
 
 model Invitation {
-  id         String           @id @default(cuid())
-  userId     String
-  title      String
-  code       String           @unique
-  status     InvitationStatus @default(DRAFT)
-  content    Json?
-  expiresAt  DateTime?
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
-  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  payments   Payment[]
+  id                String                 @id @default(cuid())
+  userId            String
+  title             String
+  code              String                 @unique
+  status            InvitationStatus       @default(DRAFT)
+  content           Json?
+  expiresAt         DateTime?
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  /// 공개 미리보기 등에서 집계된 누적 조회(세션당 1회 수준)
+  publicViewCount   Int                    @default(0)
+  lastPublicViewAt  DateTime?
+  user              User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments          Payment[]
+  rsvpSubmissions   RsvpSubmission[]
+  dailyViews        InvitationDailyView[]
 
   @@index([userId, createdAt(sort: Desc)])
+}
+
+/// 서울 날짜(YYYY-MM-DD) 기준 일별 조회 수
+model InvitationDailyView {
+  invitationId String
+  statDate     String      @db.VarChar(10)
+  views        Int         @default(0)
+  invitation   Invitation  @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+
+  @@id([invitationId, statDate])
+  @@index([invitationId])
+}
+
+model RsvpSubmission {
+  id              String   @id @default(cuid())
+  invitationId    String
+  side            String
+  intent          String
+  guestName       String
+  companionCount  Int      @default(0)
+  createdAt       DateTime @default(now())
+  invitation      Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+
+  @@index([invitationId, createdAt(sort: Desc)])
 }
 
 model Payment {

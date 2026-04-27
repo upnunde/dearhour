@@ -61,7 +61,7 @@ function buildHostsIntroBase(data: CardData): HostsIntroPreviewBase {
 
   const venueBlock =
     !!venueDisplay && (
-      <p className="text-[16px] leading-relaxed" style={{ color: bodyColor }}>
+      <p className="text-[15px] leading-relaxed" style={{ color: bodyColor }}>
         {venueDisplay}
       </p>
     );
@@ -577,7 +577,7 @@ function HostsIntroPreviewHeroH({ base, hero }: { base: HostsIntroPreviewBase; h
       </div>
       <div className="w-full p-0 m-0">{hero}</div>
       <div className="max-w-[340px] mx-auto w-full px-6 pt-8 pb-[50px] text-center space-y-3">
-        <p className="flex justify-center items-center gap-1 text-[22px] font-normal tracking-[0.04em]" style={{ color: titleColor }}>
+        <p className="mb-5 flex justify-center items-center gap-1 text-[22px] font-normal tracking-[0.04em]" style={{ color: titleColor }}>
           {firstName}
           <span className="mx-2 inline-block h-[22px] w-px align-middle border-l-[0.5px] border-current opacity-45" aria-hidden />
           {secondName}

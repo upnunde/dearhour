@@ -1,0 +1,71 @@
+# Cursor Rules for DearHour (모바일 청첩장 서비스)
+
+## Project Context
+This is a mobile invitation/wedding card builder service built with:
+- Next.js 16 (App Router)
+- React 19
+- TypeScript 5 (strict mode)
+- Tailwind CSS 4
+- Prisma 6 + Supabase Postgres
+- Zustand for state management
+- Supabase Auth for authentication
+
+## Language
+- Always respond in Korean (한국어로 응답)
+- Code comments in English, UI text in Korean
+
+## Code Style
+
+### TypeScript
+- Use explicit types, never `any`
+- Prefer `interface` for objects, `type` for unions/intersections
+- Use optional chaining (`?.`) and nullish coalescing (`??`)
+- All functions must have explicit return types for exports
+
+### React Components
+- Use function declarations, not arrow functions for components
+- Props interface must be separate from component
+- Server Components by default, `"use client"` only when needed
+- Event handlers: `handle*` for functions, `on*` for props
+
+### File Organization
+- Page components: `app/[route]/page.tsx`
+- Client components: `app/[route]/*-client.tsx`
+- API routes: `app/api/[endpoint]/route.ts`
+- Shared components: `components/`
+- Feature-specific: `features/[feature]/`
+
+### Tailwind CSS
+- Mobile-first responsive design
+- Class order: layout → box model → typography → color → effects
+- Prefer Tailwind classes over arbitrary values
+- Use project color palette (gray-50/100/200, black/white for buttons)
+
+### API Routes
+- Always validate input
+- Use try-catch with proper error responses
+- Apply rate limiting for public endpoints
+- Return structured JSON: `{ data }` or `{ error, code? }`
+
+### Database (Prisma)
+- Use `select` to fetch only needed fields
+- Use transactions for related operations
+- Add indexes for frequently queried fields
+
+## Prohibited
+- `any` type
+- `// @ts-ignore`
+- Inline styles (use Tailwind)
+- console.log in production code
+- Hardcoded sensitive values
+
+## External Integrations
+When working with external services (Supabase, Toss Payments, Naver Maps):
+- Check AGENTS.md for existing integrations first
+- Don't ask to reconfigure completed integrations
+- Report runtime errors with specific details
+
+## Git
+- Commit messages: `<type>(<scope>): <subject>` in Korean
+- Push immediately when user requests commit/push
+- Don't ask for confirmation before push

@@ -5,13 +5,17 @@ const PROTECTED_PREFIXES = ["/mypage", "/admin", "/payment"];
 // /admin/login 은 마스터 로그인 자체이므로 인증 체크에서 제외한다.
 const PUBLIC_EXCEPTIONS = ["/admin/login"];
 
+function matchesRoutePrefix(pathname: string, prefix: string) {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
 export async function middleware(request: NextRequest) {
   try {
     const { response, user } = await updateSession(request);
     const { pathname, search } = request.nextUrl;
 
-    const isPublicException = PUBLIC_EXCEPTIONS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
-    const needsAuth = !isPublicException && PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+    const isPublicException = PUBLIC_EXCEPTIONS.some((path) => matchesRoutePrefix(pathname, path));
+    const needsAuth = !isPublicException && PROTECTED_PREFIXES.some((prefix) => matchesRoutePrefix(pathname, prefix));
     if (!needsAuth || user) {
       return response;
     }

@@ -11,6 +11,22 @@ const accentBtnOutline =
 const gatewayCardClass =
   "flex h-full flex-col rounded-2xl border border-stone-200 bg-white/90 p-6 shadow-sm backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-stone-300 hover:shadow-xl md:p-8";
 
+const footerInfo = {
+  brandKr: "디어아워",
+  brandEn: "Dear Hour",
+  companyName: "디어아워 주식회사",
+  ceo: "홍길동",
+  businessNumber: "123-45-67890",
+  ecommerceNumber: "2026-서울강남-0000",
+  telecomReportOffice: "서울특별시 강남구청",
+  address: "서울특별시 강남구 테헤란로 123, 10층",
+  privacyOfficer: "김보안",
+  supportEmail: "support@dearhour.co",
+  supportPhone: "02-1234-5678",
+  supportHours: "평일 10:00 - 18:00 (점심 12:30 - 13:30, 주말/공휴일 휴무)",
+  host: "Vercel Inc.",
+};
+
 export default function HomePage() {
   return (
     <>
@@ -133,18 +149,51 @@ export default function HomePage() {
           </div>
         </section>
 
-        <footer className="border-t border-stone-800 bg-stone-950 px-4 py-8 text-center text-sm text-stone-500 md:px-6">
-          <p className="font-medium text-stone-300">Dear Hour · 디어아워</p>
-          <p className="mt-2">모바일 알림장 SaaS · 통합 메인 홈</p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-            <Link href="/login" className="text-stone-400 underline-offset-4 transition hover:text-white hover:underline">
-              로그인
-            </Link>
-            <Link href="/editor" className="text-stone-400 underline-offset-4 transition hover:text-white hover:underline">
-              에디터
-            </Link>
+        <footer className="border-t border-stone-800 bg-stone-950 px-4 py-8 text-sm text-stone-500 md:px-6">
+          <div className="mx-auto w-full max-w-6xl">
+            <p className="text-center font-medium text-stone-300">
+              {footerInfo.brandEn} · {footerInfo.brandKr}
+            </p>
+            <p className="mt-2 text-center">모바일 알림장 SaaS · 통합 메인 홈</p>
+
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+              <Link href="/login" className="text-stone-400 underline-offset-4 transition hover:text-white hover:underline">
+                로그인
+              </Link>
+              <Link href="/editor" className="text-stone-400 underline-offset-4 transition hover:text-white hover:underline">
+                에디터
+              </Link>
+              <a href="#" className="text-stone-400 underline-offset-4 transition hover:text-white hover:underline">
+                이용약관
+              </a>
+              <a href="#" className="text-stone-400 underline-offset-4 transition hover:text-white hover:underline">
+                개인정보처리방침
+              </a>
+            </div>
+
+            <div className="mt-6 space-y-1 border-t border-stone-800 pt-5 text-center text-xs leading-relaxed text-stone-500">
+              <p>
+                상호: {footerInfo.companyName} · 대표: {footerInfo.ceo} · 사업자등록번호: {footerInfo.businessNumber}
+              </p>
+              <p>
+                통신판매업신고: {footerInfo.ecommerceNumber} ({footerInfo.telecomReportOffice}) · 개인정보보호책임자: {footerInfo.privacyOfficer}
+              </p>
+              <p>
+                주소: {footerInfo.address}
+              </p>
+              <p>
+                고객센터: {footerInfo.supportEmail} · {footerInfo.supportPhone}
+              </p>
+              <p>
+                운영시간: {footerInfo.supportHours}
+              </p>
+              <p>
+                호스팅 제공자: {footerInfo.host}
+              </p>
+            </div>
+
+            <p className="mt-6 text-center text-xs text-stone-600">© {new Date().getFullYear()} Dear Hour. All rights reserved.</p>
           </div>
-          <p className="mt-6 text-xs text-stone-600">© {new Date().getFullYear()} Dear Hour. All rights reserved.</p>
         </footer>
       </main>
     </>

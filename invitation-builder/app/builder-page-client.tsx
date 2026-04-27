@@ -55,6 +55,7 @@ import {
   geocodeAddress,
   saveInvitationDraft,
   searchWeddingHallSuggestions,
+  submitInvitationRsvp,
 } from "@/features/invitation-builder/services/client-api";
 
 const DEFAULT_LOCATION_PREVIEW_COORDS = { lat: 37.579617, lon: 126.977041 }; // 경복궁
@@ -103,6 +104,20 @@ function upperCaseFirst(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return "";
   return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
+/** `YYYY-MM-DD`(공개일 date input) → 한국어 한 줄. 공개 시각은 에디터 안내와 동일하게 0시. */
+function formatPublishScheduledBanner(ymd: string): string | null {
+  const trimmed = String(ymd ?? "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return null;
+  const [ys, ms, ds] = trimmed.split("-");
+  const y = Number(ys);
+  const m = Number(ms);
+  const d = Number(ds);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
+  const date = new Date(y, m - 1, d);
+  if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) return null;
+  return `${y}년 ${m}월 ${d}일 0시에 공개 예정입니다`;
 }
 
 function getOptionalSubtitle2(sectionId: string) {
@@ -1709,6 +1724,8 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
   const [rsvpPreviewName, setRsvpPreviewName] = useState('');
   const [rsvpPreviewGuestCount, setRsvpPreviewGuestCount] = useState('0');
   const [rsvpPreviewPrivacyAgreed, setRsvpPreviewPrivacyAgreed] = useState(false);
+  const [rsvpSubmitting, setRsvpSubmitting] = useState(false);
+  const [rsvpSubmitError, setRsvpSubmitError] = useState<string | null>(null);
   const [pendingDeleteTab, setPendingDeleteTab] = useState<{ id: string; label: string } | null>(null);
   const [galleryDetailOpen, setGalleryDetailOpen] = useState(false);
   const [galleryDetailIndex, setGalleryDetailIndex] = useState(0);
@@ -1814,6 +1831,9 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
     if (Array.isArray(value)) return value[0] ?? '';
     return typeof value === 'string' ? value : '';
   }, [initialSearchParams]);
+
+  /** 마이페이지 → 편집 링크 등으로 전달된 저장 청첩장 ID (RSVP·하객 업로드 API에 사용) */
+  const editorInvitationId = useMemo(() => pickSearchParam("invitationId").trim(), [pickSearchParam]);
 
   useEffect(() => {
     if (onboardingAppliedRef.current) return;
@@ -2530,12 +2550,12 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
   const mainImageInputRef = useRef<HTMLInputElement | null>(null);
   const mainMultiBatchInputRef = useRef<HTMLInputElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const playIntentRef = useRef(true);
+  const playIntentRef = useRef(false);
   const objectUrlRef = useRef<string | null>(null);
   const mainImageObjectUrlRef = useRef<string | null>(null);
   const simulateTimerRef = useRef<number | null>(null);
 
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(0.8);
   const [currentTime, setCurrentTime] = useState(0);
@@ -3107,6 +3127,11 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
     const todayYmd = `${y}-${m}-${d}`;
     return todayYmd > deadline;
   })();
+
+  const publishPreviewBannerText = useMemo(() => {
+    if (!(sectionEnabled.publish ?? false)) return null;
+    return formatPublishScheduledBanner(data.publish?.publicStartDate ?? "");
+  }, [data.publish?.publicStartDate, sectionEnabled.publish]);
 
   const sidebarSortable = useSortable({
     items: orderedContentOptionalItems.map((it) => ({ ...it, id: it.id })),
@@ -4928,7 +4953,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
               <p className={`${PREVIEW_TYPOGRAPHY_GUIDE.subtitle2} mb-0 pb-5`}>{subtitle2}</p>
             </div>
             {description && <p className="whitespace-pre-line text-[14px] leading-[24px] text-center mb-[24px]">{description}</p>}
-            <GuestPhotoUploadForm maxTotalMB={50} />
+            <GuestPhotoUploadForm maxTotalMB={50} invitationId={editorInvitationId || undefined} />
           </div>
         );
       }
@@ -8438,6 +8463,14 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                 effect={data.theme?.particleEffect ?? 'none'}
                 themeColor={selectedKeyColorPreset.key}
               />
+              {publishPreviewBannerText ? (
+                <div
+                  role="status"
+                  className="relative z-20 shrink-0 w-full border-b border-[color:color-mix(in_srgb,var(--key)_28%,transparent)] bg-[color:color-mix(in_srgb,var(--key)_14%,white)] px-3 py-2.5 text-center text-[12px] sm:text-[13px] font-semibold leading-snug tracking-tight text-[color:var(--on-surface-20)]"
+                >
+                  {publishPreviewBannerText}
+                </div>
+              ) : null}
               <div ref={previewScrollRef} className="flex-1 overflow-y-auto no-scrollbar">
                 {layoutOrder.includes('hosts') && (
                   <div
@@ -9014,7 +9047,13 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
         </DialogContent>
       </Dialog>
 
-      <Dialog open={rsvpPreviewModalOpen} onOpenChange={setRsvpPreviewModalOpen}>
+      <Dialog
+        open={rsvpPreviewModalOpen}
+        onOpenChange={(open) => {
+          setRsvpPreviewModalOpen(open);
+          if (!open) setRsvpSubmitError(null);
+        }}
+      >
         <DialogContent className="w-[420px] max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-16px)] rounded-2xl border border-border p-0 overflow-hidden flex flex-col">
           <div className="p-5 border-b border-border bg-white">
             <DialogTitle className="text-[16px] font-semibold text-on-surface-10">참석의사 전달</DialogTitle>
@@ -9092,12 +9131,23 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
               />
               <span>개인정보 수집 및 이용에 동의합니다.</span>
             </label>
+            {!editorInvitationId ? (
+              <p className="text-xs leading-relaxed text-amber-800 bg-amber-50 border border-amber-200/80 rounded-lg px-3 py-2">
+                저장된 청첩장에서만 전달됩니다. 마이페이지에서 이 청첩장의 &quot;편집&quot;으로 들어와 주세요(URL에 청첩장 ID가 포함됩니다).
+              </p>
+            ) : null}
+            {rsvpSubmitError ? (
+              <p className="text-sm text-red-600" role="alert">
+                {rsvpSubmitError}
+              </p>
+            ) : null}
           </div>
           <div className="p-4 border-t border-border bg-white flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
               className="h-9 px-3 rounded-lg border-[color:var(--key)] bg-white text-sm text-[color:var(--key)] hover:bg-slate-50"
+              disabled={rsvpSubmitting}
               onClick={() => setRsvpPreviewModalOpen(false)}
             >
               취소
@@ -9105,10 +9155,47 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
             <Button
               type="button"
               className="h-9 px-3 rounded-lg bg-[color:var(--key)] hover:brightness-95 text-white text-sm"
-              disabled={!rsvpPreviewName.trim() || !rsvpPreviewPrivacyAgreed}
-              onClick={() => setRsvpPreviewModalOpen(false)}
+              disabled={
+                rsvpSubmitting ||
+                !editorInvitationId ||
+                !rsvpPreviewName.trim() ||
+                !rsvpPreviewPrivacyAgreed
+              }
+              onClick={async () => {
+                if (!editorInvitationId || !rsvpPreviewName.trim() || !rsvpPreviewPrivacyAgreed) return;
+                setRsvpSubmitting(true);
+                setRsvpSubmitError(null);
+                const companionParsed = Number.parseInt(String(rsvpPreviewGuestCount).trim(), 10);
+                const companionCount =
+                  rsvpPreviewIntent === "참석"
+                    ? Math.max(0, Math.min(50, Number.isFinite(companionParsed) ? companionParsed : 0))
+                    : 0;
+                try {
+                  const res = await submitInvitationRsvp({
+                    invitationId: editorInvitationId,
+                    side: rsvpPreviewSide,
+                    intent: rsvpPreviewIntent,
+                    guestName: rsvpPreviewName.trim(),
+                    companionCount,
+                  });
+                  const json = (await res.json().catch(() => null)) as { error?: string } | null;
+                  if (!res.ok) {
+                    setRsvpSubmitError(json?.error ?? "전송에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+                    return;
+                  }
+                  setRsvpPreviewModalOpen(false);
+                  setRsvpPreviewName("");
+                  setRsvpPreviewGuestCount("0");
+                  setRsvpPreviewPrivacyAgreed(false);
+                  window.alert("참석 여부가 전달되었습니다.");
+                } catch {
+                  setRsvpSubmitError("네트워크 오류가 발생했습니다. 다시 시도해 주세요.");
+                } finally {
+                  setRsvpSubmitting(false);
+                }
+              }}
             >
-              참석여부 전달하기
+              {rsvpSubmitting ? "전송 중…" : "참석여부 전달하기"}
             </Button>
           </div>
         </DialogContent>

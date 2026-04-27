@@ -45,3 +45,17 @@ export async function saveInvitationDraft(input: {
     body: JSON.stringify(input),
   });
 }
+
+export async function submitInvitationRsvp(input: {
+  invitationId: string;
+  side: string;
+  intent: string;
+  guestName: string;
+  companionCount: number;
+}): Promise<Response> {
+  return fetch("/api/invitations/rsvp", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+}
