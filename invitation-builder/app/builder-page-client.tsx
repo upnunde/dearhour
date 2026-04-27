@@ -1532,7 +1532,6 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
     updateData('sectionEnabled', next);
   };
   const [isTabletViewport, setIsTabletViewport] = useState(false);
-  const [viewportHeightPx, setViewportHeightPx] = useState<number | null>(null);
   const [keyboardInsetPx, setKeyboardInsetPx] = useState(0);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const isResizingEditorRef = useRef(false);
@@ -1586,45 +1585,40 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
   }, [isTabletViewport, mobilePanel]);
 
   useEffect(() => {
-    const updateViewportHeight = () => {
+    /**
+     * 루트 높이는 lvh로 고정해 키보드/주소창 변화에 레이아웃 프레임이 줄어들지 않게 한다.
+     * visualViewport는 에디터 스크롤 영역 하단 패딩(키보드 가림 추정)에만 사용한다.
+     */
+    const updateKeyboardInset = () => {
       const vv = window.visualViewport;
       const visualHeight = vv?.height;
       const visualOffsetTop = vv?.offsetTop ?? 0;
       const visualScale = vv?.scale ?? 1;
       const layoutHeight = window.innerHeight;
 
-      /**
-       * iOS Safari에서 키보드/줌 시 visualViewport offsetTop을 더하면
-       * 실제 보이는 영역보다 크게 계산되어 하단 회색 빈 공간이 노출될 수 있다.
-       * - 줌 상태(scale > 1): layout viewport 높이를 유지
-       * - 일반 상태: visualViewport.height를 사용
-       */
-      const nextRaw =
+      const visibleHeightRaw =
         visualScale > 1.01
           ? layoutHeight
           : visualHeight && visualHeight > 0
             ? visualHeight
             : layoutHeight;
-      const next = Math.round(Math.max(0, nextRaw));
-      setViewportHeightPx(next);
 
-      // 키보드가 올라왔을 때 실제 가려지는 높이를 추정해 입력 필드가 잘리지 않도록 여유 패딩에 사용
-      const keyboardInsetRaw = layoutHeight - (nextRaw + visualOffsetTop);
+      const keyboardInsetRaw = layoutHeight - (visibleHeightRaw + visualOffsetTop);
       const normalizedKeyboardInset = keyboardInsetRaw > 24 ? Math.round(keyboardInsetRaw) : 0;
       setKeyboardInsetPx(normalizedKeyboardInset);
     };
 
-    updateViewportHeight();
-    window.addEventListener('resize', updateViewportHeight);
-    window.addEventListener('orientationchange', updateViewportHeight);
-    window.visualViewport?.addEventListener('resize', updateViewportHeight);
-    window.visualViewport?.addEventListener('scroll', updateViewportHeight);
+    updateKeyboardInset();
+    window.addEventListener('resize', updateKeyboardInset);
+    window.addEventListener('orientationchange', updateKeyboardInset);
+    window.visualViewport?.addEventListener('resize', updateKeyboardInset);
+    window.visualViewport?.addEventListener('scroll', updateKeyboardInset);
 
     return () => {
-      window.removeEventListener('resize', updateViewportHeight);
-      window.removeEventListener('orientationchange', updateViewportHeight);
-      window.visualViewport?.removeEventListener('resize', updateViewportHeight);
-      window.visualViewport?.removeEventListener('scroll', updateViewportHeight);
+      window.removeEventListener('resize', updateKeyboardInset);
+      window.removeEventListener('orientationchange', updateKeyboardInset);
+      window.visualViewport?.removeEventListener('resize', updateKeyboardInset);
+      window.visualViewport?.removeEventListener('scroll', updateKeyboardInset);
     };
   }, []);
 
@@ -5032,10 +5026,9 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
   return (
     <div
       className={cn(
-        "flex flex-col gap-0 w-full overflow-hidden",
+        "flex flex-col gap-0 w-full min-h-0 h-[100lvh] max-h-[100lvh] overflow-hidden",
         isTabletViewport ? "bg-white" : "bg-gray-50",
       )}
-      style={{ height: viewportHeightPx ? `${viewportHeightPx}px` : '100dvh' }}
     >
       <AppHeader
         hideSiteNav
