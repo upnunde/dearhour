@@ -786,6 +786,15 @@ function Input(props: React.ComponentProps<typeof RawInput>) {
       ? "relative flex-1 w-full group"
       : "relative w-full group";
 
+  const clearInputValue = () => {
+    if (typeof onChange !== "function") return;
+    const synthetic = {
+      target: { value: "" },
+      currentTarget: { value: "" },
+    } as React.ChangeEvent<HTMLInputElement>;
+    onChange(synthetic);
+  };
+
   return (
     <div className={wrapperClassName}>
       <RawInput
@@ -800,18 +809,15 @@ function Input(props: React.ComponentProps<typeof RawInput>) {
       <button
         type="button"
         className={[
-          "absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-lg border border-border bg-white text-on-surface-30 hover:text-on-surface-10 hover:bg-slate-50 flex items-center justify-center transition-opacity",
+          "absolute z-10 right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-lg border border-border bg-white text-on-surface-30 hover:text-on-surface-10 hover:bg-slate-50 flex items-center justify-center transition-opacity touch-manipulation",
           showClear ? "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100" : "hidden",
         ].join(" ")}
         aria-label="내용 지우기"
-        onClick={() => {
-          if (typeof onChange !== "function") return;
-          const synthetic = {
-            target: { value: "" },
-            currentTarget: { value: "" },
-          } as React.ChangeEvent<HTMLInputElement>;
-          onChange(synthetic);
+        onPointerDown={(event) => {
+          event.preventDefault();
+          clearInputValue();
         }}
+        onClick={clearInputValue}
       >
         <X className="w-4 h-4" />
       </button>
@@ -1535,6 +1541,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
   const [keyboardInsetPx, setKeyboardInsetPx] = useState(0);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const focusScrollTimerRef = useRef<number | null>(null);
+  const baseViewportHeightRef = useRef<number>(0);
   const isResizingEditorRef = useRef(false);
   const editorResizeStartRef = useRef<{ x: number; width: number } | null>(null);
   const editorResizePointerIdRef = useRef<number | null>(null);
@@ -1607,6 +1614,11 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
       const keyboardInsetRaw = layoutHeight - (visibleHeightRaw + visualOffsetTop);
       const normalizedKeyboardInset = keyboardInsetRaw > 24 ? Math.round(keyboardInsetRaw) : 0;
       setKeyboardInsetPx(normalizedKeyboardInset);
+
+      // 키보드가 닫힌 상태에서만 기준 높이를 갱신해 포커스 앵커를 디바이스 기준으로 고정
+      if (normalizedKeyboardInset === 0) {
+        baseViewportHeightRef.current = Math.round(Math.max(layoutHeight, visualHeight ?? 0));
+      }
     };
 
     updateKeyboardInset();
@@ -1639,10 +1651,12 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
       }
 
       focusScrollTimerRef.current = window.setTimeout(() => {
+        const anchorBaseHeight =
+          baseViewportHeightRef.current > 0 ? baseViewportHeightRef.current : scroller.clientHeight;
         const containerRect = scroller.getBoundingClientRect();
         const fieldRect = focusableField.getBoundingClientRect();
         const fieldTopInScroller = fieldRect.top - containerRect.top + scroller.scrollTop;
-        const anchorTop = scroller.clientHeight * 0.35;
+        const anchorTop = anchorBaseHeight * 0.35;
         const desiredTop = fieldTopInScroller - anchorTop;
         const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
         const nextTop = Math.min(maxTop, Math.max(0, desiredTop));

@@ -423,6 +423,13 @@
   }
 }
 
+/* 모바일 search 네이티브 clear(X)와 커스텀 clear 버튼 충돌 방지 */
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
 /* Image Editor Custom Range Slider */
 .image-editor-slider {
   -webkit-appearance: none;
