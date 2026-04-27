@@ -1534,6 +1534,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
   const [isTabletViewport, setIsTabletViewport] = useState(false);
   const [keyboardInsetPx, setKeyboardInsetPx] = useState(0);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const focusScrollTimerRef = useRef<number | null>(null);
   const isResizingEditorRef = useRef(false);
   const editorResizeStartRef = useRef<{ x: number; width: number } | null>(null);
   const editorResizePointerIdRef = useRef<number | null>(null);
@@ -1633,21 +1634,32 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
       const focusableField = target.closest<HTMLElement>('input, textarea, select, [contenteditable="true"]');
       if (!focusableField) return;
 
-      window.setTimeout(() => {
+      if (focusScrollTimerRef.current) {
+        window.clearTimeout(focusScrollTimerRef.current);
+      }
+
+      focusScrollTimerRef.current = window.setTimeout(() => {
         const containerRect = scroller.getBoundingClientRect();
         const fieldRect = focusableField.getBoundingClientRect();
         const fieldTopInScroller = fieldRect.top - containerRect.top + scroller.scrollTop;
-        const anchorTop = scroller.clientHeight * 0.3;
+        const anchorTop = scroller.clientHeight * 0.35;
         const desiredTop = fieldTopInScroller - anchorTop;
         const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
         const nextTop = Math.min(maxTop, Math.max(0, desiredTop));
 
+        // 기존 smooth 스크롤 잔여 모션을 끊고 최신 포커스 기준으로 다시 정렬
+        scroller.scrollTo({ top: scroller.scrollTop, behavior: 'auto' });
         scroller.scrollTo({ top: nextTop, behavior: 'smooth' });
+        focusScrollTimerRef.current = null;
       }, 140);
     };
 
     scroller.addEventListener('focusin', onFocusIn);
     return () => {
+      if (focusScrollTimerRef.current) {
+        window.clearTimeout(focusScrollTimerRef.current);
+        focusScrollTimerRef.current = null;
+      }
       scroller.removeEventListener('focusin', onFocusIn);
     };
   }, [isTabletViewport, mobilePanel]);
