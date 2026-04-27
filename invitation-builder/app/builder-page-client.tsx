@@ -1634,7 +1634,15 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
       if (!focusableField) return;
 
       window.setTimeout(() => {
-        focusableField.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+        const containerRect = scroller.getBoundingClientRect();
+        const fieldRect = focusableField.getBoundingClientRect();
+        const fieldTopInScroller = fieldRect.top - containerRect.top + scroller.scrollTop;
+        const anchorTop = scroller.clientHeight * 0.3;
+        const desiredTop = fieldTopInScroller - anchorTop;
+        const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+        const nextTop = Math.min(maxTop, Math.max(0, desiredTop));
+
+        scroller.scrollTo({ top: nextTop, behavior: 'smooth' });
       }, 140);
     };
 
