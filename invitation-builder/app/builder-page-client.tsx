@@ -7068,7 +7068,7 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                     setSelectedTransportMode('');
                                   }}
                                   disabled={availableTransportModeOptions.length === 0}
-                                  className="group/button inline-flex h-10 w-max max-w-full min-w-0 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-background bg-clip-padding px-4 pr-9 text-center text-sm font-medium text-foreground whitespace-nowrap appearance-none select-none transition-all outline-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:border-input dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
+                                  className="group/button inline-flex h-10 w-max max-w-full min-w-0 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-background bg-clip-padding px-4 text-center text-sm font-medium text-foreground whitespace-nowrap appearance-none select-none transition-all outline-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:border-input dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
                                 >
                                   <option value="">
                                     {availableTransportModeOptions.length > 0 ? "+ 교통수단 추가" : "추가 가능한 항목 없음"}
@@ -7079,9 +7079,6 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
                                     </option>
                                   ))}
                                 </select>
-                                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                                  <ChevronDown className="w-4 h-4 text-on-surface-30" />
-                                </span>
                               </div>
                             </div>
                           </div>
