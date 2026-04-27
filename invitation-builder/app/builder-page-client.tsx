@@ -1656,10 +1656,21 @@ export default function BuilderPageClient({ initialSearchParams }: { initialSear
         const containerRect = scroller.getBoundingClientRect();
         const fieldRect = focusableField.getBoundingClientRect();
         const fieldTopInScroller = fieldRect.top - containerRect.top + scroller.scrollTop;
+        const fieldCenterInScroller = fieldTopInScroller + fieldRect.height / 2;
         const anchorTop = anchorBaseHeight * 0.35;
-        const desiredTop = fieldTopInScroller - anchorTop;
+        const desiredTop = fieldCenterInScroller - anchorTop;
         const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
         const nextTop = Math.min(maxTop, Math.max(0, desiredTop));
+        const delta = nextTop - scroller.scrollTop;
+
+        /**
+         * 키보드 애니메이션/viewport 미세 변화로 focusin이 연속 발생해도
+         * 앵커 근처에서는 재스크롤하지 않아 누를 때마다 위로 밀리는 체감을 막는다.
+         */
+        if (Math.abs(delta) < 24) {
+          focusScrollTimerRef.current = null;
+          return;
+        }
 
         // 기존 smooth 스크롤 잔여 모션을 끊고 최신 포커스 기준으로 다시 정렬
         scroller.scrollTo({ top: scroller.scrollTop, behavior: 'auto' });
